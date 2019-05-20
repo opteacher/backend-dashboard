@@ -15,6 +15,8 @@
 </template>
 
 <script>
+import uuid from "uuid/v1"
+
 export default {
     methods: {
         async addModel() {
@@ -30,6 +32,10 @@ export default {
                 this.$message({
                     type: "info",
                     message: `action: ${action}`
+                })
+                this.$emit("addModel", {
+                    id: uuid(),
+                    title: "abcd"
                 })
             } catch (e) {
                 this.$message({
