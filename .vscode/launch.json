@@ -8,12 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Frontend",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script",
-                "debug"
-            ],
-            "port": 9229
+            "program": "${workspaceFolder}/frontend/app.js"
         },
         {
             "name": "Backend",
