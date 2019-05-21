@@ -1,8 +1,8 @@
 <template>
 <dashboard>
     <tool-bar @addModel="addModel"/>
-    <div>
-        <model-card v-for="model in models" :key="model.id" :model="model"/>
+    <div class="models-panel">
+        <model-card v-for="model in models" :key="model.id" :model="model" @deleteModel="deleteModel"/>
     </div>
 </dashboard>
 </template>
@@ -15,15 +15,19 @@ import modelCard from "../components/modelCard"
 export default {
     data() {
         return {
+            movingModel: null,
             models: []
         }
     },
     methods: {
         addModel(model) {
+            model.x = 0
+            model.y = 0
             this.models.push(model)
+        },
+        deleteModel(modelID) {
+            this.models.pop(ele => ele.id === modelID)
         }
-    },
-    async created() {
     },
     components: {
         "dashboard": dashboard,
@@ -33,4 +37,9 @@ export default {
 }
 </script>
 
+<style lang="scss">
+.models-panel {
+    height: 100%;
+}
+</style>
 

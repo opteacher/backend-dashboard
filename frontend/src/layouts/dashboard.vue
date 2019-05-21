@@ -2,7 +2,7 @@
 <el-container class="h-100">
     <el-header class="p-0"><header-bar/></el-header>
     <el-aside class="sidebar" width="20vw"><side-bar/></el-aside>
-    <el-main class="main"><slot/></el-main>
+    <el-main class="main p-0"><slot/></el-main>
 </el-container>
 </template>
 

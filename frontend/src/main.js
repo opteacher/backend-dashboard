@@ -4,7 +4,6 @@ import VueAxios from "vue-axios"
 import axios from "axios"
 import routes from "./routes"
 import ElementUI from "element-ui"
-import "element-ui/lib/theme-chalk/index.css"
 import "./styles/common.css"
 
 Vue.use(VueRouter)

@@ -5,7 +5,7 @@
         </el-col>
         <el-col :span="22">
             <el-button-group class="p-0">
-                <el-button type="primary" icon="el-icon-plus" size="mini" @click="addModel"/>
+                <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="addModel"/>
             </el-button-group>
         </el-col>
         <el-col :span="1">
@@ -51,10 +51,6 @@ export default {
 
 <style lang="scss">
 .toolbar {
-    margin-top: -20px;
-    margin-left: -20px;
-    margin-right: -20px;
-    margin-bottom: 20px;
     background-color: white;
 
     * {
