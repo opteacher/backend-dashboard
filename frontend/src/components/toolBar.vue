@@ -5,44 +5,39 @@
         </el-col>
         <el-col :span="22">
             <el-button-group class="p-0">
-                <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="addModel"/>
+                <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="showAddModelDlg = true"/>
             </el-button-group>
         </el-col>
         <el-col :span="1">
             <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
         </el-col>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="新建模块" :visible.sync="showAddModelDlg" :modal-append-to-body="false" width="30vw">
+            <edit-model ref="add-model-form"/>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="showAddModelDlg = false">取 消</el-button>
+                <el-button type="primary" @click="addModel">确 定</el-button>
+            </div>
+        </el-dialog>
     </el-row>
 </template>
 
 <script>
-import uuid from "uuid/v1"
+import _ from "lodash"
+
+import editModel from "../forms/editModel"
 
 export default {
+    components: {
+        "edit-model": editModel
+    },
+    data() { return {
+        showAddModelDlg: false
+    }},
     methods: {
         async addModel() {
-            const h = this.$createElement;
-            try {
-                let action = await this.$msgbox({
-                    title: "新建",
-                    message: h("p", "新建一个模块"),
-                    showCancelButton: true,
-                    confirmButtonText: "确认",
-                    cancelButtonText: "取消"
-                })
-                this.$message({
-                    type: "info",
-                    message: `action: ${action}`
-                })
-                this.$emit("addModel", {
-                    id: uuid(),
-                    title: "abcd"
-                })
-            } catch (e) {
-                this.$message({
-                    type: "error",
-                    message: `error: ${e.message || e}`
-                })
-            }
+            this.showAddModelDlg = false
+            this.$emit("add-model", _.clone(this.$refs["add-model-form"].model))
         }
     }
 }
@@ -53,7 +48,7 @@ export default {
 .toolbar {
     background-color: white;
 
-    * {
+    .el-col {
         padding: 10px;
     }
 

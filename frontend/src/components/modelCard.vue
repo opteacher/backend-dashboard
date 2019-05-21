@@ -1,13 +1,15 @@
 <template>
-<el-card class="box-card model-card">
+<el-card class="box-card model-card" style="width: 300px">
     <div slot="header" class="clearfix" v-drag>
-        <span class="card-name">{{model.title}}</span>
+        <span class="card-name">{{model.name}}</span>
         <el-link class="float-right" @click="$emit('deleteModel', model.id)">
             <i class="el-icon-close"/>
         </el-link>
     </div>
     <div class="text item">
-        tttttt
+        <div class="list-group list-group-flush">
+            <button type="button" class="list-group-item list-group-item-action list-group-item-light" v-for="prop in model.props" :key="prop.name">{{prop.name}}</button>
+        </div>
     </div>
     <el-link class="resize-button" type="primary" v-resize>
         <i class="iconfont icon--Resize-Four-Direc"/>
@@ -32,8 +34,12 @@ export default {
                 let downClientY = me.clientY
 
                 document.onmousemove = e => {
-                    card.style.left = `${left + (e.clientX - downClientX)}px`
-                    card.style.top = `${top + (e.clientY - downClientY)}px`
+                    let l = left + (e.clientX - downClientX)
+                    let t = top + (e.clientY - downClientY)
+                    t = (t <= 0) ? 0 : t
+                    l = (l <= 0) ? 0 : l
+                    card.style.left = `${l}px`
+                    card.style.top = `${t}px`
                 }
                 document.onmouseup = e => {
                     document.onmousemove = null
@@ -50,8 +56,11 @@ export default {
                 let downClientY = me.clientY
 
                 document.onmousemove = e => {
-                    card.style.width = `${e.clientX - downClientX}px`
-                    card.style.height = `${e.clientY - downClientY}px`
+                    let w = width +  e.clientX - downClientX
+                    let h = height + e.clientY - downClientY
+                    h = (h <= 61 + 24 + 40) ? 61 + 24 + 40 : h
+                    card.style.width = `${w}px`
+                    card.style.height = `${h}px`
                 }
                 document.onmouseup = e => {
                     document.onmousemove = null
@@ -67,7 +76,6 @@ export default {
 <style lang="scss">
 .model-card {
     position: relative;
-    width: 30vw;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -80,7 +88,8 @@ export default {
     }
 }
 .resize-button {
-    float: right !important;
-    margin-bottom: 20px;
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
 <dashboard>
-    <tool-bar @addModel="addModel"/>
+    <tool-bar @add-model="addModel"/>
     <div class="models-panel">
         <model-card v-for="model in models" :key="model.id" :model="model" @deleteModel="deleteModel"/>
     </div>
