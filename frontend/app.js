@@ -27,7 +27,7 @@ app.use(logger());
 app.use(statc(path.join(__dirname, "public")));
 
 // 指定页面目录
-app.use(views(path.resolve("./frontend"), {extension: "html"}));
+app.use(views(path.resolve("./"), {extension: "html"}));
 
 // 路径分配
 app.use(async ctx => await ctx.render("index"));

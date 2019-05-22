@@ -39,6 +39,7 @@ export default {
 
 <style lang="scss">
 .models-panel {
+    position: relative;
     height: 100%;
 }
 </style>

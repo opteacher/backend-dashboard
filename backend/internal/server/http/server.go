@@ -3,7 +3,8 @@ package http
 import (
 	"net/http"
 
-	"backend/internal/model"
+	modelsctl "backend/internal/controller/models"
+	globalmw "backend/internal/server/middleware"
 	"backend/internal/service"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
@@ -17,6 +18,7 @@ var (
 
 // New new a bm server.
 func New(s *service.Service) (engine *bm.Engine) {
+	// 读取服务配置
 	var (
 		hc struct {
 			Server *bm.ServerConfig
@@ -27,9 +29,13 @@ func New(s *service.Service) (engine *bm.Engine) {
 			panic(err)
 		}
 	}
+	// 使用默认blademaster管理网关
 	svc = s
 	engine = bm.DefaultServer(hc.Server)
+	engine.Use(globalmw.SetupCORS(), globalmw.ParseJSON())
+	// 初始化路由
 	initRouter(engine)
+	// 开启监听
 	if err := engine.Start(); err != nil {
 		panic(err)
 	}
@@ -38,9 +44,10 @@ func New(s *service.Service) (engine *bm.Engine) {
 
 func initRouter(e *bm.Engine) {
 	e.Ping(ping)
-	g := e.Group("/backend")
+	g := e.Group("/backend-dashboard/backend")
 	{
-		g.GET("/start", howToStart)
+		ctl := modelsctl.New()
+		g.POST("/models", ctl.HandlePost)
 	}
 }
 
@@ -49,12 +56,4 @@ func ping(ctx *bm.Context) {
 		log.Error("ping error(%v)", err)
 		ctx.AbortWithStatus(http.StatusServiceUnavailable)
 	}
-}
-
-// example for http request handler.
-func howToStart(c *bm.Context) {
-	k := &model.Kratos{
-		Hello: "Golang 大法好 !!!",
-	}
-	c.JSON(k, nil)
 }

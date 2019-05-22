@@ -75,7 +75,7 @@ export default {
 
 <style lang="scss">
 .model-card {
-    position: relative;
+    position: absolute;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;

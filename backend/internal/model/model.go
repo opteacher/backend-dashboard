@@ -1,6 +1,12 @@
 package model
 
-// Kratos hello kratos.
-type Kratos struct {
-	Hello string
+type Prop struct {
+	Name string      `json:"name"`
+	Type interface{} `json:"type"`
+}
+
+type Model struct {
+	Name    string   `json:"name"`
+	Props   []Prop   `json:"props"`
+	Methods []string `json:"methods"`
 }

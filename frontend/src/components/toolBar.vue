@@ -12,7 +12,7 @@
             <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
         </el-col>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-        <el-dialog title="新建模块" :visible.sync="showAddModelDlg" :modal-append-to-body="false" width="30vw">
+        <el-dialog title="新建模块" :visible.sync="showAddModelDlg" :modal-append-to-body="false" width="50vw">
             <edit-model ref="add-model-form"/>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="showAddModelDlg = false">取 消</el-button>
@@ -37,7 +37,15 @@ export default {
     methods: {
         async addModel() {
             this.showAddModelDlg = false
-            this.$emit("add-model", _.clone(this.$refs["add-model-form"].model))
+            let form = this.$refs["add-model-form"]
+            let newModel = _.clone(form.model)
+            try {
+                console.log(await this.axios.post("http://127.0.0.1:8000/backend-dashboard/backend/models", newModel))
+            } catch(e) {
+                this.$message(`创建模块失败：${e}`)
+            }
+            this.$emit("add-model", newModel)
+            form.resetModel()
         }
     }
 }

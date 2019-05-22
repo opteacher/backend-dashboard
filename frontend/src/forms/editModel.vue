@@ -102,6 +102,15 @@ export default {
         },
         deleteProp(propName) {
             this.model.props.pop(ele => ele.name === propName)
+        },
+        resetModel() {
+            this.model = {
+                id: "",
+                name: "",
+                props: [],
+                propName: "",
+                methods: []
+            }
         }
     }
 }
