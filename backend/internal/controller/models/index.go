@@ -28,3 +28,9 @@ func (ctl *ModelsController) HandlePost(ctx *bm.Context) {
 		}
 	}
 }
+
+func (ctl *ModelsController) HandleDelete(ctx *bm.Context) {
+	if mid, exists := ctx.Get("mid"); exists {
+		ctx.JSON(mid, nil)
+	}
+}

@@ -48,6 +48,7 @@ func initRouter(e *bm.Engine) {
 	{
 		ctl := modelsctl.New()
 		g.POST("/models", ctl.HandlePost)
+		g.DELETE("/models/:mid", ctl.HandleDelete)
 	}
 }
 

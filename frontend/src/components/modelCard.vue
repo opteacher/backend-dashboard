@@ -2,7 +2,7 @@
 <el-card class="box-card model-card" style="width: 300px">
     <div slot="header" class="clearfix" v-drag>
         <span class="card-name">{{model.name}}</span>
-        <el-link class="float-right" @click="$emit('deleteModel', model.id)">
+        <el-link class="float-right" @click="$emit('delete-model', model.id)">
             <i class="el-icon-close"/>
         </el-link>
     </div>

@@ -39,11 +39,6 @@ export default {
             this.showAddModelDlg = false
             let form = this.$refs["add-model-form"]
             let newModel = _.clone(form.model)
-            try {
-                console.log(await this.axios.post("http://127.0.0.1:8000/backend-dashboard/backend/models", newModel))
-            } catch(e) {
-                this.$message(`创建模块失败：${e}`)
-            }
             this.$emit("add-model", newModel)
             form.resetModel()
         }
