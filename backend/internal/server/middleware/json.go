@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"github.com/bilibili/kratos/pkg/log"
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
 )
 
@@ -19,6 +20,7 @@ func (p *jsonParser) ServeHTTP(ctx *bm.Context) {
 		return
 	}
 	defer ctx.Request.Body.Close()
+	log.Info("json middleware: received json body: %s", string(body))
 
 	// 解析参数
 	var value interface{}

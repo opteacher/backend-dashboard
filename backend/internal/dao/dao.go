@@ -2,6 +2,9 @@ package dao
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/bilibili/kratos/pkg/cache/memcache"
@@ -90,4 +93,111 @@ func (d *Dao) pingRedis(ctx context.Context) (err error) {
 		log.Error("conn.Set(PING) error(%v)", err)
 	}
 	return
+}
+
+func (d *Dao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
+	if rows, err := tx.Query(fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr), condArgs...); err != nil {
+		return nil, err
+	} else {
+		return d.query(rows, table, condStr, condArgs)
+	}
+}
+
+func (d *Dao) Query(ctx context.Context, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
+	if rows, err := d.db.Query(ctx, fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr), condArgs...); err != nil {
+		return nil, err
+	} else {
+		return d.query(rows, table, condStr, condArgs)
+	}
+}
+
+func (d *Dao) query(rows *sql.Rows, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
+	if ctypes, err := rows.ColumnTypes(); err != nil {
+		return nil, err
+	} else {
+		defer rows.Close()
+		var res []map[string]interface{}
+		for rows.Next() {
+			row := make(map[string]interface{})
+			var value []interface{}
+			for _, ctype := range ctypes {
+				val := reflect.New(ctype.ScanType()).Interface()
+				row[ctype.Name()] = val
+				value = append(value, val)
+			}
+			if err := rows.Scan(value...); err != nil {
+				continue
+			}
+			res = append(res, row)
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+}
+
+func (d *Dao) Insert(ctx context.Context, table string, entry map[string]interface{}) (int64, error) {
+	// NOTE: 理论上不存在负数的ID
+	return d.Save(ctx, table, "`id`=?", []interface{}{-99}, entry)
+}
+
+func (d *Dao) Save(ctx context.Context, table string, condStr string, condArgs []interface{}, entry map[string]interface{}) (int64, error) {
+	if tx, err := d.db.Begin(ctx); err != nil {
+		return 0, err
+	} else if items, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
+		tx.Rollback()
+		return 0, err
+	} else if len(items) == 0 {
+		// 新增
+		ks, vs := splitKeyAndVal(entry)
+		kstr, vstr := combineInsert(ks)
+		if res, err := tx.Exec(fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, kstr, vstr), vs...); err != nil {
+			tx.Rollback()
+			return 0, err
+		} else {
+			tx.Commit()
+			return res.RowsAffected()
+		}
+	} else {
+		// 更新
+		ks, vs := splitKeyAndVal(entry)
+		kstr := combineUpdate(ks)
+		if res, err := tx.Exec(fmt.Sprintf("UPDATE %s SET %s WHERE %s", table, kstr, condStr), append(vs, condArgs)...); err != nil {
+			tx.Rollback()
+			return 0, err
+		} else {
+			tx.Commit()
+			return res.RowsAffected()
+		}
+	}
+}
+
+func splitKeyAndVal(entry map[string]interface{}) ([]string, []interface{}) {
+	var keys []string
+	var vals []interface{}
+	for k, v := range entry {
+		keys = append(keys, k)
+		vals = append(vals, v)
+	}
+	return keys, vals
+}
+
+func combineInsert(keys []string) (kstr string, vstr string) {
+	for _, key := range keys {
+		kstr += key + ","
+		vstr += "?,"
+	}
+	kstr = strings.TrimRight(kstr, ",")
+	vstr = strings.TrimRight(vstr, ",")
+	return kstr, vstr
+}
+
+func combineUpdate(keys []string) string {
+	str := ""
+	for _, key := range keys {
+		str += key + "=?,"
+	}
+	str = strings.TrimRight(str, ",")
+	return str
 }

@@ -32,7 +32,6 @@ export default {
     bottom: 0;
     left: 20vw;
     right: 0;
-    // background-color: #f8f9fa !important;
-    background-color: cadetblue !important;
+    background-color: #f8f9fa !important;
 }
 </style>

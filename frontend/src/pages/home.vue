@@ -24,18 +24,20 @@ export default {
     },
     methods: {
         async addModel(model) {
-            model.x = 0
-            model.y = 0
-            this.models.push(model)
-
             let res = await modelBkd.post(model)
-            let msg = utils.getErrorMsg(res)
-            if ()
-            console.log(res)
-            // this.$message(`创建模块失败：${e}`)
+            if (typeof res === "string") {
+                this.$message(`创建模块失败：${res}`)
+            } else {
+                this.models.push(model)
+            }
         },
-        deleteModel(modelID) {
-            this.models.pop(ele => ele.id === modelID)
+        async deleteModel(modelID) {
+            let res = await modelBkd.delete(modelID)
+            if (typeof res === "string") {
+                this.$message(`删除模块失败：${res}`)
+            } else {
+                this.models.pop(ele => ele.id === modelID)
+            }
         }
     },
     components: {

@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	modelsctl "backend/internal/controller/models"
+	"backend/internal/model"
 	globalmw "backend/internal/server/middleware"
 	"backend/internal/service"
 
@@ -29,10 +29,17 @@ func New(s *service.Service) (engine *bm.Engine) {
 			panic(err)
 		}
 	}
-	// 使用默认blademaster管理网关
+
+	// 初始化服务
 	svc = s
+	service.NewApiService()
+	// 使用默认blademaster管理网关
 	engine = bm.DefaultServer(hc.Server)
-	engine.Use(globalmw.SetupCORS(), globalmw.ParseJSON())
+	// 注册中间件
+	engine.Use(
+		globalmw.SetupCORS(),
+		globalmw.ParseJSON(),
+	)
 	// 初始化路由
 	initRouter(engine)
 	// 开启监听
@@ -46,9 +53,9 @@ func initRouter(e *bm.Engine) {
 	e.Ping(ping)
 	g := e.Group("/backend-dashboard/backend")
 	{
-		ctl := modelsctl.New()
-		g.POST("/models", ctl.HandlePost)
-		g.DELETE("/models/:mid", ctl.HandleDelete)
+		service.InsApiService().AddModelAPI(g, model.MODELS_NAME, []string{
+			service.INSERT,
+		})
 	}
 }
 

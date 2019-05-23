@@ -10,3 +10,5 @@ type Model struct {
 	Props   []Prop   `json:"props"`
 	Methods []string `json:"methods"`
 }
+
+const MODELS_NAME = "models"

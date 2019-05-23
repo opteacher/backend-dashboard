@@ -15,11 +15,11 @@ func New() (ctl *ModelsController) {
 }
 
 func (ctl *ModelsController) HandlePost(ctx *bm.Context) {
-	if b, exists := ctx.Get("body"); !exists {
+	if body, exists := ctx.Get("body"); !exists {
 		ctx.String(400, "未给出参数")
 	} else {
 		var m model.Model
-		if str, err := json.Marshal(b); err != nil {
+		if str, err := json.Marshal(body); err != nil {
 			ctx.String(400, "json合并错误：%v", err)
 		} else if err := json.Unmarshal(str, &m); err != nil {
 			ctx.String(400, "json解析错误：%v", err)
@@ -30,7 +30,7 @@ func (ctl *ModelsController) HandlePost(ctx *bm.Context) {
 }
 
 func (ctl *ModelsController) HandleDelete(ctx *bm.Context) {
-	if mid, exists := ctx.Get("mid"); exists {
-		ctx.JSON(mid, nil)
+	if body, exists := ctx.Get("body"); exists {
+		ctx.JSON(body, nil)
 	}
 }
