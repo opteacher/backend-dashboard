@@ -1,12 +1,12 @@
 package model
 
 type Prop struct {
-	Name string      `json:"name"`
-	Type interface{} `json:"type"`
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 type Model struct {
-	Name    string   `json:"name"`
+	Name    string   `json:"name" orm:",NOT_NULL|PRIMARY_KEY"`
 	Props   []Prop   `json:"props"`
 	Methods []string `json:"methods"`
 }

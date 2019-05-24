@@ -14,6 +14,7 @@ import (
 
 var (
 	svc *service.Service
+	api *service.ApiService
 )
 
 // New new a bm server.
@@ -32,7 +33,7 @@ func New(s *service.Service) (engine *bm.Engine) {
 
 	// 初始化服务
 	svc = s
-	service.NewApiService()
+	api = service.NewApiService()
 	// 使用默认blademaster管理网关
 	engine = bm.DefaultServer(hc.Server)
 	// 注册中间件
@@ -62,6 +63,10 @@ func initRouter(e *bm.Engine) {
 func ping(ctx *bm.Context) {
 	if err := svc.Ping(ctx); err != nil {
 		log.Error("ping error(%v)", err)
+		ctx.AbortWithStatus(http.StatusServiceUnavailable)
+	}
+	if err := api.Ping(ctx); err != nil {
+		log.Error("api service ping error(%v)", err)
 		ctx.AbortWithStatus(http.StatusServiceUnavailable)
 	}
 }

@@ -20,6 +20,10 @@ func (p *jsonParser) ServeHTTP(ctx *bm.Context) {
 		return
 	}
 	defer ctx.Request.Body.Close()
+	if len(body) == 0 {
+		ctx.Next()
+		return
+	}
 	log.Info("json middleware: received json body: %s", string(body))
 
 	// 解析参数
