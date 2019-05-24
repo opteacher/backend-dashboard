@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/internal/dao"
+	"backend/internal/model"
 	"backend/utils"
 	"context"
 	"sync"
@@ -46,11 +47,29 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 		if mbody == nil {
 			return
 		} else if method, exs := mbody["method"]; !exs {
-			ctx.String(400, "必须指定Method")
+			ctx.String(400, "必须指定method")
 		} else {
 			params := mbody["params"]
 			switch method {
 			case INSERT:
+				if params == nil {
+					ctx.String(400, "做新增操作必须提交对象作为参数params")
+					return
+				}
+				if tx, err := s.dao.BeginTx(ctx); err != nil {
+					ctx.String(400, "事务开启失败：%v", err)
+				} else {
+					for _, m := range params.([]interface{}) {
+						mdl := m.(map[string]interface{})
+						if _, err := s.dao.InsertTx(tx, model.MODELS_NAME, mdl); err != nil {
+							s.dao.Rollback(tx)
+							ctx.String(400, "插入数据源失败：%v", err)
+						}
+					}
+					if err := s.dao.Commit(tx); err != nil {
+						ctx.String(400, "事务提交失败：%v", err)
+					}
+				}
 			default:
 				ctx.String(400, "未知Method：%s", method)
 			}

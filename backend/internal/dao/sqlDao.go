@@ -11,10 +11,12 @@ import (
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/database/sql"
+	"github.com/bilibili/kratos/pkg/log"
 )
 
 type MySqlDao struct {
 	db *sql.DB
+	tx *sql.Tx
 }
 
 func NewSqlDao() (dao *MySqlDao) {
@@ -34,10 +36,23 @@ func (d *MySqlDao) Close() {
 
 func (d *MySqlDao) Ping(ctx context.Context) error {
 	d.Create(ctx, model.MODELS_NAME, reflect.TypeOf((*model.Model)(nil)).Elem())
+	// d.tx.Commit()
 	return d.db.Ping(ctx)
 }
 
-func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) error {
+func (d *MySqlDao) BeginTx(ctx context.Context) (*sql.Tx, error) {
+	return d.db.Begin(ctx)
+}
+
+func (d *MySqlDao) Commit(tx *sql.Tx) error {
+	return tx.Commit()
+}
+
+func (d *MySqlDao) Rollback(tx *sql.Tx) error {
+	return tx.Rollback()
+} 
+
+func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) (err error) {
 	typeMap := map[string]string{
 		"string": "VARCHAR(255)",
 		"int64":  "INT(11)",
@@ -126,8 +141,14 @@ func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) e
 		sql = strings.TrimRight(sql, ",")
 	}
 	sql += ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
-	fmt.Println(sql)
-	return nil
+	log.Info("database: SQL(%s)", sql)
+	if d.tx == nil {
+		if d.tx, err = d.BeginTx(ctx); err != nil {
+			return err
+		}
+	}
+	_, err = d.tx.Exec(sql)
+	return err
 }
 
 func (d *MySqlDao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
@@ -180,7 +201,17 @@ func (d *MySqlDao) Insert(ctx context.Context, table string, entry map[string]in
 func (d *MySqlDao) Save(ctx context.Context, table string, condStr string, condArgs []interface{}, entry map[string]interface{}) (int64, error) {
 	if tx, err := d.db.Begin(ctx); err != nil {
 		return 0, err
-	} else if items, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
+	} else {
+		return d.SaveTx(tx, table, condStr, condArgs, entry)
+	}
+}
+
+func (d *MySqlDao) InsertTx(tx *sql.Tx, table string, entry map[string]interface{}) (int64, error) {
+	return d.SaveTx(tx, table, "`id`=?", []interface{}{-99}, entry)
+}
+
+func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}, entry map[string]interface{}) (int64, error) {
+	if items, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
 		tx.Rollback()
 		return 0, err
 	} else if len(items) == 0 {
