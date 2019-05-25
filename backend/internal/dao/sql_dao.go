@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"backend/internal/model"
 	"backend/utils"
 	"context"
 	"errors"
@@ -12,6 +11,7 @@ import (
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/database/sql"
 	"github.com/bilibili/kratos/pkg/log"
+	gsql "database/sql"
 )
 
 type MySqlDao struct {
@@ -34,23 +34,25 @@ func (d *MySqlDao) Close() {
 	d.db.Close()
 }
 
-func (d *MySqlDao) Ping(ctx context.Context) error {
-	d.Create(ctx, model.MODELS_NAME, reflect.TypeOf((*model.Model)(nil)).Elem())
-	// d.tx.Commit()
-	return d.db.Ping(ctx)
-}
-
 func (d *MySqlDao) BeginTx(ctx context.Context) (*sql.Tx, error) {
 	return d.db.Begin(ctx)
 }
 
-func (d *MySqlDao) Commit(tx *sql.Tx) error {
+func (d *MySqlDao) CommitTx(tx *sql.Tx) error {
 	return tx.Commit()
 }
 
-func (d *MySqlDao) Rollback(tx *sql.Tx) error {
+func (d *MySqlDao) Commit() error {
+	return d.tx.Commit()
+}
+
+func (d *MySqlDao) RollbackTx(tx *sql.Tx) error {
 	return tx.Rollback()
-} 
+}
+
+func (d *MySqlDao) Rollback() error {
+	return d.tx.Rollback()
+}
 
 func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) (err error) {
 	typeMap := map[string]string{
@@ -152,7 +154,9 @@ func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) (
 }
 
 func (d *MySqlDao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
-	if rows, err := tx.Query(fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr), condArgs...); err != nil {
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr)
+	log.Info("database: SQL(%s)", sql)
+	if rows, err := tx.Query(sql, condArgs...); err != nil {
 		return nil, err
 	} else {
 		return d.query(rows, table, condStr, condArgs)
@@ -160,7 +164,9 @@ func (d *MySqlDao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []
 }
 
 func (d *MySqlDao) Query(ctx context.Context, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
-	if rows, err := d.db.Query(ctx, fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr), condArgs...); err != nil {
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr)
+	log.Info("database: SQL(%s)", sql)
+	if rows, err := d.db.Query(ctx, sql, condArgs...); err != nil {
 		return nil, err
 	} else {
 		return d.query(rows, table, condStr, condArgs)
@@ -202,15 +208,15 @@ func (d *MySqlDao) Save(ctx context.Context, table string, condStr string, condA
 	if tx, err := d.db.Begin(ctx); err != nil {
 		return 0, err
 	} else {
-		return d.SaveTx(tx, table, condStr, condArgs, entry)
+		return d.SaveTx(tx, table, condStr, condArgs, entry, true)
 	}
 }
 
 func (d *MySqlDao) InsertTx(tx *sql.Tx, table string, entry map[string]interface{}) (int64, error) {
-	return d.SaveTx(tx, table, "`id`=?", []interface{}{-99}, entry)
+	return d.SaveTx(tx, table, "`id`=?", []interface{}{-99}, entry, false)
 }
 
-func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}, entry map[string]interface{}) (int64, error) {
+func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}, entry map[string]interface{}, commit bool) (int64, error) {
 	if items, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
 		tx.Rollback()
 		return 0, err
@@ -218,24 +224,30 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 		// 新增
 		ks, vs := splitKeyAndVal(entry)
 		kstr, vstr := combineInsert(ks)
-		if res, err := tx.Exec(fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, kstr, vstr), vs...); err != nil {
+		var res gsql.Result
+		sql := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, kstr, vstr)
+		log.Info("database: SQL(%s)", sql)
+		if res, err = tx.Exec(sql, vs...); err != nil {
 			tx.Rollback()
 			return 0, err
-		} else {
+		} else if commit {
 			tx.Commit()
-			return res.RowsAffected()
 		}
+		return res.RowsAffected()
 	} else {
 		// 更新
 		ks, vs := splitKeyAndVal(entry)
 		kstr := combineUpdate(ks)
-		if res, err := tx.Exec(fmt.Sprintf("UPDATE %s SET %s WHERE %s", table, kstr, condStr), append(vs, condArgs)...); err != nil {
+		var res gsql.Result
+		sql := fmt.Sprintf("UPDATE %s SET %s WHERE %s", table, kstr, condStr)
+		log.Info("database: SQL(%s)", sql)
+		if res, err = tx.Exec(sql, append(vs, condArgs)...); err != nil {
 			tx.Rollback()
 			return 0, err
-		} else {
+		} else if commit {
 			tx.Commit()
-			return res.RowsAffected()
 		}
+		return res.RowsAffected()
 	}
 }
 
