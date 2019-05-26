@@ -5,11 +5,10 @@ import (
 	"backend/internal/model"
 	"backend/utils"
 	"context"
-	"sync"
-	"reflect"
-	"time"
-
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
+	"reflect"
+	"sync"
+	"time"
 )
 
 type ApiService struct {
@@ -54,16 +53,19 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 		} else if params, exs := mbody["params"]; !exs {
 			ctx.String(400, "必须指定params")
 		} else {
-			ctx.WithValue(ctx.Background(), 10*time.Second)
+			// NOTE: 发现一个现象：新启动App后，如果数据源的表已存在，删除之后再Create，
+			// 		 会发生Context超Deadline的错误。但同一次运行过程，Create几次都不会报错
+			c, cancel := context.WithDeadline(ctx, time.Now().Add(60*time.Second))
+			defer cancel()
 			switch method {
 			case CREATE:
-				if tx, err := s.dao.BeginTx(ctx); err != nil {
+				if tx, err := s.dao.BeginTx(c); err != nil {
 					ctx.String(400, "事务开启失败：%v", err)
 				} else if err := s.dao.Create(tx, model.MODELS_NAME, reflect.TypeOf((*model.Model)(nil)).Elem()); err != nil {
-					s.dao.Rollback()
+					s.dao.RollbackTx(tx)
 					ctx.String(400, "创建表%s失败：%v", model.MODELS_NAME, err)
-				} else if err := s.dao.Commit(); err != nil {
-					s.dao.Rollback()
+				} else if err := s.dao.CommitTx(tx); err != nil {
+					s.dao.RollbackTx(tx)
 					ctx.String(400, "提交创建的表集合失败：%v", err)
 				} else {
 					ctx.String(200, "创建表成功")
@@ -72,29 +74,57 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 				pamlst := params.([]interface{})
 				if len(pamlst) < 1 {
 					ctx.String(400, "需要指定要插入的元组")
+				} else if tx, err := s.dao.BeginTx(c); err != nil {
+					ctx.String(400, "开启事务失败：%v", err)
 				} else {
-					if tx, err := s.dao.BeginTx(ctx); err != nil {
-						ctx.String(400, "开启事务失败：%v", err)
-					} else {
-						for i := 0; i < len(pamlst); i++ {
-							if !reflect.TypeOf(pamlst[i]).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
-								s.dao.RollbackTx(tx)
-								ctx.String(400, "第二个参数为元组，必须指定为object")
+					var respData []interface{}
+					for _, obj := range pamlst {
+						if !reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
+							s.dao.RollbackTx(tx)
+							ctx.String(400, "参数为元组，必须指定为object")
+							return
+						} else {
+							objmap := obj.(map[string]interface{})
+							if id, err := s.dao.InsertTx(tx, mname, objmap); err != nil {
+								ctx.String(400, "插入数据源错误：%v", err)
 								return
 							} else {
-								objmap := pamlst[i].(map[string]interface{})
-								if _, err := s.dao.InsertTx(tx, mname, objmap); err != nil {
-									ctx.String(400, "插入数据源错误：%v", err)
-									return
-								}
+								objmap["id"] = id
+								respData = append(respData, objmap)
 							}
 						}
-						if err := s.dao.CommitTx(tx); err != nil {
+					}
+					if err := s.dao.CommitTx(tx); err != nil {
+						s.dao.RollbackTx(tx)
+						ctx.String(400, "提交数据源失败：%v", err)
+					} else {
+						ctx.JSON(respData, nil)
+					}
+				}
+			case DELETE:
+				pamlst := params.([]interface{})
+				if len(pamlst) < 1 {
+					ctx.String(400, "需要指定要删除的元组")
+				} else if tx, err := s.dao.BeginTx(c); err != nil {
+					ctx.String(400, "开启事务失败：%v", err)
+				} else {
+					for _, obj := range pamlst {
+						if !reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*int64)(nil)).Elem()) {
 							s.dao.RollbackTx(tx)
-							ctx.String(400, "提交数据源失败：%v", err)
+							ctx.String(400, "参数为id，必须指定为int")
+							return
 						} else {
-							ctx.String(200, "插入数据源成功")
+							if _, err := s.dao.DeleteTxByID(tx, mname, int64(obj.(float64))); err != nil {
+								ctx.String(400, "删除数据源错误：%v", err)
+								return
+							}
 						}
+					}
+					if err := s.dao.CommitTx(tx); err != nil {
+						s.dao.RollbackTx(tx)
+						ctx.String(400, "提交数据源失败：%v", err)
+					} else {
+						ctx.JSON(len(pamlst), nil)
 					}
 				}
 			default:

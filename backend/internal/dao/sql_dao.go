@@ -270,10 +270,13 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 			}
 		}
 		if commit {
-			tx.Commit()
+			if err := tx.Commit(); err != nil {
+				tx.Rollback()
+				return 0, err
+			}
 		}
+		return id, nil
 	}
-	return res.RowsAffected()
 }
 
 func (d *MySqlDao) SaveArrayPropTx(tx *sql.Tx, pname string, prop []interface{}, parent string, pid int64) (int64, error) {
@@ -284,7 +287,7 @@ func (d *MySqlDao) SaveArrayPropTx(tx *sql.Tx, pname string, prop []interface{},
 			// 普通类型
 			if n, err := d.InsertTx(tx, table, map[string]interface{}{
 				fmt.Sprintf("%s_id", utils.ToSingular(parent)): pid,
-				pname: p,
+				utils.ToSingular(pname): p,
 			}); err != nil {
 				return 0, err
 			} else {
@@ -343,4 +346,19 @@ func combineUpdate(keys []string) string {
 	}
 	str = strings.TrimRight(str, ",")
 	return str
+}
+
+func (d *MySqlDao) DeleteTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) (int64, error) {
+	sql := fmt.Sprintf("DELETE FROM %s WHERE %s", table, condStr)
+	log.Info("database: SQL(%s)", sql)
+	if res, err := tx.Exec(sql, condArgs...); err != nil {
+		tx.Rollback()
+		return 0, err
+	} else {
+		return res.RowsAffected()
+	}
+}
+
+func (d *MySqlDao) DeleteTxByID(tx *sql.Tx, table string, id int64) (int64, error) {
+	return d.DeleteTx(tx, table, "`id`=?", []interface{}{id})
 }

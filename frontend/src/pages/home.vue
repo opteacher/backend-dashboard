@@ -28,6 +28,7 @@ export default {
             if (typeof res === "string") {
                 this.$message(`创建模块失败：${res}`)
             } else {
+                model.id = res.data.data[0].id
                 this.models.push(model)
             }
         },
