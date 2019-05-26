@@ -54,11 +54,12 @@ func (d *MySqlDao) Rollback() error {
 	return d.tx.Rollback()
 }
 
-func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) (err error) {
-	typeMap := map[string]string{
-		"string": "VARCHAR(255)",
-		"int64":  "INT(11)",
-	}
+var typeMap = map[string]string {
+	"string": "VARCHAR(255)",
+	"int64":  "INT(11)",
+}
+
+func (d *MySqlDao) Create(tx *sql.Tx, table string, typ reflect.Type) (err error) {	
 	sql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` INT(11) AUTO_INCREMENT,", table)
 	var pkeys = []string{"id"}
 	var indexes []string
@@ -72,6 +73,7 @@ func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) (
 			strs := strings.Split(field.Tag.Get("orm"), ",")
 			switch len(strs) {
 			case 1:
+				fname = strs[0]
 			case 2:
 				if len(strs[0]) != 0 {
 					fname = strs[0]
@@ -107,22 +109,22 @@ func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) (
 			stable := fmt.Sprintf("%s_%s_mapper", table, fname)
 			if tn, exists = typeMap[tname[2:]]; exists {
 				// 只有一条字段的普通集合，建表与值关联
-				if err := d.Create(ctx, stable, reflect.StructOf([]reflect.StructField{
+				if err := d.Create(tx, stable, reflect.StructOf([]reflect.StructField{
 					pidField,
 					{
 						Name: "Value",
 						Type: ftype.Elem(),
-						Tag:  reflect.StructTag(utils.ToSingular(fname)),
+						Tag:  reflect.StructTag(fmt.Sprintf("orm:\"%s\"", utils.ToSingular(fname))),
 					},
 				})); err != nil {
 					return err
 				}
 				// 自定义类型数组，递归建表
-			} else if err := d.Create(ctx, stable, reflect.StructOf(append(utils.GetAllFields(ftype.Elem()), pidField))); err != nil {
+			} else if err := d.Create(tx, stable, reflect.StructOf(append(utils.GetAllFields(ftype.Elem()), pidField))); err != nil {
 				return err
 			}
 			// 自定义类型，递归建表
-		} else if err := d.Create(ctx, fname, reflect.StructOf(append(utils.GetAllFields(ftype), pidField))); err != nil {
+		} else if err := d.Create(tx, fname, reflect.StructOf(append(utils.GetAllFields(ftype), pidField))); err != nil {
 			return err
 		}
 	}
@@ -144,12 +146,7 @@ func (d *MySqlDao) Create(ctx context.Context, table string, typ reflect.Type) (
 	}
 	sql += ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 	log.Info("database: SQL(%s)", sql)
-	if d.tx == nil {
-		if d.tx, err = d.BeginTx(ctx); err != nil {
-			return err
-		}
-	}
-	_, err = d.tx.Exec(sql)
+	_, err = tx.Exec(sql)
 	return err
 }
 
@@ -217,6 +214,22 @@ func (d *MySqlDao) InsertTx(tx *sql.Tx, table string, entry map[string]interface
 }
 
 func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}, entry map[string]interface{}, commit bool) (int64, error) {
+	// 提取集合类型和自定义类型
+	cmpProps := make(map[string]interface{})
+	aryProps := make(map[string][]interface{})
+	for pname, prop := range entry {
+		tname := fmt.Sprintf("%s", reflect.TypeOf(prop))
+		if _, exs := typeMap[tname]; !exs {
+			if tname[0:2] == "[]" {
+				aryProps[pname] = prop.([]interface{})
+			} else {
+				cmpProps[pname] = prop
+			}
+			delete(entry, pname)
+		}
+	}
+	// 检查要插入的对象是否存在
+	var res gsql.Result
 	if items, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
 		tx.Rollback()
 		return 0, err
@@ -224,31 +237,83 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 		// 新增
 		ks, vs := splitKeyAndVal(entry)
 		kstr, vstr := combineInsert(ks)
-		var res gsql.Result
-		sql := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, kstr, vstr)
+		sql := fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)", table, kstr, vstr)
 		log.Info("database: SQL(%s)", sql)
 		if res, err = tx.Exec(sql, vs...); err != nil {
 			tx.Rollback()
 			return 0, err
-		} else if commit {
-			tx.Commit()
 		}
-		return res.RowsAffected()
 	} else {
 		// 更新
 		ks, vs := splitKeyAndVal(entry)
 		kstr := combineUpdate(ks)
-		var res gsql.Result
-		sql := fmt.Sprintf("UPDATE %s SET %s WHERE %s", table, kstr, condStr)
+		sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE %s", table, kstr, condStr)
 		log.Info("database: SQL(%s)", sql)
 		if res, err = tx.Exec(sql, append(vs, condArgs)...); err != nil {
 			tx.Rollback()
 			return 0, err
-		} else if commit {
+		}
+	}
+	// 处理复合类型和集合类型
+	if id, err := res.LastInsertId(); err != nil {
+		tx.Rollback()
+		return 0, err
+	} else {
+		for pname, prop := range cmpProps {
+			if _, err := d.SaveCompPropTx(tx, pname, prop, table, id); err != nil {
+				return 0, err
+			}
+		}
+		for pname, prop := range aryProps {
+			if _, err := d.SaveArrayPropTx(tx, pname, prop, table, id); err != nil {
+				return 0, err
+			}
+		}
+		if commit {
 			tx.Commit()
 		}
-		return res.RowsAffected()
 	}
+	return res.RowsAffected()
+}
+
+func (d *MySqlDao) SaveArrayPropTx(tx *sql.Tx, pname string, prop []interface{}, parent string, pid int64) (int64, error) {
+	table := fmt.Sprintf("%s_%s_mapper", strings.ToLower(parent), strings.ToLower(pname))
+	var num int64
+	for _, p := range prop {
+		if _, exs := typeMap[reflect.TypeOf(p).Name()]; exs {
+			// 普通类型
+			if n, err := d.InsertTx(tx, table, map[string]interface{}{
+				fmt.Sprintf("%s_id", utils.ToSingular(parent)): pid,
+				pname: p,
+			}); err != nil {
+				return 0, err
+			} else {
+				num += n
+			}
+		} else if fmt.Sprintf("%s", p)[0:2] == "[]" {
+			// 集合中的集合类型
+			// TODO: 应该不常用
+		} else {
+			// 自定义类型
+			if n, err := d.SaveCompPropTx(tx, pname, p, parent, pid); err != nil {
+				return 0, err
+			} else {
+				num += n
+			}
+		}
+	}
+	return num, nil
+}
+
+func (d *MySqlDao) SaveCompPropTx(tx *sql.Tx, pname string, prop interface{}, parent string, pid int64) (int64, error) {
+	table := fmt.Sprintf("%s_%s_mapper", strings.ToLower(parent), strings.ToLower(pname))
+	if !reflect.TypeOf(prop).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
+		tx.Rollback()
+		return 0, fmt.Errorf("非对象键值对类型：%s", reflect.TypeOf(prop).Name())
+	}
+	entry := prop.(map[string]interface{})
+	entry[fmt.Sprintf("%s_id", utils.ToSingular(parent))] = pid
+	return d.InsertTx(tx, table, entry)
 }
 
 func splitKeyAndVal(entry map[string]interface{}) ([]string, []interface{}) {
@@ -263,7 +328,7 @@ func splitKeyAndVal(entry map[string]interface{}) ([]string, []interface{}) {
 
 func combineInsert(keys []string) (kstr string, vstr string) {
 	for _, key := range keys {
-		kstr += key + ","
+		kstr += fmt.Sprintf("`%s`,", key)
 		vstr += "?,"
 	}
 	kstr = strings.TrimRight(kstr, ",")
@@ -274,7 +339,7 @@ func combineInsert(keys []string) (kstr string, vstr string) {
 func combineUpdate(keys []string) string {
 	str := ""
 	for _, key := range keys {
-		str += key + "=?,"
+		str += fmt.Sprintf("`%s`=?,", key)
 	}
 	str = strings.TrimRight(str, ",")
 	return str

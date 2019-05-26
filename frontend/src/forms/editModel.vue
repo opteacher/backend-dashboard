@@ -85,7 +85,6 @@ export default {
         if (this["input-model"] && this["input-model"].props) {
             this.model.props = this["input-model"].props
         }
-        this.model.id = uuid()
     },
     methods: {
         addProp() {
