@@ -5,10 +5,11 @@ import (
 	"backend/internal/model"
 	"backend/utils"
 	"context"
-	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
 	"reflect"
 	"sync"
 	"time"
+
+	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
 )
 
 type ApiService struct {
@@ -125,6 +126,22 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 						ctx.String(400, "提交数据源失败：%v", err)
 					} else {
 						ctx.JSON(len(pamlst), nil)
+					}
+				}
+			case UPDATE:
+				pamlst := params.([]interface{})
+				if len(pamlst) < 1 {
+					ctx.String(400, "需要指定要更新的元组")
+				} else if tx, err := s.dao.BeginTx(c); err != nil {
+					ctx.String(400, "开启事务失败：%v", err)
+				} else {
+					for _, obj := range pamlst {
+						if !reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
+							s.dao.RollbackTx(tx)
+							ctx.String(400, "参数为元组，必须指定为object")
+						} else {
+
+						}
 					}
 				}
 			default:

@@ -9,7 +9,7 @@ export default {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
                 method: "insert",
-                params: [_.omit(model, ["id", "propName"])]
+                params: [_.omit(model, "id")]
             })
         } catch(e) {
             return utils.getErrorMsg(e)

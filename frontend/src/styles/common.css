@@ -2,6 +2,10 @@
     padding: 7px !important;
 }
 
+.p-10 {
+    padding: 10px !important;
+}
+
 .br-0 {
     border-right: 0 !important;
 }

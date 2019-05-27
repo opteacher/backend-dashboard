@@ -1,6 +1,6 @@
 export default {
     getErrorMsg(res) {
-        if (res instanceof String) {
+        if (typeof res === "string") {
             return res
         } else if (res.message) {
             return res.message

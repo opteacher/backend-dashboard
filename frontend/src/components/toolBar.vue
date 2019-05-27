@@ -1,21 +1,32 @@
 <template>
     <el-row class="toolbar">
-        <el-col :span="1">
+        <el-col class="p-10" :span="1">
             <el-button class="p-7" plain icon="el-icon-arrow-left" size="mini"/>
         </el-col>
-        <el-col :span="22">
+        <el-col class="p-10" :span="22">
             <el-button-group class="p-0">
-                <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="showAddModelDlg = true"/>
+                <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="showAddMdlDlg = true"/>
+            </el-button-group>
+            <el-button-group class="p-0">
+                <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddLnkDlg = true" :disabled="disableAddLnkBtn"/>
             </el-button-group>
         </el-col>
-        <el-col :span="1">
+        <el-col class="p-10" :span="1">
             <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
         </el-col>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-        <el-dialog title="新建模块" :visible.sync="showAddModelDlg" :modal-append-to-body="false" width="50vw">
+        <el-dialog title="新建模块" :visible.sync="showAddMdlDlg" :modal-append-to-body="false" width="50vw">
             <edit-model ref="add-model-form"/>
             <div slot="footer" class="dialog-footer">
-                <el-button @click="showAddModelDlg = false">取 消</el-button>
+                <el-button @click="showAddMdlDlg = false">取 消</el-button>
+                <el-button type="primary" @click="addModel">确 定</el-button>
+            </div>
+        </el-dialog>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="新建关联" :visible.sync="showAddLnkDlg" :modal-append-to-body="false" width="50vw">
+            <edit-link ref="add-link-form"/>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="showAddLnkDlg = false">取 消</el-button>
                 <el-button type="primary" @click="addModel">确 定</el-button>
             </div>
         </el-dialog>
@@ -24,23 +35,38 @@
 
 <script>
 import _ from "lodash"
+import glbVar from "../global"
 
 import editModel from "../forms/editModel"
+import editLink from "../forms/editLink"
 
 export default {
     components: {
-        "edit-model": editModel
+        "edit-model": editModel,
+        "edit-link": editLink,
     },
     data() { return {
-        showAddModelDlg: false
+        models: glbVar.models,
+        disableAddLnkBtn: true,
+        showAddMdlDlg: false,
+        showAddLnkDlg: false
     }},
+    watch: {
+        models(newMdl, oldMdl) {
+            this.disableAddLnkBtn = newMdl.length < 2
+        }
+    },
     methods: {
         async addModel() {
-            this.showAddModelDlg = false
+            this.showAddMdlDlg = false
             let form = this.$refs["add-model-form"]
             let newModel = _.clone(form.model)
+            delete newModel.propName
             this.$emit("add-model", newModel)
             form.resetModel()
+        },
+        async addLink() {
+            this.showAddLnkDlg = false
         }
     }
 }
@@ -50,11 +76,6 @@ export default {
 <style lang="scss">
 .toolbar {
     background-color: white;
-
-    .el-col {
-        padding: 10px;
-    }
-
     button i {
         padding: 0;
     }

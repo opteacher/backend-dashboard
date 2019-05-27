@@ -9,19 +9,19 @@
 
 <script>
 import utils from "../utils"
+import glbVar from "../global"
 
 import dashboard from "../layouts/dashboard"
 import toolBar from "../components/toolBar"
 import modelCard from "../components/modelCard"
+import modelsPanel from "../panels/modelsPanel"
 import modelBkd from "../async/model"
 
 export default {
-    data() {
-        return {
-            movingModel: null,
-            models: []
-        }
-    },
+    data() { return {
+        movingModel: null,
+        models: glbVar.models,
+    }},
     methods: {
         async addModel(model) {
             let res = await modelBkd.post(model)
@@ -45,6 +45,7 @@ export default {
         "dashboard": dashboard,
         "model-card": modelCard,
         "tool-bar": toolBar,
+        "models-panel": modelsPanel,
     }
 }
 </script>
