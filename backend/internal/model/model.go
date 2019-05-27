@@ -11,6 +11,8 @@ type Model struct {
 	Methods []string `json:"methods"`
 	X       int      `json:"x"`
 	Y       int      `json:"y"`
+	Width int `json:"width"`
+	Height int `json:"height"`
 }
 
 const MODELS_NAME = "models"

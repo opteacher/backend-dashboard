@@ -64,6 +64,7 @@ func (d *MySqlDao) Rollback() error {
 var typeMap = map[string]string{
 	"string": "VARCHAR(255)",
 	"int64":  "INT(11)",
+	"int": "INT",
 }
 
 func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
@@ -189,12 +190,23 @@ func (d *MySqlDao) Create(tx *sql.Tx, table string, typ reflect.Type) error {
 }
 
 func (d *MySqlDao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
-	sql := fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr)
+	sql := fmt.Sprintf("SELECT * FROM `%s` WHERE %s", table, condStr)
 	log.Info("database: SQL(%s)", sql)
 	if rows, err := tx.Query(sql, condArgs...); err != nil {
 		return nil, err
 	} else {
 		return d.query(rows, table, condStr, condArgs)
+	}
+}
+
+func (d *MySqlDao) QueryTxByID(tx *sql.Tx, table string, id interface{}) (map[string]interface{}, error) {
+	if ress, err := d.QueryTx(tx, table, "`id`=?", []interface{}{id}); err != nil {
+		d.RollbackTx(tx)
+		return nil, err
+	} else if len(ress) == 0 {
+		return nil, errors.New("没有找到指定记录")
+	} else {
+		return ress[0], nil
 	}
 }
 
@@ -257,7 +269,10 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 	aryProps := make(map[string][]interface{})
 	for pname, prop := range entry {
 		tname := fmt.Sprintf("%s", reflect.TypeOf(prop))
-		if _, exs := typeMap[tname]; !exs {
+		// 只要是数字，传过来的都是float64……
+		if tname == "float64" {
+			continue
+		} else if _, exs := typeMap[tname]; !exs {
 			if tname[0:2] == "[]" {
 				aryProps[pname] = prop.([]interface{})
 			} else {
@@ -287,7 +302,7 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 		kstr := combineUpdate(ks)
 		sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE %s", table, kstr, condStr)
 		log.Info("database: SQL(%s)", sql)
-		if res, err = tx.Exec(sql, append(vs, condArgs)...); err != nil {
+		if res, err = tx.Exec(sql, append(vs, condArgs...)...); err != nil {
 			d.RollbackTx(tx)
 			return 0, err
 		}
@@ -387,7 +402,7 @@ func combineUpdate(keys []string) string {
 }
 
 func (d *MySqlDao) DeleteTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) (int64, error) {
-	sql := fmt.Sprintf("DELETE FROM %s WHERE %s", table, condStr)
+	sql := fmt.Sprintf("DELETE FROM `%s` WHERE %s", table, condStr)
 	log.Info("database: SQL(%s)", sql)
 	if res, err := tx.Exec(sql, condArgs...); err != nil {
 		d.RollbackTx(tx)
@@ -397,6 +412,23 @@ func (d *MySqlDao) DeleteTx(tx *sql.Tx, table string, condStr string, condArgs [
 	}
 }
 
-func (d *MySqlDao) DeleteTxByID(tx *sql.Tx, table string, id int64) (int64, error) {
+func (d *MySqlDao) DeleteTxByID(tx *sql.Tx, table string, id interface{}) (int64, error) {
 	return d.DeleteTx(tx, table, "`id`=?", []interface{}{id})
+}
+
+func (d *MySqlDao) UpdateTxByID(tx *sql.Tx, table string, entry map[string]interface{}) (map[string]interface{}, error) {
+	if id, exs := entry["id"]; !exs {
+		d.RollbackTx(tx)
+		return nil, errors.New("使用ID指定更新需要给出ID")
+	} else if delete(entry, "id"); false {
+		return nil, nil
+	} else if _, err := d.SaveTx(tx, table, "`id`=?", []interface{}{id}, entry, false); err != nil {
+		d.RollbackTx(tx)
+		return nil, err
+	} else if res, err := d.QueryTxByID(tx, table, id); err != nil {
+		d.RollbackTx(tx)
+		return nil, err
+	} else {
+		return res, nil
+	}
 }

@@ -1,6 +1,6 @@
 <template>
-<el-card class="box-card model-card" style="width: 300px">
-    <div slot="header" class="clearfix" v-drag>
+<el-card class="box-card model-card" :style="`left: ${model.x}px; top: ${model.y}px; width: ${model.width}px; height: ${model.height}px`">
+    <div slot="header" class="clearfix" v-drag="model.id">
         <span class="card-name">{{model.name}}</span>
         <el-link class="float-right" @click="$emit('delete-model', model.id)">
             <i class="el-icon-close"/>
@@ -20,12 +20,18 @@
 <script>
 import $ from "jquery"
 
+import modelBkd from "../async/model"
+
 export default {
     props: {
         "model": Object
     },
+    created() {
+        console.log(this.model)
+    },
     directives: {
-        drag: { bind(el) {
+        drag: { bind(el, binding) {
+            let id = binding.value
             el.onmousedown = me => {
                 let card = $(el).closest(".model-card")[0]
                 let left = Number(card.style.left.slice(0, -2))
@@ -41,13 +47,22 @@ export default {
                     card.style.left = `${l}px`
                     card.style.top = `${t}px`
                 }
-                document.onmouseup = e => {
+                document.onmouseup = async e => {
                     document.onmousemove = null
                     document.onmouseup = null
+                    let res = await modelBkd.put({
+                        id,
+                        x: Number(card.style.left.slice(0, -2)),
+                        y: Number(card.style.top.slice(0, -2))
+                    })
+                    if (typeof res === "string") {
+                        this.$message(`创建模块失败：${res}`)
+                    }
                 }
             }
         }},
-        resize: { bind(el) {
+        resize: { bind(el, binding) {
+            let id = binding.value
             el.onmousedown = me => {
                 let card = $(el).closest(".model-card")[0]
                 let width = Number(card.style.width.slice(0, -2))
@@ -62,9 +77,17 @@ export default {
                     card.style.width = `${w}px`
                     card.style.height = `${h}px`
                 }
-                document.onmouseup = e => {
+                document.onmouseup = async e => {
                     document.onmousemove = null
                     document.onmouseup = null
+                    let res = await modelBkd.put({
+                        id,
+                        width: Number(card.style.width.slice(0, -2)),
+                        height: Number(card.style.height.slice(0, -2))
+                    })
+                    if (typeof res === "string") {
+                        this.$message(`创建模块失败：${res}`)
+                    }
                 }
             }
         }}

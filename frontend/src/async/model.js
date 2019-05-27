@@ -24,5 +24,15 @@ export default {
         } catch(e) {
             return utils.getErrorMsg(e)
         }
+    },
+    async put(model) {
+        try {
+            return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
+                method: "update",
+                params: [model]
+            })
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
     }
 }

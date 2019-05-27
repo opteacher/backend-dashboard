@@ -62,7 +62,11 @@ export default {
             name: "",
             props: [],
             propName: "",
-            methods: []
+            methods: [],
+            x: 0,
+            y: 0,
+            width: 400,
+            height: 300
         },
         propOptions: [{
             title: "文本",
@@ -108,7 +112,11 @@ export default {
                 name: "",
                 props: [],
                 propName: "",
-                methods: []
+                methods: [],
+                x: 0,
+                y: 0,
+                width: 400,
+                height: 300
             }
         }
     }

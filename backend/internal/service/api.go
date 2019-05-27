@@ -114,11 +114,9 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 							s.dao.RollbackTx(tx)
 							ctx.String(400, "参数为id，必须指定为int")
 							return
-						} else {
-							if _, err := s.dao.DeleteTxByID(tx, mname, int64(obj.(float64))); err != nil {
-								ctx.String(400, "删除数据源错误：%v", err)
-								return
-							}
+						} else if _, err := s.dao.DeleteTxByID(tx, mname, int64(obj.(float64))); err != nil {
+							ctx.String(400, "删除数据源错误：%v", err)
+							return
 						}
 					}
 					if err := s.dao.CommitTx(tx); err != nil {
@@ -135,13 +133,24 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 				} else if tx, err := s.dao.BeginTx(c); err != nil {
 					ctx.String(400, "开启事务失败：%v", err)
 				} else {
+					var resp []map[string]interface{}
 					for _, obj := range pamlst {
 						if !reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
 							s.dao.RollbackTx(tx)
 							ctx.String(400, "参数为元组，必须指定为object")
+							return
+						} else if res, err := s.dao.UpdateTxByID(tx, mname, obj.(map[string]interface{})); err != nil {
+							ctx.String(400, "更新数据源错误：%v", err)
+							return
 						} else {
-
+							resp = append(resp, res)
 						}
+					}
+					if err := s.dao.CommitTx(tx); err != nil {
+						s.dao.RollbackTx(tx)
+						ctx.String(400, "提交数据源失败：%v", err)
+					} else {
+						ctx.JSON(resp, nil)
 					}
 				}
 			default:
