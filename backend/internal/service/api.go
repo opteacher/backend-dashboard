@@ -52,6 +52,9 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 		} else if method, exs := mbody["method"]; !exs {
 			ctx.String(400, "必须指定method")
 		} else if params, exs := mbody["params"]; !exs {
+			// NOTE: 参数列表对应增删改查四个操作，对于删改查：其前两个参数为条件限定参数
+			//       第一个参数为条件限定字符串；第二个参数为条件参数列表，之后再跟实例。
+			//       增操作除外，直接是实例列表
 			ctx.String(400, "必须指定params")
 		} else {
 			// NOTE: 发现一个现象：新启动App后，如果数据源的表已存在，删除之后再Create，
@@ -104,19 +107,26 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 				}
 			case DELETE:
 				pamlst := params.([]interface{})
-				if len(pamlst) < 1 {
-					ctx.String(400, "需要指定要删除的元组")
+				if len(pamlst) < 2 {
+					ctx.String(400, "需要指定要删除的条件字符串和参数列表")
 				} else if tx, err := s.dao.BeginTx(c); err != nil {
 					ctx.String(400, "开启事务失败：%v", err)
 				} else {
+					if !reflect.TypeOf(pamlst[0]).ConvertibleTo(reflect.TypeOf((*string)(nil)).Elem()) {
+
+					} else if !reflect.TypeOf(pamlst[0]).ConvertibleTo(reflect.TypeOf((*[]interface{})(nil)).Elem()) {
+						
+					}
+
+
 					for _, obj := range pamlst {
-						if !reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*int64)(nil)).Elem()) {
-							s.dao.RollbackTx(tx)
-							ctx.String(400, "参数为id，必须指定为int")
-							return
-						} else if _, err := s.dao.DeleteTxByID(tx, mname, int64(obj.(float64))); err != nil {
-							ctx.String(400, "删除数据源错误：%v", err)
-							return
+						if reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*int64)(nil)).Elem()) {
+							if _, err := s.dao.DeleteTxByID(tx, mname, int64(obj.(float64))); err != nil {
+								ctx.String(400, "删除数据源错误：%v", err)
+								return
+							}
+						} else {
+
 						}
 					}
 					if err := s.dao.CommitTx(tx); err != nil {
@@ -151,6 +161,19 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 						ctx.String(400, "提交数据源失败：%v", err)
 					} else {
 						ctx.JSON(resp, nil)
+					}
+				}
+			case SELECT:
+				pamlst := params.([]interface{})
+				if len(pamlst) < 1 {
+					ctx.String(400, "需要指定要查询的记录ID")
+				} else {
+					var resp []map[string]interface{}
+					for _, obj := range pamlst {
+						var objmap []map[string]interface{}
+						if reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*int64)(nil)).Elem()) {
+							
+						}
 					}
 				}
 			default:
