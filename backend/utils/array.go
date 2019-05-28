@@ -8,3 +8,10 @@ func Includes(a []string, t string) bool {
 	}
 	return false
 }
+
+func TakeProps(a []map[string]interface{}, pname string) (props []interface{}) {
+	for _, item := range a {
+		props = append(props, item[pname])
+	}
+	return
+}

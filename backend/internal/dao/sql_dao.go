@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"backend/internal/model"
 	"backend/utils"
 	"context"
 	"errors"
@@ -41,14 +42,22 @@ func (d *MySqlDao) BeginTx(ctx context.Context) (*sql.Tx, error) {
 	return d.db.Begin(ctx)
 }
 
-func (d *MySqlDao) CommitTx(tx *sql.Tx) error {
-	log.Info("database: Transaction(COMMIT)")
-	return tx.Commit()
+func (d *MySqlDao) CommitTx(tx *sql.Tx) (err error) {
+	if err = tx.Commit(); err != nil {
+		d.RollbackTx(tx)
+	} else {
+		log.Info("database: Transaction(COMMIT)")
+	}
+	return err
 }
 
-func (d *MySqlDao) Commit() error {
-	log.Info("database: Transaction(COMMIT)")
-	return d.tx.Commit()
+func (d *MySqlDao) Commit() (err error) {
+	if err = d.tx.Commit(); err != nil {
+		d.RollbackTx(d.tx)
+	} else {
+		log.Info("database: Transaction(COMMIT)")
+	}
+	return err
 }
 
 func (d *MySqlDao) RollbackTx(tx *sql.Tx) error {
@@ -64,7 +73,7 @@ func (d *MySqlDao) Rollback() error {
 var typeMap = map[string]string{
 	"string": "VARCHAR(255)",
 	"int64":  "INT(11)",
-	"int": "INT",
+	"int":    "INT",
 }
 
 func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
@@ -176,26 +185,54 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 
 func (d *MySqlDao) Create(tx *sql.Tx, table string, typ reflect.Type) error {
 	if sqls, err := genCreateSQL(table, typ); err != nil {
+		d.RollbackTx(tx)
 		return err
 	} else {
 		for i := len(sqls) - 1; i >= 0; i-- {
 			if _, err := tx.Exec(sqls[i]); err != nil {
 				d.RollbackTx(tx)
 				return err
+			} else {
+				log.Info("database: SQL(%s)", sqls[i])
 			}
-			log.Info("database: SQL(%s)", sqls[i])
 		}
 		return nil
 	}
 }
 
 func (d *MySqlDao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
-	sql := fmt.Sprintf("SELECT * FROM `%s` WHERE %s", table, condStr)
-	log.Info("database: SQL(%s)", sql)
-	if rows, err := tx.Query(sql, condArgs...); err != nil {
+	str := fmt.Sprintf("SELECT * FROM `%s`", table)
+	if len(condStr) != 0 {
+		str += fmt.Sprintf(" WHERE %s", condStr)
+	}
+	log.Info("database: SQL(%s); ARGS(%v)", str, condArgs)
+	if rows, err := tx.Query(str, condArgs...); err != nil {
+		d.RollbackTx(tx)
 		return nil, err
+	} else if entries, err := d.ProcsResult(rows); err != nil {
+		d.RollbackTx(tx)
+		return nil, err
+	} else if ftmapper := chkExistsMapper(table); len(ftmapper) == 0 {
+		// 检查是否有外联属性，没有正常返回
+		return entries, nil
 	} else {
-		return d.query(rows, table, condStr, condArgs)
+		// 有外联属性，逐个记录分解
+		for idx, entry := range entries {
+			id := entry["id"]
+			// 逐个外联属性处理
+			for fname, stable := range ftmapper {
+				fkey := fmt.Sprintf("%s_id", utils.ToSingular(table))
+				// 通过映射表和外联ID查找所有符合条件的项目
+				if prop, err := d.QueryTx(tx, stable, fmt.Sprintf("`%s`=?", fkey), []interface{}{id}); err != nil {
+					d.RollbackTx(tx)
+					return nil, err
+				} else {
+					// TODO: 需要判断是否是集合类型的属性
+					entries[idx][fname] = prop
+				}
+			}
+		}
+		return entries, nil
 	}
 }
 
@@ -211,39 +248,91 @@ func (d *MySqlDao) QueryTxByID(tx *sql.Tx, table string, id interface{}) (map[st
 }
 
 func (d *MySqlDao) Query(ctx context.Context, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
-	sql := fmt.Sprintf("SELECT * FROM %s WHERE %s", table, condStr)
-	log.Info("database: SQL(%s)", sql)
-	if rows, err := d.db.Query(ctx, sql, condArgs...); err != nil {
+	if tx, err := d.BeginTx(ctx); err != nil {
+		return nil, err
+	} else if entries, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
+		return nil, err
+	} else if err := d.CommitTx(tx); err != nil {
 		return nil, err
 	} else {
-		return d.query(rows, table, condStr, condArgs)
+		return entries, nil
 	}
 }
 
-func (d *MySqlDao) query(rows *sql.Rows, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
-	if ctypes, err := rows.ColumnTypes(); err != nil {
-		return nil, err
-	} else {
-		defer rows.Close()
-		var res []map[string]interface{}
-		for rows.Next() {
-			row := make(map[string]interface{})
-			var value []interface{}
-			for _, ctype := range ctypes {
-				val := reflect.New(ctype.ScanType()).Interface()
-				row[ctype.Name()] = val
-				value = append(value, val)
-			}
-			if err := rows.Scan(value...); err != nil {
-				continue
-			}
-			res = append(res, row)
-		}
-		if err := rows.Err(); err != nil {
-			return nil, err
-		}
-		return res, nil
+func combineWhereIn(which string, size int) (sql string) {
+	sql = fmt.Sprintf("%s IN (", which)
+	for i := 0; i < size; i++ {
+		sql += "?,"
 	}
+	sql = strings.TrimRight(sql, ",")
+	sql += ")"
+	return
+}
+
+var modelMap = map[string]reflect.Type{
+	model.MODELS_NAME: reflect.TypeOf((*model.Model)(nil)).Elem(),
+}
+
+func chkExistsMapper(table string) (ftmapper map[string]string) {
+	ftmapper = make(map[string]string)
+	var rowType reflect.Type
+	var exists bool
+	if rowType, exists = modelMap[table]; !exists {
+		return
+	}
+	for i := 0; i < rowType.NumField(); i++ {
+		field := rowType.Field(i)
+		ftype := fmt.Sprintf("%s", field.Type)
+		if _, exs := typeMap[ftype]; exs {
+			continue
+		}
+		fname := strings.ToLower(field.Name)
+		stable := fmt.Sprintf("%s_%s_mapper", table, fname)
+		ftmapper[fname] = stable
+	}
+	return
+}
+
+func (d *MySqlDao) ProcsResult(rows *sql.Rows) (res []map[string]interface{}, err error) {
+	var ctypes []*gsql.ColumnType
+	if ctypes, err = rows.ColumnTypes(); err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		row := make(map[string]interface{})
+		var value []interface{}
+		for _, ctype := range ctypes {
+			row[ctype.Name()] = reflect.New(ctype.ScanType()).Interface()
+			value = append(value, row[ctype.Name()])
+		}
+		if err = rows.Scan(value...); err != nil {
+			continue
+		}
+		// Golang对数据库查询的类型做了包装，需要转一下
+		for cname, col := range row {
+			tcol := reflect.TypeOf(col)
+			switch {
+			case tcol.ConvertibleTo(reflect.TypeOf((*int32)(nil))):
+				row[cname] = *col.(*int32)
+			case tcol.ConvertibleTo(reflect.TypeOf((*gsql.RawBytes)(nil))):
+				row[cname] = string(*col.(*gsql.RawBytes))
+			case tcol.ConvertibleTo(reflect.TypeOf((*gsql.NullInt64)(nil))):
+				row[cname] = (col.(*gsql.NullInt64)).Int64
+			case tcol.ConvertibleTo(reflect.TypeOf((*gsql.NullFloat64)(nil))):
+				row[cname] = (col.(*gsql.NullFloat64)).Float64
+			case tcol.ConvertibleTo(reflect.TypeOf((*gsql.NullString)(nil))):
+				row[cname] = (col.(*gsql.NullString)).String
+			case tcol.ConvertibleTo(reflect.TypeOf((*gsql.NullBool)(nil))):
+				row[cname] = (col.(*gsql.NullBool)).Bool
+			}
+		}
+		res = append(res, row)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (d *MySqlDao) Insert(ctx context.Context, table string, entry map[string]interface{}) (int64, error) {
@@ -291,7 +380,7 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 		ks, vs := splitKeyAndVal(entry)
 		kstr, vstr := combineInsert(ks)
 		sql := fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)", table, kstr, vstr)
-		log.Info("database: SQL(%s)", sql)
+		log.Info("database: SQL(%s); ARGS(%v)", sql, vs)
 		if res, err = tx.Exec(sql, vs...); err != nil {
 			d.RollbackTx(tx)
 			return 0, err
@@ -301,8 +390,9 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 		ks, vs := splitKeyAndVal(entry)
 		kstr := combineUpdate(ks)
 		sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE %s", table, kstr, condStr)
-		log.Info("database: SQL(%s)", sql)
-		if res, err = tx.Exec(sql, append(vs, condArgs...)...); err != nil {
+		args := append(vs, condArgs...)
+		log.Info("database: SQL(%s); ARGS(%v)", sql, args)
+		if res, err = tx.Exec(sql, args...); err != nil {
 			d.RollbackTx(tx)
 			return 0, err
 		}
@@ -403,7 +493,7 @@ func combineUpdate(keys []string) string {
 
 func (d *MySqlDao) DeleteTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) (int64, error) {
 	sql := fmt.Sprintf("DELETE FROM `%s` WHERE %s", table, condStr)
-	log.Info("database: SQL(%s)", sql)
+	log.Info("database: SQL(%s); ARGS(%v)", sql, condArgs)
 	if res, err := tx.Exec(sql, condArgs...); err != nil {
 		d.RollbackTx(tx)
 		return 0, err

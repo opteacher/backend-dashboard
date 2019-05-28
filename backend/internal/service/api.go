@@ -66,10 +66,8 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 				if tx, err := s.dao.BeginTx(c); err != nil {
 					ctx.String(400, "事务开启失败：%v", err)
 				} else if err := s.dao.Create(tx, model.MODELS_NAME, reflect.TypeOf((*model.Model)(nil)).Elem()); err != nil {
-					s.dao.RollbackTx(tx)
 					ctx.String(400, "创建表%s失败：%v", model.MODELS_NAME, err)
 				} else if err := s.dao.CommitTx(tx); err != nil {
-					s.dao.RollbackTx(tx)
 					ctx.String(400, "提交创建的表集合失败：%v", err)
 				} else {
 					ctx.String(200, "创建表成功")
@@ -99,7 +97,6 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 						}
 					}
 					if err := s.dao.CommitTx(tx); err != nil {
-						s.dao.RollbackTx(tx)
 						ctx.String(400, "提交数据源失败：%v", err)
 					} else {
 						ctx.JSON(respData, nil)
@@ -109,72 +106,63 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 				pamlst := params.([]interface{})
 				if len(pamlst) < 2 {
 					ctx.String(400, "需要指定要删除的条件字符串和参数列表")
+				} else if !reflect.TypeOf(pamlst[0]).ConvertibleTo(reflect.TypeOf((*string)(nil)).Elem()) {
+					ctx.String(400, "第一个参数必须是string类型（条件字符串），但收到的是：%s", reflect.TypeOf(pamlst[0]))
+				} else if !reflect.TypeOf(pamlst[1]).ConvertibleTo(reflect.TypeOf((*[]interface{})(nil)).Elem()) {
+					ctx.String(400, "第二个参数必须是[]interface{}（条件参数），但收到的是：%s", reflect.TypeOf(pamlst[1]))
 				} else if tx, err := s.dao.BeginTx(c); err != nil {
 					ctx.String(400, "开启事务失败：%v", err)
+				} else if n, err := s.dao.DeleteTx(tx, mname, pamlst[0].(string), pamlst[1].([]interface{})); err != nil {
+					ctx.String(400, "删除数据源错误：%v", err)
+				} else if err := s.dao.CommitTx(tx); err != nil {
+					ctx.String(400, "提交数据源失败：%v", err)
 				} else {
-					if !reflect.TypeOf(pamlst[0]).ConvertibleTo(reflect.TypeOf((*string)(nil)).Elem()) {
-
-					} else if !reflect.TypeOf(pamlst[0]).ConvertibleTo(reflect.TypeOf((*[]interface{})(nil)).Elem()) {
-						
-					}
-
-
-					for _, obj := range pamlst {
-						if reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*int64)(nil)).Elem()) {
-							if _, err := s.dao.DeleteTxByID(tx, mname, int64(obj.(float64))); err != nil {
-								ctx.String(400, "删除数据源错误：%v", err)
-								return
-							}
-						} else {
-
-						}
-					}
-					if err := s.dao.CommitTx(tx); err != nil {
-						s.dao.RollbackTx(tx)
-						ctx.String(400, "提交数据源失败：%v", err)
-					} else {
-						ctx.JSON(len(pamlst), nil)
-					}
+					ctx.JSON(n, nil)
 				}
 			case UPDATE:
 				pamlst := params.([]interface{})
-				if len(pamlst) < 1 {
-					ctx.String(400, "需要指定要更新的元组")
+				if len(pamlst) < 3 {
+					ctx.String(400, "需要指定要更新的条件字符串和参数列表")
+				} else if !reflect.TypeOf(pamlst[0]).ConvertibleTo(reflect.TypeOf((*string)(nil)).Elem()) {
+					ctx.String(400, "第一个参数必须是string类型（条件字符串），但收到的是：%s", reflect.TypeOf(pamlst[0]))
+				} else if !reflect.TypeOf(pamlst[1]).ConvertibleTo(reflect.TypeOf((*[]interface{})(nil)).Elem()) {
+					ctx.String(400, "第二个参数必须是[]interface{}（条件参数），但收到的是：%s", reflect.TypeOf(pamlst[1]))
 				} else if tx, err := s.dao.BeginTx(c); err != nil {
 					ctx.String(400, "开启事务失败：%v", err)
 				} else {
-					var resp []map[string]interface{}
-					for _, obj := range pamlst {
-						if !reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
+					condStr := pamlst[0].(string)
+					condArgs := pamlst[1].([]interface{})
+					var updNum int64
+					for i := 2; i < len(pamlst); i++ {
+						if obj := pamlst[i]; !reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
 							s.dao.RollbackTx(tx)
 							ctx.String(400, "参数为元组，必须指定为object")
 							return
-						} else if res, err := s.dao.UpdateTxByID(tx, mname, obj.(map[string]interface{})); err != nil {
+						} else if n, err := s.dao.SaveTx(tx, mname, condStr, condArgs, obj.(map[string]interface{}), false); err != nil {
 							ctx.String(400, "更新数据源错误：%v", err)
 							return
 						} else {
-							resp = append(resp, res)
+							updNum += n
 						}
 					}
 					if err := s.dao.CommitTx(tx); err != nil {
-						s.dao.RollbackTx(tx)
 						ctx.String(400, "提交数据源失败：%v", err)
 					} else {
-						ctx.JSON(resp, nil)
+						ctx.JSON(updNum, nil)
 					}
 				}
 			case SELECT:
 				pamlst := params.([]interface{})
-				if len(pamlst) < 1 {
-					ctx.String(400, "需要指定要查询的记录ID")
+				if len(pamlst) < 2 {
+					ctx.String(400, "需要指定要查询的条件字符串和参数列表")
+				} else if !reflect.TypeOf(pamlst[0]).ConvertibleTo(reflect.TypeOf((*string)(nil)).Elem()) {
+					ctx.String(400, "第一个参数必须是string类型（条件字符串），但收到的是：%s", reflect.TypeOf(pamlst[0]))
+				} else if !reflect.TypeOf(pamlst[1]).ConvertibleTo(reflect.TypeOf((*[]interface{})(nil)).Elem()) {
+					ctx.String(400, "第二个参数必须是[]interface{}（条件参数），但收到的是：%s", reflect.TypeOf(pamlst[1]))
+				} else if res, err := s.dao.Query(c, mname, pamlst[0].(string), pamlst[1].([]interface{})); err != nil {
+					ctx.String(400, "查询数据源错误：%v", err)
 				} else {
-					var resp []map[string]interface{}
-					for _, obj := range pamlst {
-						var objmap []map[string]interface{}
-						if reflect.TypeOf(obj).ConvertibleTo(reflect.TypeOf((*int64)(nil)).Elem()) {
-							
-						}
-					}
+					ctx.JSON(res, nil)
 				}
 			default:
 				ctx.String(400, "未知Method：%s", method)

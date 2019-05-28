@@ -11,7 +11,7 @@
             <button type="button" class="list-group-item list-group-item-action list-group-item-light" v-for="prop in model.props" :key="prop.name">{{prop.name}}</button>
         </div>
     </div>
-    <el-link class="resize-button" type="primary" v-resize>
+    <el-link class="resize-button" type="primary" v-resize="model.id">
         <i class="iconfont icon--Resize-Four-Direc"/>
     </el-link>
 </el-card>
@@ -56,7 +56,7 @@ export default {
                         y: Number(card.style.top.slice(0, -2))
                     })
                     if (typeof res === "string") {
-                        this.$message(`创建模块失败：${res}`)
+                        console.log(`更新模块失败：${res}`)
                     }
                 }
             }
@@ -86,7 +86,7 @@ export default {
                         height: Number(card.style.height.slice(0, -2))
                     })
                     if (typeof res === "string") {
-                        this.$message(`创建模块失败：${res}`)
+                        console.log(`更新模块失败：${res}`)
                     }
                 }
             }

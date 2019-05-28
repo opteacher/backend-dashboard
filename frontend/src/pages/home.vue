@@ -22,7 +22,19 @@ export default {
         movingModel: null,
         models: glbVar.models,
     }},
+    created() {
+        this.queryModels()
+    },
     methods: {
+        async queryModels() {
+            let res = await modelBkd.get()
+            if (typeof res === "string") {
+                this.$message(`查询模块失败：${res}`)
+            } else {
+                glbVar.models = res.data.data
+                this.models = glbVar.models
+            }
+        },
         async addModel(model) {
             let res = await modelBkd.post(model)
             if (typeof res === "string") {

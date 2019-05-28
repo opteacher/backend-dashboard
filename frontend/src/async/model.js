@@ -19,7 +19,7 @@ export default {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
                 method: "delete",
-                params: [id]
+                params: ["`id`=?", [id]]
             })
         } catch(e) {
             return utils.getErrorMsg(e)
@@ -29,7 +29,17 @@ export default {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
                 method: "update",
-                params: [model]
+                params: ["`id`=?", [model.id], model]
+            })
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
+    async get() {
+        try {
+            return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
+                method: "select",
+                params: ["", []]
             })
         } catch(e) {
             return utils.getErrorMsg(e)
