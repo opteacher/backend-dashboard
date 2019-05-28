@@ -46,15 +46,15 @@ export default {
         "edit-link": editLink,
     },
     data() { return {
-        models: glbVar.models,
         disableAddLnkBtn: true,
         showAddMdlDlg: false,
         showAddLnkDlg: false
     }},
-    watch: {
-        models(newMdl, oldMdl) {
-            this.disableAddLnkBtn = newMdl.length < 2
-        }
+    components: {
+        models: Object
+    },
+    created() {
+        this.chkAddLnkBtn()
     },
     methods: {
         async addModel() {
@@ -67,6 +67,9 @@ export default {
         },
         async addLink() {
             this.showAddLnkDlg = false
+        },
+        chkAddLnkBtn() {
+            this.disableAddLnkBtn = glbVar.models.length < 2
         }
     }
 }

@@ -20,7 +20,7 @@ import modelBkd from "../async/model"
 export default {
     data() { return {
         movingModel: null,
-        models: glbVar.models,
+        models: [],
     }},
     created() {
         this.queryModels()
@@ -41,7 +41,8 @@ export default {
                 this.$message(`创建模块失败：${res}`)
             } else {
                 model.id = res.data.data[0].id
-                this.models.push(model)
+                glbVar.models.push(model)
+                this.models = glbVar.models
             }
         },
         async deleteModel(modelID) {
@@ -49,7 +50,8 @@ export default {
             if (typeof res === "string") {
                 this.$message(`删除模块失败：${res}`)
             } else {
-                this.models.pop(ele => ele.id === modelID)
+                glbVar.models.pop(ele => ele.id === modelID)
+                this.models = glbVar.models
             }
         }
     },

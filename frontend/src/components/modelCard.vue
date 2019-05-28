@@ -27,7 +27,6 @@ export default {
         "model": Object
     },
     created() {
-        console.log(this.model)
     },
     directives: {
         drag: { bind(el, binding) {
