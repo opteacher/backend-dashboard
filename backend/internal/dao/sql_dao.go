@@ -22,6 +22,11 @@ type MySqlDao struct {
 	tx *sql.Tx
 }
 
+var modelMap = map[string]reflect.Type{
+	model.MODELS_NAME: reflect.TypeOf((*model.Model)(nil)).Elem(),
+	model.RELATIONS_NAME: reflect.TypeOf((*model.Relation)(nil)).Elem(),
+}
+
 func NewSqlDao() (dao *MySqlDao) {
 	var config struct {
 		Demo *sql.Config
@@ -269,10 +274,6 @@ func combineWhereIn(which string, size int) (sql string) {
 	return
 }
 
-var modelMap = map[string]reflect.Type{
-	model.MODELS_NAME: reflect.TypeOf((*model.Model)(nil)).Elem(),
-}
-
 func chkExistsMapper(table string) (ftmapper map[string]string) {
 	ftmapper = make(map[string]string)
 	var rowType reflect.Type
@@ -474,7 +475,7 @@ func splitKeyAndVal(entry map[string]interface{}) ([]string, []interface{}) {
 
 func combineInsert(keys []string) (kstr string, vstr string) {
 	for _, key := range keys {
-		kstr += fmt.Sprintf("`%s`,", key)
+		kstr += fmt.Sprintf("`%s`,", strings.ToLower(key))
 		vstr += "?,"
 	}
 	kstr = strings.TrimRight(kstr, ",")
@@ -485,7 +486,7 @@ func combineInsert(keys []string) (kstr string, vstr string) {
 func combineUpdate(keys []string) string {
 	str := ""
 	for _, key := range keys {
-		str += fmt.Sprintf("`%s`=?,", key)
+		str += fmt.Sprintf("`%s`=?,", strings.ToLower(key))
 	}
 	str = strings.TrimRight(str, ",")
 	return str

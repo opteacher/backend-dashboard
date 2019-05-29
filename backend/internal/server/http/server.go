@@ -57,6 +57,9 @@ func initRouter(e *bm.Engine) {
 		service.InsApiService().AddModelAPI(g, model.MODELS_NAME, []string{
 			service.INSERT,
 		})
+		service.InsApiService().AddModelAPI(g, model.RELATIONS_NAME, []string{
+			service.INSERT,
+		})
 	}
 }
 

@@ -50,8 +50,6 @@
 </template>
 
 <script>
-import uuid from "uuid/v1"
-
 export default {
     props: {
         "input-model": Object

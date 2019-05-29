@@ -1,5 +1,10 @@
 package utils
 
+import (
+	"fmt"
+	"strings"
+)
+
 func ToSingular(word string) string {
 	l := len(word)
 	switch {
@@ -14,4 +19,17 @@ func ToSingular(word string) string {
 	default:
 		return word
 	}
+}
+
+func CamelToPascal(word string) string {
+	str := ""
+	for _, w := range word {
+		if w < 93 {
+			str += fmt.Sprintf("_%s", string(w+32))
+		} else {
+			str += string(w)
+		}
+	}
+	str = strings.TrimLeft(str, "_")
+	return str
 }

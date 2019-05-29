@@ -67,6 +67,8 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 					ctx.String(400, "事务开启失败：%v", err)
 				} else if err := s.dao.Create(tx, model.MODELS_NAME, reflect.TypeOf((*model.Model)(nil)).Elem()); err != nil {
 					ctx.String(400, "创建表%s失败：%v", model.MODELS_NAME, err)
+				} else if err := s.dao.Create(tx, model.RELATIONS_NAME, reflect.TypeOf((*model.Relation)(nil)).Elem()); err != nil {
+					ctx.String(400, "创建表%s失败：%v", model.RELATIONS_NAME, err)
 				} else if err := s.dao.CommitTx(tx); err != nil {
 					ctx.String(400, "提交创建的表集合失败：%v", err)
 				} else {

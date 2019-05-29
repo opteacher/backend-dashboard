@@ -8,7 +8,7 @@
                 <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="showAddMdlDlg = true"/>
             </el-button-group>
             <el-button-group class="p-0">
-                <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddLnkDlg = true" :disabled="disableAddLnkBtn"/>
+                <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddRelDlg = true" :disabled="disableAddRelBtn"/>
             </el-button-group>
         </el-col>
         <el-col class="p-10" :span="1">
@@ -23,11 +23,12 @@
             </div>
         </el-dialog>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-        <el-dialog title="新建关联" :visible.sync="showAddLnkDlg" :modal-append-to-body="false" width="50vw">
-            <edit-link ref="add-link-form"/>
+        <el-dialog title="新建关联" :visible.sync="showAddRelDlg" :modal-append-to-body="false" width="50vw">
+            <edit-relation ref="add-relation-form" :models="models"/>
             <div slot="footer" class="dialog-footer">
-                <el-button @click="showAddLnkDlg = false">取 消</el-button>
-                <el-button type="primary" @click="addModel">确 定</el-button>
+                <el-button @click="resetRelation">重 置</el-button>
+                <el-button @click="showAddRelDlg = false">取 消</el-button>
+                <el-button type="primary" @click="addRelation">确 定</el-button>
             </div>
         </el-dialog>
     </el-row>
@@ -35,41 +36,62 @@
 
 <script>
 import _ from "lodash"
-import glbVar from "../global"
 
 import editModel from "../forms/editModel"
-import editLink from "../forms/editLink"
+import editRelation from "../forms/editRelation"
 
 export default {
+    props: {
+        "models": Array
+    },
     components: {
         "edit-model": editModel,
-        "edit-link": editLink,
+        "edit-relation": editRelation,
     },
     data() { return {
-        disableAddLnkBtn: true,
+        disableAddRelBtn: true,
         showAddMdlDlg: false,
-        showAddLnkDlg: false
+        showAddRelDlg: false
     }},
-    components: {
-        models: Object
-    },
-    created() {
-        this.chkAddLnkBtn()
+    watch: {
+        models(nv, ov) {
+            this.chkAddRelBtn()
+        }
     },
     methods: {
         async addModel() {
-            this.showAddMdlDlg = false
             let form = this.$refs["add-model-form"]
-            let newModel = _.clone(form.model)
-            delete newModel.propName
-            this.$emit("add-model", newModel)
-            form.resetModel()
+            form.model.propName = "test"
+            form.$refs["edit-model-form"].validate(valid => {
+                if (valid) {
+                    let newModel = _.clone(form.model)
+                    delete newModel.propName
+                    this.$emit("add-model", newModel)
+                    form.resetModel()
+                    this.showAddMdlDlg = false
+                } else {
+                    return false
+                }
+            })
         },
-        async addLink() {
-            this.showAddLnkDlg = false
+        resetRelation() {
+            this.$refs["add-relation-form"].resetRelation()
         },
-        chkAddLnkBtn() {
-            this.disableAddLnkBtn = glbVar.models.length < 2
+        async addRelation() {
+            let form = this.$refs["add-relation-form"]
+            form.$refs["edit-relation-form"].validate(valid => {
+                if (valid) {
+                    let newRelation = _.clone(form.relation)
+                    this.$emit("add-relation", newRelation)
+                    form.resetRelation()
+                    this.showAddRelDlg = false
+                } else {
+                    return false
+                }
+            })
+        },
+        chkAddRelBtn() {
+            this.disableAddRelBtn = !this.models || this.models.length < 2
         }
     }
 }
