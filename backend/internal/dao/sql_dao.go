@@ -22,7 +22,7 @@ type MySqlDao struct {
 	tx *sql.Tx
 }
 
-var modelMap = map[string]reflect.Type{
+var ModelMap = map[string]reflect.Type{
 	model.MODELS_NAME: reflect.TypeOf((*model.Model)(nil)).Elem(),
 	model.RELATIONS_NAME: reflect.TypeOf((*model.Relation)(nil)).Elem(),
 }
@@ -89,7 +89,7 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
 		// 提取字段名
-		fname := strings.ToLower(field.Name)
+		fname := utils.CamelToPascal(field.Name)
 		fattr := "" // 字段属性
 		if field.Tag.Get("orm") != "" {
 			// 用逗号分隔字段名和字段修饰说明
@@ -133,7 +133,7 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 			sql += fmt.Sprintf("`%s` %s %s,", fname, tn, fattr)
 		} else if tname[:2] == "[]" {
 			// 判断是否是普通类型数组
-			stable := fmt.Sprintf("%s_%s_mapper", table, fname)
+			stable := fmt.Sprintf("%s_%s_mapper", utils.ToSingular(table), fname)
 			if tn, exists = typeMap[tname[2:]]; exists {
 				// 只有一条字段的普通集合，建表与值关联
 				if subsqls, err := genCreateSQL(stable, reflect.StructOf([]reflect.StructField{
@@ -278,7 +278,7 @@ func chkExistsMapper(table string) (ftmapper map[string]string) {
 	ftmapper = make(map[string]string)
 	var rowType reflect.Type
 	var exists bool
-	if rowType, exists = modelMap[table]; !exists {
+	if rowType, exists = ModelMap[table]; !exists {
 		return
 	}
 	for i := 0; i < rowType.NumField(); i++ {
@@ -287,7 +287,10 @@ func chkExistsMapper(table string) (ftmapper map[string]string) {
 		if _, exs := typeMap[ftype]; exs {
 			continue
 		}
-		fname := strings.ToLower(field.Name)
+		fname := utils.CamelToPascal(field.Name)
+		if ftype[0:2] == "[]" {
+			table = utils.ToSingular(table)
+		}
 		stable := fmt.Sprintf("%s_%s_mapper", table, fname)
 		ftmapper[fname] = stable
 	}
@@ -424,7 +427,7 @@ func (d *MySqlDao) SaveTx(tx *sql.Tx, table string, condStr string, condArgs []i
 }
 
 func (d *MySqlDao) SaveArrayPropTx(tx *sql.Tx, pname string, prop []interface{}, parent string, pid int64) (int64, error) {
-	table := fmt.Sprintf("%s_%s_mapper", strings.ToLower(parent), strings.ToLower(pname))
+	table := fmt.Sprintf("%s_%s_mapper", utils.ToSingular(parent), utils.CamelToPascal(pname))
 	var num int64
 	for _, p := range prop {
 		if _, exs := typeMap[reflect.TypeOf(p).Name()]; exs {
@@ -453,7 +456,7 @@ func (d *MySqlDao) SaveArrayPropTx(tx *sql.Tx, pname string, prop []interface{},
 }
 
 func (d *MySqlDao) SaveCompPropTx(tx *sql.Tx, pname string, prop interface{}, parent string, pid int64) (int64, error) {
-	table := fmt.Sprintf("%s_%s_mapper", strings.ToLower(parent), strings.ToLower(pname))
+	table := fmt.Sprintf("%s_%s_mapper", parent, utils.CamelToPascal(pname))
 	if !reflect.TypeOf(prop).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
 		d.RollbackTx(tx)
 		return 0, fmt.Errorf("非对象键值对类型：%s", reflect.TypeOf(prop).Name())
@@ -475,7 +478,7 @@ func splitKeyAndVal(entry map[string]interface{}) ([]string, []interface{}) {
 
 func combineInsert(keys []string) (kstr string, vstr string) {
 	for _, key := range keys {
-		kstr += fmt.Sprintf("`%s`,", strings.ToLower(key))
+		kstr += fmt.Sprintf("`%s`,", utils.CamelToPascal(key))
 		vstr += "?,"
 	}
 	kstr = strings.TrimRight(kstr, ",")
@@ -486,7 +489,7 @@ func combineInsert(keys []string) (kstr string, vstr string) {
 func combineUpdate(keys []string) string {
 	str := ""
 	for _, key := range keys {
-		str += fmt.Sprintf("`%s`=?,", strings.ToLower(key))
+		str += fmt.Sprintf("`%s`=?,", utils.CamelToPascal(key))
 	}
 	str = strings.TrimRight(str, ",")
 	return str

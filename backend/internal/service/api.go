@@ -2,12 +2,12 @@ package service
 
 import (
 	"backend/internal/dao"
-	"backend/internal/model"
 	"backend/utils"
 	"context"
 	"reflect"
 	"sync"
 	"time"
+	"fmt"
 
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
 )
@@ -46,6 +46,9 @@ const SELECT = "select"
 
 func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []string) {
 	g.POST("/"+mname, func(ctx *bm.Context) {
+		if tm, ok := ctx.Deadline(); ok {
+			fmt.Println(tm.Sub(time.Now()))
+		}
 		mbody := utils.GetReqBody(ctx)
 		if mbody == nil {
 			return
@@ -65,10 +68,8 @@ func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []stri
 			case CREATE:
 				if tx, err := s.dao.BeginTx(c); err != nil {
 					ctx.String(400, "事务开启失败：%v", err)
-				} else if err := s.dao.Create(tx, model.MODELS_NAME, reflect.TypeOf((*model.Model)(nil)).Elem()); err != nil {
-					ctx.String(400, "创建表%s失败：%v", model.MODELS_NAME, err)
-				} else if err := s.dao.Create(tx, model.RELATIONS_NAME, reflect.TypeOf((*model.Relation)(nil)).Elem()); err != nil {
-					ctx.String(400, "创建表%s失败：%v", model.RELATIONS_NAME, err)
+				} else if err := s.dao.Create(tx, mname, dao.ModelMap[mname]); err != nil {
+					ctx.String(400, "创建表%s失败：%v", mname, err)
 				} else if err := s.dao.CommitTx(tx); err != nil {
 					ctx.String(400, "提交创建的表集合失败：%v", err)
 				} else {
