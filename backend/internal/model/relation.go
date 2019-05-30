@@ -1,10 +1,10 @@
 package model
 
 type Relation struct {
-	BegModel int64 `json:"selBegMdl"`
-	EndModel int64 `json:"selEndMdl"`
-	BegModelNum int `json:"begMdlNum"`
-	EndModelNum int `json:"endMdlNum"`
+	Model1  int64 `json:"model1"`
+	Model2  int64 `json:"model2"`
+	Model1n int   `json:"model1n"`
+	Model2n int   `json:"model2n"`
 }
 
 const RELATIONS_NAME = "relations"

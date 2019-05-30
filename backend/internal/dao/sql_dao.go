@@ -456,7 +456,7 @@ func (d *MySqlDao) SaveArrayPropTx(tx *sql.Tx, pname string, prop []interface{},
 }
 
 func (d *MySqlDao) SaveCompPropTx(tx *sql.Tx, pname string, prop interface{}, parent string, pid int64) (int64, error) {
-	table := fmt.Sprintf("%s_%s_mapper", parent, utils.CamelToPascal(pname))
+	table := fmt.Sprintf("%s_%s_mapper", utils.ToSingular(parent), utils.CamelToPascal(pname))
 	if !reflect.TypeOf(prop).ConvertibleTo(reflect.TypeOf((*map[string]interface{})(nil)).Elem()) {
 		d.RollbackTx(tx)
 		return 0, fmt.Errorf("非对象键值对类型：%s", reflect.TypeOf(prop).Name())

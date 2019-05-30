@@ -5,7 +5,7 @@ import config from "../../config/backend"
 import utils from "../utils"
 
 export default {
-    async post(model) {
+    async add(model) {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
                 method: "insert",
@@ -15,7 +15,7 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
-    async delete(id) {
+    async del(id) {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
                 method: "delete",
@@ -25,7 +25,7 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
-    async put(model) {
+    async upd(model) {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
                 method: "update",
@@ -35,7 +35,7 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
-    async get() {
+    async qry() {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
                 method: "select",

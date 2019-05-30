@@ -24,7 +24,7 @@ func ToSingular(word string) string {
 func CamelToPascal(word string) string {
 	str := ""
 	for _, w := range word {
-		if w < 93 {
+		if w >= 65 && w <= 90 {
 			str += fmt.Sprintf("_%s", string(w+32))
 		} else {
 			str += string(w)
