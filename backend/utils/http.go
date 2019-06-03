@@ -2,6 +2,8 @@ package utils
 
 import (
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
+	"backend/api"
+	"fmt"
 )
 
 func GetReqBody(ctx *bm.Context) map[string]interface{} {
@@ -13,4 +15,11 @@ func GetReqBody(ctx *bm.Context) map[string]interface{} {
 		return mbody
 	}
 	return nil
+}
+
+func WrapError(msg string, params ...interface{}) *api.GrpcResp {
+	return &api.GrpcResp {
+		Status: 400,
+		Message: fmt.Sprintf(msg, params...),
+	}
 }

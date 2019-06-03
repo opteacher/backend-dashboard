@@ -38,12 +38,6 @@ func (s *ApiService) Ping(ctx context.Context) error {
 	return nil
 }
 
-const CREATE = "create"
-const INSERT = "insert"
-const DELETE = "delete"
-const UPDATE = "update"
-const SELECT = "select"
-
 func (s *ApiService) AddModelAPI(g *bm.RouterGroup, mname string, methods []string) {
 	g.POST("/"+mname, func(ctx *bm.Context) {
 		if tm, ok := ctx.Deadline(); ok {

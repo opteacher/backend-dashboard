@@ -1,0 +1,19 @@
+// 定义项目 API 的 proto 文件 可以同时描述 gRPC 和 HTTP API
+// protobuf 文件参考:
+//  - https://developers.google.com/protocol-buffers/
+syntax = "proto3";
+
+// package 命名使用 {appid}.{version} 的方式, version 形如 v1, v2 ..
+package api;
+
+message GrpcReqs {
+    string version = 1;
+    string method = 2;
+    repeated bytes params = 3;
+}
+
+message GrpcResp {
+    int32 status = 1;
+    string message = 2;
+    bytes data = 3;
+}
