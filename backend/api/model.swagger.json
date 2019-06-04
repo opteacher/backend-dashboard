@@ -16,9 +16,9 @@
         "application/json"
     ],
     "paths": {
-        "/models": {
+        "/backend/api/v1/models": {
             "post": {
-                "summary": "/models",
+                "summary": "/backend/api/v1/models",
                 "responses": {
                     "200": {
                         "description": "A successful response.",
@@ -64,7 +64,13 @@
                 "method": {
                     "type": "string"
                 },
-                "params": {
+                "table": {
+                    "type": "string"
+                },
+                "condition": {
+                    "type": "string"
+                },
+                "arguments": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -75,13 +81,18 @@
         ".model.service.v1.GrpcResp": {
             "type": "object",
             "properties": {
-                "status": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "data": {
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.model.service.v1.Model"
+                    }
+                }
+            }
+        },
+        ".model.service.v1.Model": {
+            "type": "object",
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }

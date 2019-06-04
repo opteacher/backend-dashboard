@@ -17,20 +17,24 @@ option (gogoproto.goproto_getters_all) = false;
 service ModelSvc {
     rpc HdlModelURL(GrpcReqs) returns (GrpcResp) {
         option (google.api.http) = {
-            post:"/models"
+            post:"/backend/api/v1/models"
             body: "*"
         };
     };
 }
 
+message Model {
+    string name = 1;
+}
+
 message GrpcReqs {
     string version = 1;
     string method = 2;
-    repeated bytes params = 3;
+    string table = 3;
+    string condition = 4;
+    repeated string arguments = 5;
 }
 
 message GrpcResp {
-    int32 status = 1;
-    string message = 2;
-    bytes data = 3;
+    repeated Model result = 1;
 }

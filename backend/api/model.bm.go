@@ -24,7 +24,7 @@ var _ *bm.Context
 var _ context.Context
 var _ binding.StructValidator
 
-var PathModelSvcHdlModelURL = "/models"
+var PathModelSvcHdlModelURL = "/backend/api/v1/models"
 
 // ModelSvcBMServer is the server API for ModelSvc service.
 type ModelSvcBMServer interface {
@@ -45,5 +45,5 @@ func modelSvcHdlModelURL(c *bm.Context) {
 // RegisterModelSvcBMServer Register the blademaster route
 func RegisterModelSvcBMServer(e *bm.Engine, server ModelSvcBMServer) {
 	ModelSvcSvc = server
-	e.POST("/models", modelSvcHdlModelURL)
+	e.POST("/backend/api/v1/models", modelSvcHdlModelURL)
 }

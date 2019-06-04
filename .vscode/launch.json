@@ -16,7 +16,9 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/backend/cmd/main.go",
-            "env": {},
+            "env": {
+                "http_proxy": "http://127.0.0.1:63617"
+            },
             "args": [
                 "-conf", "${workspaceFolder}/backend/configs/"
             ]

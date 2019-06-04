@@ -2,11 +2,8 @@ package http
 
 import (
 	"net/http"
-
-	"backend/internal/server/middleware"
 	"backend/internal/service"
 	"backend/api"
-
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/log"
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
@@ -35,10 +32,6 @@ func New(s *service.Service) (engine *bm.Engine) {
 	// 使用默认blademaster管理网关
 	engine = bm.DefaultServer(hc.Server)
 	// 注册中间件
-	engine.Use(
-		globalmw.SetupCORS(),
-		globalmw.ParseJSON(),
-	)
 	// 初始化路由
 	api.RegisterModelSvcBMServer(engine, service.NewModelService())
 	// 开启监听
