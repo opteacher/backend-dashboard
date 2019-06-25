@@ -8,10 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"backend/internal/server/grpc"
 	"backend/internal/server/http"
 	"backend/internal/service"
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/log"
+	"github.com/bilibili/kratos/pkg/net/rpc/warden/resolver"
+	"github.com/bilibili/kratos/pkg/naming/discovery"
 )
 
 func main() {
@@ -22,7 +25,9 @@ func main() {
 	log.Init(nil) // debug flag: log.dir={path}
 	defer log.Close()
 	log.Info("backend start")
+	resolver.Register(discovery.Builder())
 	svc := service.New()
+	grpcSrv := grpc.New(svc)
 	httpSrv := http.New(svc)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -32,6 +37,9 @@ func main() {
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
 			ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
+			if err := grpcSrv.Shutdown(ctx); err != nil {
+				log.Error("grpcSrv.Shutdown error(%v)", err)
+			}
 			if err := httpSrv.Shutdown(ctx); err != nil {
 				log.Error("httpSrv.Shutdown error(%v)", err)
 			}

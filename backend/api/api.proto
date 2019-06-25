@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package backend.manager.service.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "api";
+option (gogoproto.goproto_getters_all) = false;
+
+service BackendManager {
+    rpc Models(IdenReqs) returns (ModelArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/models"
+            body: "*"
+        };
+    };
+}
+
+message Empty {
+
+}
+
+enum MethodType {
+    INSERT = 0;
+    DELETE = 1;
+    UPDATE = 2;
+    SELECT = 3;
+}
+
+message IdenReqs {
+    string method = 1;
+    repeated string params = 2;
+}
+
+message Prop {
+    string name = 1;
+    string type = 2;
+}
+
+message Model {
+    string name = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    repeated Prop props = 2;
+    repeated string methods = 3;
+    int32 x = 4;
+    int32 y = 5;
+    int32 width = 6;
+    int32 height = 7;
+}
+
+message NumberID {
+    int64 id = 1[(gogoproto.jsontag) = 'id'];
+}
+
+message ModelArray {
+    repeated Model models = 1;
+}

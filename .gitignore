@@ -1,8 +1,8 @@
-backend/go.sum
 backend/.idea/
 backend/cmd/debug
 frontend/node_modules/
 frontend/public/dist/
 frontend/package-lock.json
 go.mod
+go.sum
 .*

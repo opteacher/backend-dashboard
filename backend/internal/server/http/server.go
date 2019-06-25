@@ -2,11 +2,19 @@ package http
 
 import (
 	"net/http"
+	"strings"
+
+	pb "backend/api"
 	"backend/internal/service"
-	"backend/api"
+
+	"context"
+	"backend/internal/server"
+	"backend/internal/utils"
+
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/log"
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
+	"backend/internal/server/mws"
 )
 
 var (
@@ -15,7 +23,6 @@ var (
 
 // New new a bm server.
 func New(s *service.Service) (engine *bm.Engine) {
-	// 读取服务配置
 	var (
 		hc struct {
 			Server *bm.ServerConfig
@@ -26,19 +33,37 @@ func New(s *service.Service) (engine *bm.Engine) {
 			panic(err)
 		}
 	}
-
-	// 初始化服务
 	svc = s
-	// 使用默认blademaster管理网关
 	engine = bm.DefaultServer(hc.Server)
-	// 注册中间件
-	// 初始化路由
-	api.RegisterModelSvcBMServer(engine, service.NewModelService())
-	// 开启监听
+	engine.Use(mws.SetupCORS())
+	pb.RegisterBackendManagerBMServer(engine, svc)
+	RegisterHTTPService(svc, []string{
+		strings.Replace(hc.Server.Addr, "0.0.0.0", "127.0.0.1", 1),
+	})
 	if err := engine.Start(); err != nil {
 		panic(err)
 	}
 	return
+}
+
+func RegisterHTTPService(svc *service.Service, addrs []string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	appID := svc.AppID()
+	if cli, err := server.RegisterService(); err != nil {
+		log.Error("Fetch discovery service error: %v", err)
+	} else if _, err := cli.RegAsHTTP(ctx, &pb.RegSvcReqs{
+		AppID: appID,
+		Urls:  addrs,
+	}); err != nil {
+	} else if data, err := utils.PickPathsFromSwaggerJSON(svc.SwaggerFile()); err != nil {
+		log.Error("API swagger file open failed: %v", err)
+	} else if _, err := cli.AddRoutes(ctx, &pb.AddRoutesReqs{
+		ServiceID: appID,
+		Paths:     data,
+	}); err != nil {
+		panic(err)
+	}
 }
 
 func ping(ctx *bm.Context) {
