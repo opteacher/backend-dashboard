@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-// NOTE: 逻辑巨乱，找时间加注释！！！！
+// TODO: 逻辑巨乱，找时间加注释！！！！
 func FillWithMap(obj interface{}, mp map[string]interface{}) interface{} {
 	typ := reflect.TypeOf(obj)
 	ele := reflect.ValueOf(obj)
@@ -43,16 +43,7 @@ func FillWithMap(obj interface{}, mp map[string]interface{}) interface{} {
 				}
 			}
 		} else {
-			switch fkind {
-			case reflect.Int:
-				fallthrough
-			case reflect.Int8:
-				fallthrough
-			case reflect.Int16:
-				fallthrough
-			case reflect.Int32:
-				mvalue = mvalue.Convert(field.Type)
-			}
+			mvalue = mvalue.Convert(field.Type)
 			filler.Set(mvalue)
 		}
 	}

@@ -7,10 +7,7 @@ import utils from "../utils"
 export default {
     async add(model) {
         try {
-            return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
-                method: "INSERT",
-                params: [JSON.stringify(_.omit(model, "id"))]
-            })
+            return await axios.post(`${config.url}/backend-dashboard/backend/models.insert`, _.omit(model, "id"))
         } catch(e) {
             return utils.getErrorMsg(e)
         }
@@ -37,10 +34,7 @@ export default {
     },
     async qry() {
         try {
-            return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
-                method: "SELECT",
-                params: [""]
-            })
+            return await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`)
         } catch(e) {
             return utils.getErrorMsg(e)
         }

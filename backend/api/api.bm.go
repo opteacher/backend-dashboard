@@ -22,26 +22,91 @@ var _ *bm.Context
 var _ context.Context
 var _ binding.StructValidator
 
-var PathBackendManagerModels = "/backend-dashboard/backend/models"
+var PathBackendManagerModelsInsert = "/backend-dashboard/backend/models.insert"
+var PathBackendManagerModelsDelete = "/backend-dashboard/backend/models.delete"
+var PathBackendManagerModelsUpdate = "/backend-dashboard/backend/models.update"
+var PathBackendManagerModelsSelectAll = "/backend-dashboard/backend/models.selectAll"
+var PathBackendManagerModelsSelectByName = "/backend-dashboard/backend/models.selectByName"
+var PathBackendManagerExport = "/backend-dashboard/backend/export"
 
 // BackendManagerBMServer is the server API for BackendManager service.
 type BackendManagerBMServer interface {
-	Models(ctx context.Context, req *IdenReqs) (resp *ModelArray, err error)
+	ModelsInsert(ctx context.Context, req *Model) (resp *Model, err error)
+
+	ModelsDelete(ctx context.Context, req *NameID) (resp *Model, err error)
+
+	ModelsUpdate(ctx context.Context, req *Model) (resp *Empty, err error)
+
+	ModelsSelectAll(ctx context.Context, req *Empty) (resp *ModelArray, err error)
+
+	ModelsSelectByName(ctx context.Context, req *NameID) (resp *Model, err error)
+
+	Export(ctx context.Context, req *ExpOptions) (resp *Empty, err error)
 }
 
 var BackendManagerSvc BackendManagerBMServer
 
-func backendManagerModels(c *bm.Context) {
-	p := new(IdenReqs)
+func backendManagerModelsInsert(c *bm.Context) {
+	p := new(Model)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
 		return
 	}
-	resp, err := BackendManagerSvc.Models(c, p)
+	resp, err := BackendManagerSvc.ModelsInsert(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerModelsDelete(c *bm.Context) {
+	p := new(NameID)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ModelsDelete(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerModelsUpdate(c *bm.Context) {
+	p := new(Model)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ModelsUpdate(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerModelsSelectAll(c *bm.Context) {
+	p := new(Empty)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ModelsSelectAll(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerModelsSelectByName(c *bm.Context) {
+	p := new(NameID)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ModelsSelectByName(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerExport(c *bm.Context) {
+	p := new(ExpOptions)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.Export(c, p)
 	c.JSON(resp, err)
 }
 
 // RegisterBackendManagerBMServer Register the blademaster route
 func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer) {
 	BackendManagerSvc = server
-	e.POST("/backend-dashboard/backend/models", backendManagerModels)
+	e.POST("/backend-dashboard/backend/models.insert", backendManagerModelsInsert)
+	e.POST("/backend-dashboard/backend/models.delete", backendManagerModelsDelete)
+	e.POST("/backend-dashboard/backend/models.update", backendManagerModelsUpdate)
+	e.POST("/backend-dashboard/backend/models.selectAll", backendManagerModelsSelectAll)
+	e.POST("/backend-dashboard/backend/models.selectByName", backendManagerModelsSelectByName)
+	e.POST("/backend-dashboard/backend/export", backendManagerExport)
 }

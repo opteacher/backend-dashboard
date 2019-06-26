@@ -16,9 +16,120 @@
         "application/json"
     ],
     "paths": {
-        "/backend-dashboard/backend/models": {
+        "/backend-dashboard/backend/export": {
             "post": {
-                "summary": "/backend-dashboard/backend/models",
+                "summary": "/backend-dashboard/backend/export",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.ExpOptions"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/models.delete": {
+            "post": {
+                "summary": "/backend-dashboard/backend/models.delete",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Model"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.NameID"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/models.insert": {
+            "post": {
+                "summary": "/backend-dashboard/backend/models.insert",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Model"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Model"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/models.selectAll": {
+            "post": {
+                "summary": "/backend-dashboard/backend/models.selectAll",
                 "responses": {
                     "200": {
                         "description": "A successful response.",
@@ -44,7 +155,81 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/.backend.manager.service.v1.IdenReqs"
+                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/models.selectByName": {
+            "post": {
+                "summary": "/backend-dashboard/backend/models.selectByName",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Model"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.NameID"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/models.update": {
+            "post": {
+                "summary": "/backend-dashboard/backend/models.update",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Model"
                         }
                     }
                 ],
@@ -55,23 +240,27 @@
         }
     },
     "definitions": {
-        ".backend.manager.service.v1.IdenReqs": {
+        ".backend.manager.service.v1.Empty": {
+            "type": "object",
+            "properties": {}
+        },
+        ".backend.manager.service.v1.ExpOptions": {
             "type": "object",
             "properties": {
-                "method": {
+                "name": {
                     "type": "string"
                 },
-                "params": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "projTemp": {
+                    "type": "integer"
                 }
             }
         },
         ".backend.manager.service.v1.Model": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -109,6 +298,14 @@
                     "items": {
                         "$ref": "#/definitions/.backend.manager.service.v1.Model"
                     }
+                }
+            }
+        },
+        ".backend.manager.service.v1.NameID": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         },

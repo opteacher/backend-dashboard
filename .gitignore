@@ -1,5 +1,6 @@
 backend/.idea/
 backend/cmd/debug
+backend/cmd/__debug_bin
 frontend/node_modules/
 frontend/public/dist/
 frontend/package-lock.json
