@@ -109,6 +109,9 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 		}
 		// 提取字段名
 		fname := utils.CamelToPascal(field.Name)
+		if fname == "id" {
+			continue
+		}
 		fattr := "" // 字段属性
 		if field.Tag.Get("orm") != "" {
 			// 用逗号分隔字段名和字段修饰说明
@@ -229,11 +232,10 @@ func (d *Dao) CreateTx(tx *sql.Tx, table string, typ reflect.Type) error {
 		return err
 	} else {
 		for i := len(sqls) - 1; i >= 0; i-- {
+			log.Info("database: SQL(%s)", sqls[i])
 			if _, err := tx.Exec(sqls[i]); err != nil {
 				d.RollbackTx(tx)
 				return err
-			} else {
-				log.Info("database: SQL(%s)", sqls[i])
 			}
 		}
 		ModelMap[table] = typ

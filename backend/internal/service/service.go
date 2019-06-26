@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"crypto/md5"
 	"reflect"
+	"time"
 
 	pb "backend/api"
 	"backend/internal/dao"
@@ -11,11 +13,12 @@ import (
 
 	"fmt"
 
-	"github.com/bilibili/kratos/pkg/conf/paladin"
-	"encoding/json"
 	"backend/internal/utils"
+	"encoding/json"
 	"os"
 	"path"
+
+	"github.com/bilibili/kratos/pkg/conf/paladin"
 )
 
 // Service service.
@@ -111,15 +114,23 @@ func (s *Service) ModelsSelectByName(context.Context, *pb.NameID) (*pb.Model, er
 	return nil, nil
 }
 
-func (s *Service) Export(context.Context, *pb.ExpOptions) (*pb.Empty, error) {
+func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.Empty, error) {
 	if wsPath, err := s.ac.Get("workspace").String(); err != nil {
 		return nil, fmt.Errorf("配置文件中未定义工作区目录：%v", err)
-	} else if pjPath := path.Join(wsPath, "template", pb.ExpOptions_KRATOS.String()); false {
+	} else if bin, err := time.Now().MarshalBinary(); err != nil {
+		return nil, fmt.Errorf("生成临时文件夹名失败：%v", err)
+	} else if cchName := fmt.Sprintf("%x", md5.Sum(bin)); false {
 
-	} else if wsFile, err := os.Open(pjPath); err != nil {
+	} else if cchPath := path.Join(wsPath, "cache", cchName); false {
+
+	} else if err := os.MkdirAll(cchPath, os.ModeDir); err != nil {
+		return nil, fmt.Errorf("创建临时文件夹：%s失败：%v", cchPath, err)
+	} else if tmpPath := path.Join(wsPath, "template"); false {
+
+	} else if wsFile, err := os.Open(path.Join(tmpPath, "kratos-demo")); err != nil {
 		return nil, fmt.Errorf("工作区目录有误，打开失败：%v", err)
-	} else if err := utils.Compress([]*os.File{wsFile}, ); err != nil {
-
+	} else if err := utils.Compress([]*os.File{wsFile}, path.Join(wsPath, "cache", req.Name)); err != nil {
+		return nil, fmt.Errorf("压缩项目失败：%v", err)
 	}
 	return nil, nil
 }

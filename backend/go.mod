@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.40.0 // indirect
-	github.com/aristanetworks/goarista v0.0.0-20190607111240-52c2a7864a08 // indirect
+	github.com/aristanetworks/goarista v0.0.0-20190625195245-f3b0eb5a88b2 // indirect
 	github.com/bilibili/kratos v0.1.0
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
@@ -19,19 +19,23 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/prometheus/common v0.6.0 // indirect
+	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20190512091148-babf20351dd7 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
 	github.com/spf13/viper v1.4.0 // indirect
 	github.com/toqueteos/webbrowser v1.1.0 // indirect
 	github.com/tsuna/gohbase v0.0.0-20190502052937-24ffed0537aa // indirect
+	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422 // indirect
 	golang.org/x/mod v0.1.0 // indirect
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
+	golang.org/x/sys v0.0.0-20190624142023-c5567b49c5d0 // indirect
+	golang.org/x/tools v0.0.0-20190625160430-252024b82959 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
-	google.golang.org/genproto v0.0.0-20190611190212-a7e196e89fd3
+	google.golang.org/genproto v0.0.0-20190620144150-6af8c5fc6601
 	google.golang.org/grpc v1.21.1
 	gopkg.in/AlecAivazis/survey.v1 v1.8.2 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.0 // indirect
