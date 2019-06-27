@@ -39,7 +39,7 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc Export(ExpOptions) returns (Empty) {
+    rpc Export(ExpOptions) returns (UrlResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/export"
             body: "*"
@@ -67,6 +67,7 @@ message Prop {
 }
 
 message Model {
+    int64 id = 1;
     string name = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
     repeated Prop props = 3;
     repeated string methods = 4;
@@ -82,8 +83,9 @@ message ModelArray {
 
 message ExpOptions {
     string name = 1;
-    enum ProjTemp {
-        KRATOS = 0;
-    }
-    ProjTemp projTemp = 2;
+    string type = 2;
+}
+
+message UrlResp {
+    string url = 1;
 }

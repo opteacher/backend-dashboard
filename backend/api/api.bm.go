@@ -41,7 +41,7 @@ type BackendManagerBMServer interface {
 
 	ModelsSelectByName(ctx context.Context, req *NameID) (resp *Model, err error)
 
-	Export(ctx context.Context, req *ExpOptions) (resp *Empty, err error)
+	Export(ctx context.Context, req *ExpOptions) (resp *UrlResp, err error)
 }
 
 var BackendManagerSvc BackendManagerBMServer

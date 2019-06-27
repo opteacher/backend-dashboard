@@ -6,9 +6,10 @@
         <el-col class="p-10" :span="22">
             <el-button-group class="p-0">
                 <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="showAddMdlDlg = true"/>
+                <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddRelDlg = true" :disabled="disableAddRelBtn"/>
             </el-button-group>
             <el-button-group class="p-0">
-                <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddRelDlg = true" :disabled="disableAddRelBtn"/>
+                <el-button class="p-7" type="primary" icon="el-icon-download" size="mini" @click="showExportDlg = true"/>
             </el-button-group>
         </el-col>
         <el-col class="p-10" :span="1">
@@ -31,14 +32,24 @@
                 <el-button type="primary" @click="addRelation">确 定</el-button>
             </div>
         </el-dialog>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="导出项目" :visible.sync="showExportDlg" :modal-append-to-body="false" width="50vw">
+            <exp-project ref="exp-project-form"/>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="showExportDlg = false">取 消</el-button>
+                <el-button type="primary" @click="exportProject">导 出</el-button>
+            </div>
+        </el-dialog>
     </el-row>
 </template>
 
 <script>
 import _ from "lodash"
 
+import backend from "../async/backend"
 import editModel from "../forms/editModel"
 import editRelation from "../forms/editRelation"
+import expProject from "../forms/expProject"
 
 export default {
     props: {
@@ -47,11 +58,13 @@ export default {
     components: {
         "edit-model": editModel,
         "edit-relation": editRelation,
+        "exp-project": expProject
     },
     data() { return {
         disableAddRelBtn: true,
         showAddMdlDlg: false,
-        showAddRelDlg: false
+        showAddRelDlg: false,
+        showExportDlg: false
     }},
     watch: {
         models(nv, ov) {
@@ -92,6 +105,23 @@ export default {
         },
         chkAddRelBtn() {
             this.disableAddRelBtn = !this.models || this.models.length < 2
+        },
+        async exportProject() {
+            let form = this.$refs["exp-project-form"]
+            form.$refs["exp-project-form"].validate(async valid => {
+                if (valid) {
+                    if (form.exportOption.name.slice(-4).toLowerCase() !== ".zip") {
+                        form.exportOption.name += ".zip"
+                    }
+                    let res = await backend.export(form.exportOption)
+                    if (res.data.data && res.data.data.url) {
+                        window.open(res.data.data.url, "_blank")
+                    }
+                    this.showExportDlg = false
+                } else {
+                    return false
+                }
+            })
         }
     }
 }
