@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 )
@@ -160,14 +161,23 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 }
 
 func (s *Service) editProject(ctx context.Context, pjName string, pjPath string) error {
-	pjName = utils.CamelToPascal(pjName)
-	if pjName[len(pjName) - 4:] == ".zip" {
+	if err := s.genKratosProtoFile(ctx, pjName, pjPath); err != nil {
+		return fmt.Errorf("生成Proto文件失败：%v", err)
+	}
+}
+
+type funcInfo struct {
+	name string
+}
+
+func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath string) error {
+	if pjName[len(pjName) - 4:] == ".zip" || pjName[len(pjName) - 4:] == ".ZIP" {
 		pjName = pjName[:len(pjName) - 4]
 	}
+	pkgName := utils.CamelToPascal(pjName)
 	// 添加proto文件并根据数据库添加message和service
-	protoPath := path.Join(pjPath, "api/api.proto")
 	protoData := "syntax = \"proto3\";\n\n"
-	protoData += fmt.Sprintf("package %s.service.v1;\n\n", pjName)
+	protoData += fmt.Sprintf("package %s.service.v1;\n\n", pkgName)
 	protoData += "import \"gogoproto/gogo.proto\";\n"
 	protoData += "import \"google/api/annotations.proto\";\n\n"
 	protoData += "option go_package = \"api\";\n"
@@ -178,35 +188,71 @@ func (s *Service) editProject(ctx context.Context, pjName string, pjPath string)
 		return err
 	}
 	type HttpAPI struct {
-		subject string
-		method  string
+		Model string
+		Func string
+		Path string
+		Method  string
+	}
+	actMap := map[string]string {
+		"POST": "Insert",
+		"DELETE": "Delete",
+		"PUT": "Update",
+		"GET": "Select",
+		"ALL": "SelectAll"
 	}
 	var modelApis []HttpAPI
 	for _, mdl := range res {
-		protoData += fmt.Sprintf("message %s {\n", mdl["name"].(string))
+		mname := mdl["name"].(string)
+		protoData += fmt.Sprintf("message %s {\n", mname)
 		for i, prop := range mdl["props"].([]map[string]interface{}) {
 			protoData += fmt.Sprintf("\t%s %s=%d;\n", prop["type"], prop["name"], i+1)
 		}
 		protoData += "}\n\n"
 
 		for _, method := range mdl["methods"].([]map[string]interface{}) {
+			m := method["method"].(string)
+			aname, exs := actMap[m]
+			if !exs {
+				aname = "Select"
+			}
 			modelApis = append(modelApis, HttpAPI{
-				subject: mdl["name"].(string),
-				method:  method["method"].(string),
+				Model: mname,
+				Func: fmt.Sprintf("%s%s", aname, utils.Capital(mname)),
+				Path: fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
+				Method: strings.ToLower(m),
 			})
 		}
 	}
 
 	if len(modelApis) != 0 {
-		protoData += fmt.Sprintf("service %s {\n")
+		protoData += fmt.Sprintf("service %s {\n", utils.Capital(pjName))
 	}
+	for _, api := range modelApis {
+		protoData += fmt.Sprintf("\trpc %s(%s) returns (%s) {\n", api.Func, api.Model, api.Model)
+		protoData += "\t\toption (google.api.http) = {\n"
+		protoData += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.Method, api.Path)
+	}
+	protoData += "}\n\n"
 
+	protoPath := path.Join(pjPath, "api", "api.proto")
 	protoFile, err := os.OpenFile(protoPath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		return err
 	}
 	defer protoFile.Close()
 	protoFile.WriteString(protoData)
+	return nil
+}
+
+func (s *Service) genKratosServiceFile(ctx context.Context, pjName string, pjPath string) error {
+	code := ""
+	servicePath := path.Join(pjPath, "internal", "service", "service.go")
+	serviceFile, err := os.OpenFile(servicePath, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+	defer serviceFile.Close()
+	serviceFile.WriteString(code)
 	return nil
 }
 

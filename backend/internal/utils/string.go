@@ -1,10 +1,10 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"strings"
-	"crypto/md5"
-    "encoding/hex"
 )
 
 func ToSingular(word string) string {
@@ -40,4 +40,12 @@ func Md5Hex(str string) string {
 	h := md5.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func Capital(str string) string {
+	if str[0] >= 'a' && str[0] <= 'z' {
+		return string(str[0]-32) + str[1:]
+	} else {
+		return str
+	}
 }

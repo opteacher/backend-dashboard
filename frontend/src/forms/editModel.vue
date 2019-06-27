@@ -68,16 +68,16 @@ export default {
         },
         propOptions: [{
             title: "文本",
-            value: String
+            value: "string"
         }, {
             title: "数字",
-            value: Number
+            value: "int32"
         }, {
             title: "日期",
-            value: Date
+            value: "uint64"
         }, {
             title: "布尔",
-            value: Boolean
+            value: "bool"
         }]
     }},
     created() {

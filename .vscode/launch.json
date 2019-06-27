@@ -19,7 +19,7 @@
             "env": {},
             "args": [
                 "-conf", "${workspaceFolder}/backend/configs/",
-                "-discovery.nodes", "127.0.0.1:7171"
+                "-discovery.nodes", "101.132.155.87:7171"
             ]
         }
     ]
