@@ -15,11 +15,11 @@
     </el-form-item>
     <el-form-item label="路由前缀" :rules="[
         { required: true, message: '请输入路由前缀', trigger: 'blur' }
-    ]" prop="prefix">
-        <el-input v-model="exportOption.prefix"/>
+    ]" prop="routePrefix">
+        <el-input v-model="exportOption.routePrefix"/>
     </el-form-item>
     <el-form-item label="微服务">
-        <el-checkbox v-model="exportOption.micoSvc">生成为微服务</el-checkbox>
+        <el-checkbox v-model="exportOption.isMicoServ">生成为微服务</el-checkbox>
     </el-form-item>
 </el-form>
 </template>
@@ -29,12 +29,12 @@ export default {
     data() {return {
         exportOption: {
             name: "",
-            prefix: "/api/v1",
-            micoSvc: false
+            routePrefix: "/api/v1",
+            isMicoServ: false
         },
         exportTypes: [{
             title: "bl-kratos",
-            value: "kratos-demo"
+            value: "kratos"
         }],
     }}
 }

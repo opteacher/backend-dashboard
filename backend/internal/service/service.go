@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bufio"
 	"context"
 	"crypto/md5"
 	"reflect"
@@ -20,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
+	"io"
 )
 
 // Service service.
@@ -80,7 +82,6 @@ func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, e
 }
 
 func (s *Service) ModelsDelete(ctx context.Context, req *pb.NameID) (*pb.Model, error) {
-	resp := new(pb.Model)
 	conds := "`name`=?"
 	argus := []interface{}{req.Name}
 	if tx, err := s.dao.BeginTx(ctx); err != nil {
@@ -91,10 +92,12 @@ func (s *Service) ModelsDelete(ctx context.Context, req *pb.NameID) (*pb.Model, 
 		return nil, fmt.Errorf("删除数据库记录失败：%v", err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
 		return nil, fmt.Errorf("数据库提交失败：%v", err)
-	} else if utils.FillWithMap(resp, res[0]); false {
-		return nil, nil
+	} else if bd, err := json.Marshal(res[0]); err != nil {
+		return nil, fmt.Errorf("转JSON字节码失败：%v", err)
+	} else if resp, err := utils.WrapJsonUnmarshal(bd, utils.GetTypeOfPtr((*pb.Model)(nil))); err != nil {
+		return nil, fmt.Errorf("转Model对象失败：%v", err)
 	} else {
-		return resp, nil
+		return resp.(*pb.Model), nil
 	}
 }
 
@@ -109,9 +112,13 @@ func (s *Service) ModelsSelectAll(ctx context.Context, req *pb.Empty) (*pb.Model
 	} else {
 		resp := new(pb.ModelArray)
 		for _, entry := range res {
-			mdl := new(pb.Model)
-			utils.FillWithMap(mdl, entry)
-			resp.Models = append(resp.Models, mdl)
+			if bdata, err := json.Marshal(entry); err != nil {
+				return nil, fmt.Errorf("转JSON字节码失败：%v", err)
+			} else if mdl, err := utils.WrapJsonUnmarshal(bdata, utils.GetTypeOfPtr((*pb.Model)(nil))); err != nil {
+				return nil, fmt.Errorf("转Model对象失败：%v", err)
+			} else {
+				resp.Models = append(resp.Models, mdl.(*pb.Model))
+			}
 		}
 		return resp, nil
 	}
@@ -161,53 +168,69 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 }
 
 func (s *Service) editProject(ctx context.Context, pjName string, pjPath string) error {
-	if err := s.genKratosProtoFile(ctx, pjName, pjPath); err != nil {
+	if apis, err := s.genKratosProtoFile(ctx, pjName, pjPath); err != nil {
 		return fmt.Errorf("生成Proto文件失败：%v", err)
+	} else if err := s.chgKratosServiceFile(ctx, pjPath, apis); err != nil {
+		return fmt.Errorf("修改Service文件失败：%v", err)
 	}
+	return nil
 }
 
-type funcInfo struct {
-	name string
+
+// 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
+type oprNode struct {
+	proc string
+	desc string
+	code string
 }
 
-func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath string) error {
-	if pjName[len(pjName) - 4:] == ".zip" || pjName[len(pjName) - 4:] == ".ZIP" {
-		pjName = pjName[:len(pjName) - 4]
+type apiInfo struct {
+	model  string
+	name   string
+	params map[string]string
+	route  string
+	method string
+	ret    string
+	flow []oprNode
+}
+
+// 根据数据库中模型的定义，生成proto的message和service
+func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath string) ([]apiInfo, error) {
+	if pjName[len(pjName)-4:] == ".zip" || pjName[len(pjName)-4:] == ".ZIP" {
+		pjName = pjName[:len(pjName)-4]
 	}
 	pkgName := utils.CamelToPascal(pjName)
 	// 添加proto文件并根据数据库添加message和service
-	protoData := "syntax = \"proto3\";\n\n"
-	protoData += fmt.Sprintf("package %s.service.v1;\n\n", pkgName)
-	protoData += "import \"gogoproto/gogo.proto\";\n"
-	protoData += "import \"google/api/annotations.proto\";\n\n"
-	protoData += "option go_package = \"api\";\n"
-	protoData += "option (gogoproto.goproto_getters_all) = false;\n\n"
+	code := "syntax = \"proto3\";\n\n"
+	code += fmt.Sprintf("package %s.service.v1;\n\n", pkgName)
+	code += "import \"gogoproto/gogo.proto\";\n"
+	code += "import \"google/api/annotations.proto\";\n\n"
+	code += "option go_package = \"api\";\n"
+	code += "option (gogoproto.goproto_getters_all) = false;\n\n"
+	code += "message Nil {\n}\n\n"
+	code += "message IdenReqs {\n\tint64 id = 1;\n}\n\n"
 
 	res, err := s.dao.Query(ctx, model.MODELS_TABLE, "", []interface{}{})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	type HttpAPI struct {
-		Model string
-		Func string
-		Path string
-		Method  string
-	}
-	actMap := map[string]string {
-		"POST": "Insert",
+	actMap := map[string]string{
+		"POST":   "Insert",
 		"DELETE": "Delete",
-		"PUT": "Update",
-		"GET": "Select",
-		"ALL": "SelectAll"
+		"PUT":    "Update",
+		"GET":    "Select",
+		"ALL":    "SelectAll",
 	}
-	var modelApis []HttpAPI
+	var modelApis []apiInfo
 	for _, mdl := range res {
 		mname := mdl["name"].(string)
-		protoData += fmt.Sprintf("message %s {\n", mname)
+		code += fmt.Sprintf("message %s {\n", mname)
 		for i, prop := range mdl["props"].([]map[string]interface{}) {
-			protoData += fmt.Sprintf("\t%s %s=%d;\n", prop["type"], prop["name"], i+1)
+			code += fmt.Sprintf("\t%s %s=%d;\n", prop["type"], prop["name"], i+1)
 		}
-		protoData += "}\n\n"
+		code += "}\n\n"
+		// 复数message
+		code += fmt.Sprintf("message %sArray {\n\t%s %s = 1;\n}\n\n", mname, mname, utils.ToPlural(strings.ToLower(mname)))
 
 		for _, method := range mdl["methods"].([]map[string]interface{}) {
 			m := method["method"].(string)
@@ -215,44 +238,101 @@ func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath 
 			if !exs {
 				aname = "Select"
 			}
-			modelApis = append(modelApis, HttpAPI{
-				Model: mname,
-				Func: fmt.Sprintf("%s%s", aname, utils.Capital(mname)),
-				Path: fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
-				Method: strings.ToLower(m),
-			})
+			modelApi := apiInfo{
+				model:  mname,
+				name:   fmt.Sprintf("%s%s", aname, mname),
+				params: make(map[string]string),
+				route:  fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
+				method: strings.ToLower(m),
+			}
+			switch modelApi.method {
+			case "post":
+				modelApi.params["entry"] = mname
+				modelApi.ret = mname
+			case "delete":
+				modelApi.params["iden"] = "IdenReqs"
+				modelApi.ret = mname
+			case "put":
+				modelApi.params["iden"] = "IdenReqs"
+				modelApi.params["entry"] = mname
+				modelApi.ret = mname
+			case "get":
+				modelApi.params["iden"] = "IdenReqs"
+				modelApi.ret = mname
+			case "all":
+				modelApi.method = "get"
+				modelApi.params["params"] = "Nil"
+				modelApi.ret = mname + "Array"
+			}
+			modelApis = append(modelApis, modelApi)
 		}
 	}
 
 	if len(modelApis) != 0 {
-		protoData += fmt.Sprintf("service %s {\n", utils.Capital(pjName))
+		code += fmt.Sprintf("service %s {\n", utils.Capital(pjName))
 	}
 	for _, api := range modelApis {
-		protoData += fmt.Sprintf("\trpc %s(%s) returns (%s) {\n", api.Func, api.Model, api.Model)
-		protoData += "\t\toption (google.api.http) = {\n"
-		protoData += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.Method, api.Path)
+		sparams := ""
+		for _, ptyp := range api.params {
+			sparams += ptyp + ","
+		}
+		sparams = strings.TrimRight(sparams, ",")
+		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.name, sparams, api.ret)
+		if len(api.route) != 0 && len(api.method) != 0 {
+			code += " {\n\t\toption (google.api.http) = {\n"
+			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.method, api.route)
+		} else {
+			code += ";\n"
+		}
 	}
-	protoData += "}\n\n"
+	code += "}\n\n"
 
 	protoPath := path.Join(pjPath, "api", "api.proto")
 	protoFile, err := os.OpenFile(protoPath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer protoFile.Close()
-	protoFile.WriteString(protoData)
-	return nil
+	protoFile.WriteString(code)
+	return modelApis, nil
 }
 
-func (s *Service) genKratosServiceFile(ctx context.Context, pjName string, pjPath string) error {
-	code := ""
-	servicePath := path.Join(pjPath, "internal", "service", "service.go")
-	serviceFile, err := os.OpenFile(servicePath, os.O_RDWR|os.O_CREATE, 0755)
+// 根据抽取的接口信息，生成完整的service
+func (s *Service) chgKratosServiceFile(ctx context.Context, pjPath string, apis []apiInfo) error {
+	svcPath := path.Join(pjPath, "internal", "service", "service.go")
+	svcFile, err := os.Open(svcPath)
 	if err != nil {
 		return err
 	}
-	defer serviceFile.Close()
-	serviceFile.WriteString(code)
+	defer svcFile.Close()
+	reader := bufio.NewReader(svcFile)
+	code := ""
+	for {
+		if line, _, err := reader.ReadLine(); err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return err
+			}
+		} else if strings.Contains(string(line), "[APIS]") {
+			for _, apiInfo := range apis {
+				aparams := make([]string, 0)
+				for pname, ptype := range apiInfo.params {
+					aparams = append(aparams, fmt.Sprintf("%s *pb.%s", pname, ptype))
+				}
+				sparams := strings.Join(aparams, ", ")
+				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*pb.%s, error) {\n\treturn nil, nil\n}\n\n", apiInfo.name, sparams, apiInfo.ret)
+			}
+		} else {
+			code += string(line) + "\n"
+		}
+	}
+	svcFile, err = os.OpenFile(svcPath, os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+	defer svcFile.Close()
+	svcFile.WriteString(code)
 	return nil
 }
 

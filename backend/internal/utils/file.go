@@ -200,7 +200,7 @@ func CopyFolder(src string, dest string) {
 		}
 		if f.IsDir() {
 			//			fmt.Println(f.Name())
-			//			copyDir(f.Name(), dest+"/"+f.Name())
+			CopyFolder(f.Name(), filepath.Join(dest, f.Name()))
 		} else {
 			// fmt.Println(src)
 			// fmt.Println(src_original)
@@ -250,7 +250,7 @@ func CopyFile(src, dst string) (w int64, err error) {
 	// fmt.Println("dest_dir:" + dest_dir)
 	b, err := PathExists(dest_dir)
 	if b == false {
-		err := os.Mkdir(dest_dir, os.ModePerm) //在当前目录下生成md目录
+		err := os.MkdirAll(dest_dir, os.ModePerm) //在当前目录下生成md目录
 		if err != nil {
 			fmt.Println(err)
 		}

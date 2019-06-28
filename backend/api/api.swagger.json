@@ -252,6 +252,12 @@
                 },
                 "type": {
                     "type": "string"
+                },
+                "routePrefix": {
+                    "type": "string"
+                },
+                "isMicoServ": {
+                    "type": "boolean"
                 }
             }
         },

@@ -84,6 +84,8 @@ message ModelArray {
 message ExpOptions {
     string name = 1;
     string type = 2;
+    string routePrefix = 3;
+    bool isMicoServ = 4;
 }
 
 message UrlResp {
