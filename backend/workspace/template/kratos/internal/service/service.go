@@ -9,6 +9,7 @@ import (
 
 	"template/internal/server"
 
+	// [IMPORTS]
 )
 
 // Service service.

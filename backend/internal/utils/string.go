@@ -66,3 +66,11 @@ func Capital(str string) string {
 		return str
 	}
 }
+
+func AddSpacesBeforeRow(data string, n int) string {
+	spaces := ""
+	for i := 0; i < n; i++ {
+		spaces += "\t"
+	}
+	return strings.Replace(data, "\n", "\n" + spaces, -1)
+}

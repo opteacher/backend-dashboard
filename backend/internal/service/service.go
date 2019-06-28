@@ -94,7 +94,7 @@ func (s *Service) ModelsDelete(ctx context.Context, req *pb.NameID) (*pb.Model, 
 		return nil, fmt.Errorf("数据库提交失败：%v", err)
 	} else if bd, err := json.Marshal(res[0]); err != nil {
 		return nil, fmt.Errorf("转JSON字节码失败：%v", err)
-	} else if resp, err := utils.WrapJsonUnmarshal(bd, utils.GetTypeOfPtr((*pb.Model)(nil))); err != nil {
+	} else if resp, err := utils.UnmarshalJSON(bd, reflect.TypeOf((*pb.Model)(nil)).Elem()); err != nil {
 		return nil, fmt.Errorf("转Model对象失败：%v", err)
 	} else {
 		return resp.(*pb.Model), nil
@@ -114,7 +114,7 @@ func (s *Service) ModelsSelectAll(ctx context.Context, req *pb.Empty) (*pb.Model
 		for _, entry := range res {
 			if bdata, err := json.Marshal(entry); err != nil {
 				return nil, fmt.Errorf("转JSON字节码失败：%v", err)
-			} else if mdl, err := utils.WrapJsonUnmarshal(bdata, utils.GetTypeOfPtr((*pb.Model)(nil))); err != nil {
+			} else if mdl, err := utils.UnmarshalJSON(bdata, reflect.TypeOf((*pb.Model)(nil)).Elem()); err != nil {
 				return nil, fmt.Errorf("转Model对象失败：%v", err)
 			} else {
 				resp.Models = append(resp.Models, mdl.(*pb.Model))
@@ -178,10 +178,27 @@ func (s *Service) editProject(ctx context.Context, pjName string, pjPath string)
 
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
-type oprNode struct {
+type operStep struct {
+	imports []string
 	proc string
 	desc string
 	code string
+	params map[string]string
+	genVars []string
+}
+
+// TODO: 以后应该迁到数据库
+var operMapper = map[string]string {
+	"return_one": "return %RET%, nil\n",
+	"assignment": "%TARGET% = %SOURCE%\n",
+	"json_marshal": "bytes, err := json.Marshal(%OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"转JSON失败：%v\", err)\n}\n",
+	"json_unmarshal": "omap, utils.UnmarshalJSON(bytes, reflect.TypeOf((*%OBJ_TYPE%)(nil)).Elem())\nif err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
+	"database_beginTx": "tx, err := s.dao.BeginTx(ctx)\nif err != nil {\n\treturn nil, fmt.Errorf(\"开启事务失败：%v\", err)\n}\n",
+	"database_commitTx": "err := s.dao.CommitTx(tx)\nif err != nil {\n\treturn nil, fmt.Errorf(\"提交事务失败：%v\", err)\n}\n",
+	"database_queryTx": "res, err := s.dao.QueryTx(ctx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
+	"database_deleteTx": "_, err := s.dao.DeleteTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n",
+	"database_insertTx": "id, err := s.dao.InsertTx(tx, \"%TABLE_NAME%\", %OBJ_MAP%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n",
+	"database_updateTx": "id, err := s.dao.SaveTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n",
 }
 
 type apiInfo struct {
@@ -191,7 +208,7 @@ type apiInfo struct {
 	route  string
 	method string
 	ret    string
-	flow []oprNode
+	flows []operStep
 }
 
 // 根据数据库中模型的定义，生成proto的message和service
@@ -232,8 +249,11 @@ func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath 
 		// 复数message
 		code += fmt.Sprintf("message %sArray {\n\t%s %s = 1;\n}\n\n", mname, mname, utils.ToPlural(strings.ToLower(mname)))
 
-		for _, method := range mdl["methods"].([]map[string]interface{}) {
-			m := method["method"].(string)
+		if !reflect.TypeOf(mdl["methods"]).ConvertibleTo(reflect.TypeOf(([]interface{})(nil))) {
+			continue
+		}
+		for _, method := range mdl["methods"].([]interface{}) {
+			m := method.(string)
 			aname, exs := actMap[m]
 			if !exs {
 				aname = "Select"
@@ -249,6 +269,56 @@ func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath 
 			case "post":
 				modelApi.params["entry"] = mname
 				modelApi.ret = mname
+				modelApi.flows = []operStep{
+					{
+						desc: "先将收到的请求参数编码成JSON字节数组",
+						proc: "json_marshal",
+						params: map[string]string{
+							"OBJECT": "entry",
+						},
+					},
+					{
+						desc: "再将JSON字节数组转成Map键值对",
+						// TODO: 自身的包要加包名前缀
+						impo: []string{
+							"template/internal/utils",
+						},
+						proc: "json_unmarshal",
+						params: map[string]string{
+							"OBJ_TYPE": mname,
+						},
+					},
+					{
+						desc: "开启数据库事务",
+						proc: "database_beginTx",
+					},
+					{
+						desc: "做数据库插入操作",
+						proc: "database_insertTx",
+						params: map[string]string{
+							"TABLE_NAME": utils.CamelToPascal(mname),
+							"OBJ_MAP": "omap",
+						},
+					},
+					{
+						desc: "提交数据库事务",
+						proc: "database_commitTx",
+					},
+					{
+						desc: "将改记录的数据库id赋予请求参数",
+						proc: "assignment",
+						params: map[string]string{
+							"SOURCE": "id",
+							"TARGET": "entry.Id",
+						},
+					},
+					{
+						proc: "return_one",
+						params: map[string]string{
+							"RET": "entry",
+						},
+					},
+				}
 			case "delete":
 				modelApi.params["iden"] = "IdenReqs"
 				modelApi.ret = mname
@@ -306,24 +376,60 @@ func (s *Service) chgKratosServiceFile(ctx context.Context, pjPath string, apis 
 	}
 	defer svcFile.Close()
 	reader := bufio.NewReader(svcFile)
+	// 收集import文件
+	imports := make(map[string]interface{})
+	for _, a := range apis {
+		for _, step := range a.flows {
+			for _, i := range step.imports {
+				imports[i] = nil
+			}
+		}
+	}
 	code := ""
 	for {
-		if line, _, err := reader.ReadLine(); err != nil {
+		line, _, err := reader.ReadLine()
+		if err != nil {
 			if err == io.EOF {
 				break
 			} else {
 				return err
 			}
-		} else if strings.Contains(string(line), "[APIS]") {
+		}
+		switch {
+		case strings.Contains(string(line), "[APIS]"):
 			for _, apiInfo := range apis {
 				aparams := make([]string, 0)
 				for pname, ptype := range apiInfo.params {
 					aparams = append(aparams, fmt.Sprintf("%s *pb.%s", pname, ptype))
 				}
 				sparams := strings.Join(aparams, ", ")
-				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*pb.%s, error) {\n\treturn nil, nil\n}\n\n", apiInfo.name, sparams, apiInfo.ret)
+				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*pb.%s, error) {\n", apiInfo.name, sparams, apiInfo.ret)
+				for idx, step := range apiInfo.flows {
+					if idx == 0 {
+						code += "\t"
+					}
+					// 添加注释
+					if len(step.desc) != 0 {
+						code += fmt.Sprintf("// %s\n", step.desc)
+					}
+					// 提取步骤操作的代码
+					cd, exs := operMapper[step.proc]
+					if !exs {
+						return fmt.Errorf("无法找到指定操作步骤：%s", step.proc)
+					}
+					// 替换步骤中的占位符
+					for o, n := range step.params {
+						cd = strings.Replace(cd, fmt.Sprintf("%%%s%%", o), n, -1)
+					}
+					code += "\t" + utils.AddSpacesBeforeRow(cd, 1)
+				}
+				code += "}\n\n"
 			}
-		} else {
+		case strings.Contains(string(line), "[IMPORTS]"):
+			for _, impo := range imports {
+				code += "\t" + impo
+			}
+		default:
 			code += string(line) + "\n"
 		}
 	}

@@ -91,3 +91,25 @@ message ExpOptions {
 message UrlResp {
     string url = 1;
 }
+
+message OperMapper {
+    string key = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    string code = 2;
+}
+
+message OperStep {
+    repeated string imports = 1;
+    string operKey = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    string desc = 3;
+    map<string,string> params = 4;
+}
+
+message ApiInfo {
+    string model = 1;
+    string name = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    map<string,string> params = 3;
+    string route = 4;
+    string method = 5;
+    string return = 6;
+    repeated OperStep flows = 7;
+}
