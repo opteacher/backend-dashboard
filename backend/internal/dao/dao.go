@@ -128,6 +128,8 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 					switch {
 					case str == "PRIMARY_KEY":
 						pkeys = append(pkeys, fname)
+					case str == "UNIQUE_KEY":
+						fattr += "UNIQUE "
 					case str == "INDEX":
 						indexes = append(indexes, fname)
 					case str == "NOT_NULL":
@@ -150,6 +152,7 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 			Type: reflect.TypeOf(int64(0)),
 			Tag:  reflect.StructTag(fmt.Sprintf("orm:\"%s_id,NOT_NULL|FOREIGN_KEY(%s.id)\"", utils.ToSingular(table), table)),
 		}
+		stable := fmt.Sprintf("%s_%s_mapper", utils.ToSingular(table), fname)
 		if tn, exists := typeMap[fkind]; exists {
 			// 存在于类型表的直接拿来用
 			sql += fmt.Sprintf("`%s` %s %s,", fname, tn, fattr)
@@ -159,7 +162,6 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 			if eleTyp.Kind() == reflect.Ptr {
 				eleTyp = eleTyp.Elem()
 			}
-			stable := fmt.Sprintf("%s_%s_mapper", utils.ToSingular(table), fname)
 			if tn, exists = typeMap[eleTyp.Kind()]; exists {
 				// 只有一条字段的普通集合，建表与值关联
 				if subsqls, err := genCreateSQL(stable, reflect.StructOf([]reflect.StructField{
@@ -176,6 +178,24 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 				}
 				// 自定义类型数组，递归建表
 			} else if subsqls, err := genCreateSQL(stable, reflect.StructOf(append(utils.GetAllFields(eleTyp), pidField))); err != nil {
+				return nil, err
+			} else {
+				sqls = append(sqls, subsqls...)
+			}
+		} else if fkind == reflect.Map {
+			if subsqls, err := genCreateSQL(stable, reflect.StructOf([]reflect.StructField{
+				pidField,
+				{
+					Name: "Key",
+					Type: ftype.Key(),
+					Tag:  reflect.StructTag(fmt.Sprintf("orm:\"%s_key,PRIMARY_KEY\"", fname)),
+				},
+				{
+					Name: "Value",
+					Type: ftype.Elem(),
+					Tag:  reflect.StructTag(fmt.Sprintf("orm:\"%s_value\"", fname)),
+				},
+			})); err != nil {
 				return nil, err
 			} else {
 				sqls = append(sqls, subsqls...)
@@ -240,6 +260,14 @@ func (d *Dao) CreateTx(tx *sql.Tx, table string, typ reflect.Type) error {
 		}
 		ModelMap[table] = typ
 		return nil
+	}
+}
+
+func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, error) {
+	if res, err := tx.Exec(sql, args...); err != nil {
+		return nil, err
+	} else {
+		return res, nil
 	}
 }
 
@@ -604,4 +632,26 @@ func FixQueryResult(result map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return result
+}
+
+func ConvertQueryResultToObj(rmap []map[string]interface{}, tgtTyp reflect.Type) (interface{}, error) {
+	ret := reflect.MakeSlice(tgtTyp, len(rmap), len(rmap))
+	if len(rmap) == 0 {
+		return ret.Interface(), nil
+	}
+	// 挑出存在于目标对象的属性分量
+	tstEle := rmap[0]
+	fmap := make(map[string]string)
+	for i := 0; i < tgtTyp.NumField(); i++ {
+		field := tgtTyp.Field(i)
+		mkey := utils.CamelToPascal(field.Name)
+		if _, exs := tstEle[mkey]; exs {
+			fmap[mkey] = field.Name
+		}
+	}
+	// 从map填充进对象
+	for i, mele := range rmap {
+		oele := ret.Index(i)
+	}
+	return ret, nil
 }

@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/bilibili/kratos/pkg/database/sql"
+
 	pb "backend/api"
 	"backend/internal/dao"
 	"backend/internal/model"
@@ -20,8 +22,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"io"
+
+	"github.com/bilibili/kratos/pkg/conf/paladin"
 )
 
 // Service service.
@@ -49,8 +52,146 @@ func New() (s *Service) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	s.dao.Create(ctx, model.MODELS_TABLE, reflect.TypeOf((*pb.Model)(nil)).Elem())
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.MODELS_TABLE, reflect.TypeOf((*pb.Model)(nil)).Elem()); err != nil {
+		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.API_INFO_TABLE, reflect.TypeOf((*struct {
+		Name   string `orm:",PRIMARY_KEY|UNIQUE_KEY"`
+		Model  string
+		Params string
+		Route  string
+		Method string
+		Return string
+		Flows  string
+	})(nil)).Elem()); err != nil {
+		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.OPER_STEP_TABLE, reflect.TypeOf((*struct {
+		OperKey  string `orm:"oper_key,PRIMARY_KEY"`
+		Requires string
+		Desc     string
+		Inputs   string
+		Outputs  string
+	})(nil)).Elem()); err != nil {
+		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.OPER_MAP_TABLE, reflect.TypeOf((*struct {
+		Key  string `orm:",PRIMARY_KEY|UNIQUE_KEY"`
+		Code string
+	})(nil)).Elem()); err != nil {
+		panic(err)
+	} else if err := s.initOperMap(tx); err != nil {
+		panic(err)
+	} else if err := s.initOperStep(tx); err != nil {
+		panic(err)
+	} else if err := s.dao.CommitTx(tx); err != nil {
+		panic(err)
+	} else {
+
+	}
 	return s
+}
+
+func (s *Service) initOperMap(tx *sql.Tx) error {
+	if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "return_succeed",
+		"code": "return %RET%, nil\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "assignment",
+		"code": "%TARGET% = %SOURCE%\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "json_marshal",
+		"code": "bytes, err := json.Marshal(%OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"转JSON失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "json_unmarshal",
+		"code": "omap, utils.UnmarshalJSON(bytes, reflect.TypeOf((*%OBJ_TYPE%)(nil)).Elem())\nif err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "database_beginTx",
+		"code": "tx, err := s.dao.BeginTx(ctx)\nif err != nil {\n\treturn nil, fmt.Errorf(\"开启事务失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "database_commitTx",
+		"code": "err := s.dao.CommitTx(tx)\nif err != nil {\n\treturn nil, fmt.Errorf(\"提交事务失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "database_queryTx",
+		"code": "res, err := s.dao.QueryTx(ctx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "database_deleteTx",
+		"code": "_, err := s.dao.DeleteTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "database_insertTx",
+		"code": "id, err := s.dao.InsertTx(tx, \"%TABLE_NAME%\", %OBJ_MAP%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_MAP_TABLE, map[string]interface{}{
+		"key":  "database_updateTx",
+		"code": "id, err := s.dao.SaveTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n",
+	}); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+func (s *Service) initOperStep(tx *sql.Tx) error {
+	if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
+		"oper_key": "json_marshal",
+		"desc":     "先将收到的请求参数编码成JSON字节数组",
+		"inputs":   "OBJECT:entry",
+		"requires": "encoding/json",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
+		"oper_key": "json_unmarshal",
+		"desc":     "再将JSON字节数组转成Map键值对",
+		"inputs":   "OBJ_TYPE:%OBJ_TYPE%",
+		"requires": "%PACKAGE%/internal/utils",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
+		"oper_key": "database_beginTx",
+		"desc":     "开启数据库事务",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
+		"oper_key": "database_insertTx",
+		"desc":     "做数据库插入操作",
+		"inputs":   "TABLE_NAME:%TABLE_NAME%,OBJ_MAP:omap",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
+		"oper_key": "database_commitTx",
+		"desc":     "提交数据库事务",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
+		"oper_key": "assignment",
+		"desc":     "将改记录的数据库id赋予请求参数",
+		"inputs":   "SOURCE:id,TARGET:entry.Id",
+	}); err != nil {
+		return err
+	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
+		"oper_key": "return_succeed",
+		"inputs":   "RET:entry",
+	}); err != nil {
+		return err
+	} else {
+		return nil
+	}
 }
 
 func (s *Service) AppID() string {
@@ -176,43 +317,40 @@ func (s *Service) editProject(ctx context.Context, pjName string, pjPath string)
 	return nil
 }
 
-
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 type operStep struct {
 	imports []string
-	proc string
-	desc string
-	code string
-	params map[string]string
+	proc    string
+	desc    string
+	code    string
+	params  map[string]string
 	genVars []string
 }
 
 // TODO: 以后应该迁到数据库
-var operMapper = map[string]string {
-	"return_one": "return %RET%, nil\n",
-	"assignment": "%TARGET% = %SOURCE%\n",
-	"json_marshal": "bytes, err := json.Marshal(%OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"转JSON失败：%v\", err)\n}\n",
-	"json_unmarshal": "omap, utils.UnmarshalJSON(bytes, reflect.TypeOf((*%OBJ_TYPE%)(nil)).Elem())\nif err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
-	"database_beginTx": "tx, err := s.dao.BeginTx(ctx)\nif err != nil {\n\treturn nil, fmt.Errorf(\"开启事务失败：%v\", err)\n}\n",
+var operMapper = map[string]string{
+	"return_succeed":    "return %RET%, nil\n",
+	"assignment":        "%TARGET% = %SOURCE%\n",
+	"json_marshal":      "bytes, err := json.Marshal(%OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"转JSON失败：%v\", err)\n}\n",
+	"json_unmarshal":    "omap, utils.UnmarshalJSON(bytes, reflect.TypeOf((*%OBJ_TYPE%)(nil)).Elem())\nif err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
+	"database_beginTx":  "tx, err := s.dao.BeginTx(ctx)\nif err != nil {\n\treturn nil, fmt.Errorf(\"开启事务失败：%v\", err)\n}\n",
 	"database_commitTx": "err := s.dao.CommitTx(tx)\nif err != nil {\n\treturn nil, fmt.Errorf(\"提交事务失败：%v\", err)\n}\n",
-	"database_queryTx": "res, err := s.dao.QueryTx(ctx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
+	"database_queryTx":  "res, err := s.dao.QueryTx(ctx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
 	"database_deleteTx": "_, err := s.dao.DeleteTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n",
 	"database_insertTx": "id, err := s.dao.InsertTx(tx, \"%TABLE_NAME%\", %OBJ_MAP%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n",
 	"database_updateTx": "id, err := s.dao.SaveTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n",
 }
 
-type apiInfo struct {
-	model  string
-	name   string
-	params map[string]string
-	route  string
-	method string
-	ret    string
-	flows []operStep
+func (s *Service) readOperFromDB(ctx context.Context) error {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return err
+	} else if rmap, err := s.dao.QueryTx(tx, model.OPER_STEP_TABLE, "", nil); err != nil {
+		return err
+	}
 }
 
 // 根据数据库中模型的定义，生成proto的message和service
-func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath string) ([]apiInfo, error) {
+func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath string) ([]*pb.ApiInfo, error) {
 	if pjName[len(pjName)-4:] == ".zip" || pjName[len(pjName)-4:] == ".ZIP" {
 		pjName = pjName[:len(pjName)-4]
 	}
@@ -238,7 +376,7 @@ func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath 
 		"GET":    "Select",
 		"ALL":    "SelectAll",
 	}
-	var modelApis []apiInfo
+	var modelApis []*pb.ApiInfo
 	for _, mdl := range res {
 		mname := mdl["name"].(string)
 		code += fmt.Sprintf("message %s {\n", mname)
@@ -258,81 +396,81 @@ func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath 
 			if !exs {
 				aname = "Select"
 			}
-			modelApi := apiInfo{
-				model:  mname,
-				name:   fmt.Sprintf("%s%s", aname, mname),
-				params: make(map[string]string),
-				route:  fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
-				method: strings.ToLower(m),
+			modelApi := &pb.ApiInfo{
+				Name:   fmt.Sprintf("%s%s", aname, mname),
+				Model:  mname,
+				Params: make(map[string]string),
+				Route:  fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
+				Method: strings.ToLower(m),
 			}
-			switch modelApi.method {
+			switch modelApi.Method {
 			case "post":
-				modelApi.params["entry"] = mname
-				modelApi.ret = mname
-				modelApi.flows = []operStep{
-					{
-						desc: "先将收到的请求参数编码成JSON字节数组",
-						proc: "json_marshal",
-						params: map[string]string{
-							"OBJECT": "entry",
-						},
-					},
-					{
-						desc: "再将JSON字节数组转成Map键值对",
-						// TODO: 自身的包要加包名前缀
-						impo: []string{
-							"template/internal/utils",
-						},
-						proc: "json_unmarshal",
-						params: map[string]string{
-							"OBJ_TYPE": mname,
-						},
-					},
-					{
-						desc: "开启数据库事务",
-						proc: "database_beginTx",
-					},
-					{
-						desc: "做数据库插入操作",
-						proc: "database_insertTx",
-						params: map[string]string{
-							"TABLE_NAME": utils.CamelToPascal(mname),
-							"OBJ_MAP": "omap",
-						},
-					},
-					{
-						desc: "提交数据库事务",
-						proc: "database_commitTx",
-					},
-					{
-						desc: "将改记录的数据库id赋予请求参数",
-						proc: "assignment",
-						params: map[string]string{
-							"SOURCE": "id",
-							"TARGET": "entry.Id",
-						},
-					},
-					{
-						proc: "return_one",
-						params: map[string]string{
-							"RET": "entry",
-						},
-					},
-				}
+				modelApi.Params["entry"] = mname
+				modelApi.Return = mname
+				// modelApi.Flows = []*pb.OperStep{
+				// 	{
+				// 		desc: "先将收到的请求参数编码成JSON字节数组",
+				// 		proc: "json_marshal",
+				// 		params: map[string]string{
+				// 			"OBJECT": "entry",
+				// 		},
+				// 	},
+				// 	{
+				// 		desc: "再将JSON字节数组转成Map键值对",
+				// 		// TODO: 自身的包要加包名前缀
+				// 		imports: []string{
+				// 			"template/internal/utils",
+				// 		},
+				// 		proc: "json_unmarshal",
+				// 		params: map[string]string{
+				// 			"OBJ_TYPE": mname,
+				// 		},
+				// 	},
+				// 	{
+				// 		desc: "开启数据库事务",
+				// 		proc: "database_beginTx",
+				// 	},
+				// 	{
+				// 		desc: "做数据库插入操作",
+				// 		proc: "database_insertTx",
+				// 		params: map[string]string{
+				// 			"TABLE_NAME": utils.CamelToPascal(mname),
+				// 			"OBJ_MAP":    "omap",
+				// 		},
+				// 	},
+				// 	{
+				// 		desc: "提交数据库事务",
+				// 		proc: "database_commitTx",
+				// 	},
+				// 	{
+				// 		desc: "将改记录的数据库id赋予请求参数",
+				// 		proc: "assignment",
+				// 		params: map[string]string{
+				// 			"SOURCE": "id",
+				// 			"TARGET": "entry.Id",
+				// 		},
+				// 	},
+				// 	{
+				// 		proc: "return_succeed",
+				// 		params: map[string]string{
+				// 			"RET": "entry",
+				// 		},
+				// 	},
+				// }
 			case "delete":
-				modelApi.params["iden"] = "IdenReqs"
-				modelApi.ret = mname
+				modelApi.Params["iden"] = "IdenReqs"
+				modelApi.Return = mname
 			case "put":
-				modelApi.params["iden"] = "IdenReqs"
-				modelApi.params["entry"] = mname
-				modelApi.ret = mname
+				modelApi.Params["iden"] = "IdenReqs"
+				modelApi.Params["entry"] = mname
+				modelApi.Return = mname
 			case "get":
-				modelApi.params["iden"] = "IdenReqs"
-				modelApi.ret = mname
+				modelApi.Params["iden"] = "IdenReqs"
+				modelApi.Return = mname
 			case "all":
-				modelApi.method = "get"
-				modelApi.params["params"] = "Nil"
-				modelApi.ret = mname + "Array"
+				modelApi.Method = "get"
+				modelApi.Params["params"] = "Nil"
+				modelApi.Return = mname + "Array"
 			}
 			modelApis = append(modelApis, modelApi)
 		}
@@ -343,14 +481,14 @@ func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath 
 	}
 	for _, api := range modelApis {
 		sparams := ""
-		for _, ptyp := range api.params {
+		for _, ptyp := range api.Params {
 			sparams += ptyp + ","
 		}
 		sparams = strings.TrimRight(sparams, ",")
-		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.name, sparams, api.ret)
-		if len(api.route) != 0 && len(api.method) != 0 {
+		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.Name, sparams, api.Return)
+		if len(api.Route) != 0 && len(api.Method) != 0 {
 			code += " {\n\t\toption (google.api.http) = {\n"
-			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.method, api.route)
+			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.Method, api.Route)
 		} else {
 			code += ";\n"
 		}
@@ -368,7 +506,7 @@ func (s *Service) genKratosProtoFile(ctx context.Context, pjName string, pjPath 
 }
 
 // 根据抽取的接口信息，生成完整的service
-func (s *Service) chgKratosServiceFile(ctx context.Context, pjPath string, apis []apiInfo) error {
+func (s *Service) chgKratosServiceFile(ctx context.Context, pjPath string, apis []*pb.ApiInfo) error {
 	svcPath := path.Join(pjPath, "internal", "service", "service.go")
 	svcFile, err := os.Open(svcPath)
 	if err != nil {
@@ -377,11 +515,11 @@ func (s *Service) chgKratosServiceFile(ctx context.Context, pjPath string, apis 
 	defer svcFile.Close()
 	reader := bufio.NewReader(svcFile)
 	// 收集import文件
-	imports := make(map[string]interface{})
+	requires := make(map[string]interface{})
 	for _, a := range apis {
-		for _, step := range a.flows {
-			for _, i := range step.imports {
-				imports[i] = nil
+		for _, step := range a.Flows {
+			for _, i := range step.Requires {
+				requires[i] = nil
 			}
 		}
 	}
@@ -399,26 +537,26 @@ func (s *Service) chgKratosServiceFile(ctx context.Context, pjPath string, apis 
 		case strings.Contains(string(line), "[APIS]"):
 			for _, apiInfo := range apis {
 				aparams := make([]string, 0)
-				for pname, ptype := range apiInfo.params {
+				for pname, ptype := range apiInfo.Params {
 					aparams = append(aparams, fmt.Sprintf("%s *pb.%s", pname, ptype))
 				}
 				sparams := strings.Join(aparams, ", ")
-				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*pb.%s, error) {\n", apiInfo.name, sparams, apiInfo.ret)
-				for idx, step := range apiInfo.flows {
+				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*pb.%s, error) {\n", apiInfo.Name, sparams, apiInfo.Return)
+				for idx, step := range apiInfo.Flows {
 					if idx == 0 {
 						code += "\t"
 					}
 					// 添加注释
-					if len(step.desc) != 0 {
-						code += fmt.Sprintf("// %s\n", step.desc)
+					if len(step.Desc) != 0 {
+						code += fmt.Sprintf("// %s\n", step.Desc)
 					}
 					// 提取步骤操作的代码
-					cd, exs := operMapper[step.proc]
+					cd, exs := operMapper[step.OperKey]
 					if !exs {
-						return fmt.Errorf("无法找到指定操作步骤：%s", step.proc)
+						return fmt.Errorf("无法找到指定操作步骤：%s", step.OperKey)
 					}
 					// 替换步骤中的占位符
-					for o, n := range step.params {
+					for o, n := range step.Inputs {
 						cd = strings.Replace(cd, fmt.Sprintf("%%%s%%", o), n, -1)
 					}
 					code += "\t" + utils.AddSpacesBeforeRow(cd, 1)
@@ -426,8 +564,8 @@ func (s *Service) chgKratosServiceFile(ctx context.Context, pjPath string, apis 
 				code += "}\n\n"
 			}
 		case strings.Contains(string(line), "[IMPORTS]"):
-			for _, impo := range imports {
-				code += "\t" + impo
+			for require, _ := range requires {
+				code += "\t" + require
 			}
 		default:
 			code += string(line) + "\n"

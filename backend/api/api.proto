@@ -97,11 +97,12 @@ message OperMapper {
     string code = 2;
 }
 
+// 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 message OperStep {
-    repeated string imports = 1;
+    repeated string requires = 1;
     string operKey = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
     string desc = 3;
-    map<string,string> params = 4;
+    map<string,string> inputs = 4;
 }
 
 message ApiInfo {
