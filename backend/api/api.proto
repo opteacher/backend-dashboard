@@ -92,17 +92,14 @@ message UrlResp {
     string url = 1;
 }
 
-message OperMapper {
-    string key = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
-    string code = 2;
-}
-
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 message OperStep {
-    repeated string requires = 1;
-    string operKey = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    string operKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    repeated string requires = 2;
     string desc = 3;
     map<string,string> inputs = 4;
+    repeated string outputs = 5;
+    string code = 6;
 }
 
 message ApiInfo {

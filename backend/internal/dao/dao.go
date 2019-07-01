@@ -652,6 +652,33 @@ func ConvertQueryResultToObj(rmap []map[string]interface{}, tgtTyp reflect.Type)
 	// 从map填充进对象
 	for i, mele := range rmap {
 		oele := ret.Index(i)
+		for mfname, ofname := range fmap {
+			ofield := oele.FieldByName(ofname)
+			mfield := reflect.ValueOf(mele[mfname])
+			ofkind := ofield.Type().Kind()
+			mfkind := mfield.Type().Kind()
+			if ofkind == mfkind {
+				ofield.Set(mfield)
+			} else if mfkind == reflect.String {
+				str := mfield.String()
+				switch ofkind {
+				case reflect.Map:
+					kvs := strings.Split(str, ",")
+					mapstr := make(map[string]string)
+					for _, kv := range kvs {
+						kvAry := strings.Split(kv, ":")
+						mapstr[kvAry[0]] = kvAry[1]
+					}
+					mfield = reflect.ValueOf(mapstr)
+					ofield.Set(mfield)
+				case reflect.Array:
+					fallthrough
+				case reflect.Slice:
+					mfield = reflect.ValueOf(strings.Split(str, ","))
+					ofield.Set(mfield)
+				}
+			}
+		}
 	}
 	return ret, nil
 }
