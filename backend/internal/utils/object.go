@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"reflect"
+	"encoding/json"
 )
 
 // TODO: 逻辑巨乱，找时间加注释！！！！
@@ -48,4 +49,15 @@ func FillWithMap(obj interface{}, mp map[string]interface{}) interface{} {
 		}
 	}
 	return obj
+}
+
+// NOTE: 返回的是src类型的指针
+func Copy(src interface{}) (interface{}, error) {
+	if bytes, err := json.Marshal(src); err != nil {
+		return nil, err
+	} else if tgt, err := UnmarshalJSON(bytes, reflect.TypeOf(src)); err != nil {
+		return nil, err
+	} else {
+		return tgt, nil
+	}
 }

@@ -72,5 +72,5 @@ func AddSpacesBeforeRow(data string, n int) string {
 	for i := 0; i < n; i++ {
 		spaces += "\t"
 	}
-	return strings.Replace(data, "\n", "\n" + spaces, -1)
+	return spaces + strings.Replace(data, "\n", "\n" + spaces, -1)
 }

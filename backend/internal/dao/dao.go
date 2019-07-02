@@ -635,7 +635,7 @@ func FixQueryResult(result map[string]interface{}) map[string]interface{} {
 }
 
 func ConvertQueryResultToObj(rmap []map[string]interface{}, tgtTyp reflect.Type) (interface{}, error) {
-	ret := reflect.MakeSlice(tgtTyp, len(rmap), len(rmap))
+	ret := reflect.MakeSlice(reflect.SliceOf(tgtTyp), len(rmap), len(rmap))
 	if len(rmap) == 0 {
 		return ret.Interface(), nil
 	}
@@ -661,6 +661,9 @@ func ConvertQueryResultToObj(rmap []map[string]interface{}, tgtTyp reflect.Type)
 				ofield.Set(mfield)
 			} else if mfkind == reflect.String {
 				str := mfield.String()
+				if len(str) == 0 {
+					continue
+				}
 				switch ofkind {
 				case reflect.Map:
 					kvs := strings.Split(str, ",")
@@ -680,5 +683,5 @@ func ConvertQueryResultToObj(rmap []map[string]interface{}, tgtTyp reflect.Type)
 			}
 		}
 	}
-	return ret, nil
+	return ret.Interface(), nil
 }
