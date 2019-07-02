@@ -10,6 +10,7 @@ import (
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/log"
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
+	"template/internal/server/mws"
 )
 
 var (
@@ -30,10 +31,9 @@ func New(s *service.Service) (engine *bm.Engine) {
 	}
 	svc = s
 	engine = bm.DefaultServer(hc.Server)
-	//pb.RegisterDemoBMServer(engine, svc)
-	svr.RegisterHTTPService(svc, []string{
-		strings.Replace(hc.Server.Addr, "0.0.0.0", "127.0.0.1", 1),
-	})
+	engine.Use(mws.SetupCORS())
+	pb.RegisterDemoBMServer(engine, svc)
+	svr.RegisterHTTPService(svc, []string{strings.Replace(hc.Server.Addr, "0.0.0.0", "127.0.0.1", 1)})
 	if err := engine.Start(); err != nil {
 		panic(err)
 	}

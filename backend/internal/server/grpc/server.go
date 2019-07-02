@@ -24,9 +24,7 @@ func New(svc *service.Service) *warden.Server {
 	}
 	ws := warden.NewServer(rc.Server)
 	pb.RegisterBackendManagerServer(ws.Server(), svc)
-	RegisterGRPCService(svc.AppID(), []string{
-		strings.Replace(rc.Server.Addr, "0.0.0.0", "127.0.0.1", 1),
-	})
+	RegisterGRPCService(svc.AppID(), []string{strings.Replace(rc.Server.Addr, "0.0.0.0", "127.0.0.1", 1)})
 	ws, err := ws.Start()
 	if err != nil {
 		panic(err)

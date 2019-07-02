@@ -103,11 +103,12 @@ message OperStep {
 }
 
 message ApiInfo {
-    string model = 1;
-    string name = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
-    map<string,string> params = 3;
-    string route = 4;
-    string method = 5;
-    string return = 6;
-    repeated OperStep flows = 7;
+    string name = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    string model = 2;
+    string table = 3;
+    map<string,string> params = 4;
+    string route = 5;
+    string method = 6;
+    string return = 7;
+    repeated OperStep flows = 8;
 }

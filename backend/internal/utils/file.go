@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"bufio"
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
@@ -265,4 +266,51 @@ func CopyFile(src, dst string) (w int64, err error) {
 	defer dstFile.Close()
 
 	return io.Copy(dstFile, srcFile)
+}
+
+// 文件插入（逐行操作，只使用文本文件）
+type ProcFunc func(string, *bool) (string, bool, error)
+func InsertTxt(fpath string, proc ProcFunc) error {
+	// 读取import部分
+	file, err := os.Open(fpath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+
+	doProc := true
+	code := ""
+	for {
+		line, _, err := reader.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return err
+			}
+		}
+		str := string(line)
+		if scd, isBreak, err := proc(str, &doProc); err != nil {
+			return err
+		} else if isBreak {
+			break
+		} else if doProc {
+			code += scd + "\n"
+		} else {
+			code += str + "\n"
+		}
+	}
+	// 写入
+	file.Close()
+	file, err = os.OpenFile(fpath, os.O_RDWR|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if _, err = file.WriteString(code); err != nil {
+		return err
+	}
+	return nil
 }

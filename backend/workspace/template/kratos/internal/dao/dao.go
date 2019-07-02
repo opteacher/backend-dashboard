@@ -13,7 +13,7 @@ import (
 	"github.com/bilibili/kratos/pkg/database/sql"
 	"github.com/bilibili/kratos/pkg/log"
 
-	"backend/internal/utils"
+	"template/internal/utils"
 )
 
 // Dao dao.
