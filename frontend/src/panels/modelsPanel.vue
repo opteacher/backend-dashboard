@@ -27,19 +27,52 @@
         },
         watch: {
             models() {
-                d3.select("#pnlModels")
-                    .selectAll("circle")
+                let mdlCard = d3.select("#pnlModels")
+                    .selectAll("g")
                     .data(this.models)
-                    .enter()
-                    .append("circle")
-                    .attr("cx", model => model.x)
-                    .attr("cy", model => model.y)
-                    .attr("r", 20)
+                    .join("g")
+                let padding = 5
+                let innerHgt = {}
+                mdlCard.append("rect")
+                    .attr("name", model => `model_${model.name}`)
+                    .attr("x", model => model.x)
+                    .attr("y", model => model.y)
+                    .attr("width", model => model.width)
+                    .attr("height", model => model.height)
+                    .attr("rx", 4)
+                    .attr("ry", 4)
                     .attr("fill", "steelblue")
-                    .call(d3.drag().on("drag", function (tgt) {
+                mdlCard.append("text")
+                    .attr("x", model => model.x)
+                    .attr("y", model => model.y)
+                    .text(model => model.name)
+                    .attr("fill", "white")
+                    .each(function (model) {
+                        innerHgt[model.name] = this.getBoundingClientRect().height
                         d3.select(this)
-                            .attr("cx", tgt.cx = d3.event.x)
-                            .attr("cy", tgt.cx = d3.event.y)
+                            .attr("x", model.x + padding)
+                            .attr("y", model.y + this.getBoundingClientRect().height)
+                    })
+                mdlCard.append("line")
+                    .attr("x1", model => model.x + padding)
+                    .attr("y1", model => model.y + innerHgt[model.name] + padding)
+                    .attr("x2", model => model.x + model.width - padding)
+                    .attr("y2", model => model.y + innerHgt[model.name] + padding)
+                    .attr("stroke-width", 2)
+                    .attr("stroke", "white")
+                mdlCard.append("rect")
+                    .attr("name", model => `model_${model.name}`)
+                    .attr("x", model => model.x)
+                    .attr("y", model => model.y)
+                    .attr("width", model => model.width)
+                    .attr("height", model => model.height)
+                    .attr("rx", 4)
+                    .attr("ry", 4)
+                    .attr("opacity", 0)
+                    .call(d3.drag().on("drag", function (tgt) {
+                        d3.selectAll(`[name='model_${tgt.name}']`)
+                            .attr("x", tgt.x = d3.event.x)
+                            .attr("y", tgt.y = d3.event.y)
                     }))
             }
         },
