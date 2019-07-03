@@ -95,7 +95,7 @@ export default {
             form.$refs["edit-relation-form"].validate(valid => {
                 if (valid) {
                     let newRelation = _.clone(form.relation)
-                    this.$emit("add-relation", newRelation)
+                    this.$emit("add-link", newRelation)
                     form.resetRelation()
                     this.showAddRelDlg = false
                 } else {

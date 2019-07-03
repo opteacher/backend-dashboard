@@ -19,7 +19,6 @@ import (
 	"backend/internal/utils"
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 
