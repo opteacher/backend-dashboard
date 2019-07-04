@@ -12,12 +12,9 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
-    async del(id) {
+    async del(name) {
         try {
-            return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
-                method: "delete",
-                params: ["`id`=?", [id]]
-            })
+            return await axios.post(`${config.url}/backend-dashboard/backend/models.delete`, {name})
         } catch(e) {
             return utils.getErrorMsg(e)
         }

@@ -1,7 +1,7 @@
 <template>
     <div class="w-100 h-100">
         <tool-bar @add-model="addModel" @add-link="addLink" :models="models"/>
-        <svg id="pnlModels" class="w-100 h-100"></svg>
+        <div id="pnlModels" class="w-100 h-100"></div>
     </div>
 </template>
 
@@ -16,7 +16,7 @@
         },
         data() {
             return {
-                mdlChart: null,
+                inited: false,
                 models: [],
                 links: []
             }
@@ -27,53 +27,99 @@
         },
         watch: {
             models() {
-                let mdlCard = d3.select("#pnlModels")
-                    .selectAll("g")
+                d3.select("#pnlModels").html("")
+                let mdlPanel = d3.select("#pnlModels")
+                    .selectAll("div")
                     .data(this.models)
-                    .join("g")
-                let padding = 5
-                let innerHgt = {}
-                mdlCard.append("rect")
+                    .join("div")
+                    .style("position", "absolute")
+                let mdlCard = mdlPanel.append("div")
+                    .attr("class", "card")
                     .attr("name", model => `model_${model.name}`)
-                    .attr("x", model => model.x)
-                    .attr("y", model => model.y)
-                    .attr("width", model => model.width)
-                    .attr("height", model => model.height)
-                    .attr("rx", 4)
-                    .attr("ry", 4)
-                    .attr("fill", "steelblue")
-                mdlCard.append("text")
-                    .attr("x", model => model.x)
-                    .attr("y", model => model.y)
-                    .text(model => model.name)
-                    .attr("fill", "white")
-                    .each(function (model) {
-                        innerHgt[model.name] = this.getBoundingClientRect().height
-                        d3.select(this)
-                            .attr("x", model.x + padding)
-                            .attr("y", model.y + this.getBoundingClientRect().height)
-                    })
-                mdlCard.append("line")
-                    .attr("x1", model => model.x + padding)
-                    .attr("y1", model => model.y + innerHgt[model.name] + padding)
-                    .attr("x2", model => model.x + model.width - padding)
-                    .attr("y2", model => model.y + innerHgt[model.name] + padding)
-                    .attr("stroke-width", 2)
-                    .attr("stroke", "white")
-                mdlCard.append("rect")
-                    .attr("name", model => `model_${model.name}`)
-                    .attr("x", model => model.x)
-                    .attr("y", model => model.y)
-                    .attr("width", model => model.width)
-                    .attr("height", model => model.height)
-                    .attr("rx", 4)
-                    .attr("ry", 4)
-                    .attr("opacity", 0)
+                    .style("left", model => `${model.x}px`)
+                    .style("top", model => `${model.y}px`)
+                    .style("width", model => `${model.width}px`)
+                    .style("height", model => `${model.height}px`)
+                    .style("cursor", "pointer")
                     .call(d3.drag().on("drag", function (tgt) {
-                        d3.selectAll(`[name='model_${tgt.name}']`)
-                            .attr("x", tgt.x = d3.event.x)
-                            .attr("y", tgt.y = d3.event.y)
+                        d3.select(this)
+                            .style("left", `${tgt.x = d3.event.x}px`)
+                            .style("top", `${tgt.y = d3.event.y}px`)
                     }))
+                mdlCard.append("div")
+                    .attr("class", "card-header")
+                    .text(model => model.name)
+                    .append("button")
+                    .attr("type", "button")
+                    .attr("class", "close")
+                    .attr("data-dismiss", "alert")
+                    .attr("aria-label", "Close")
+                    .on("click", eve => {
+                        this.$alert("确定删除模块？", "提示", {
+                            confirmButtonText: "确定",
+                            callback: async action => {
+                                if (action !== "confirm") {
+                                    return
+                                }
+                                await this.deleteModel(eve.name)
+                                this.$message({
+                                    type: "info",
+                                    message: `模块（${eve.name}）删除成功！`
+                                })
+                            }
+                        })
+                    })
+                    .append("span")
+                    .attr("aria-hidden", "true")
+                    .html("&times;")
+                mdlCard.append("div")
+                    .attr("class", "card-body")
+                    .append("ul")
+                    .attr("class", "list-group list-group-flush")
+                    .html(model => model.props.map(prop => `
+                        <li class="list-group-item">
+                            ${prop.name}
+                            <span class="float-right">${prop.type}</span>
+                        </li>
+                    `).join(""))
+                mdlCard.append("div")
+                    .attr("class", "card-footer")
+                    .html(model => [
+                        {m:"POST", c:"success"},
+                        {m:"DELETE", c:"danger"},
+                        {m:"PUT", c:"warning"},
+                        {m:"GET", c:"primary"},
+                        {m:"ALL", c:"info"}
+                    ].map(method => {
+                        if (model.methods.includes(method.m)) {
+                            return `<span class="badge badge-${method.c}">${method.m}</span> `
+                        } else {
+                            return `<span class="badge badge-secondary">${method.m}</span> `
+                        }
+                    }).join(""))
+                let rszIcon = mdlCard.append("svg")
+                    .attr("width", 18)
+                    .attr("height", 18)
+                    .style("position", "absolute")
+                    .style("bottom", 0)
+                    .style("right", 0)
+                    .style("cursor", "nwse-resize")
+                    .call(d3.drag().on("drag", function (tgt) {
+                        let mouseLoc = d3.mouse(document.getElementById("pnlModels"))
+                        d3.select(`[name="model_${tgt.name}"]`)
+                            .style("width", `${tgt.width = mouseLoc[0] - tgt.x}px`)
+                            .style("height", `${tgt.height = mouseLoc[1] - tgt.y}px`)
+                    }))
+                rszIcon.append("line")
+                    .attr("x1", 16).attr("y1", 2)
+                    .attr("x2", 2).attr("y2", 16)
+                    .attr("stroke", "#7c7c7c")
+                    .attr("stroke-width", 3)
+                rszIcon.append("line")
+                    .attr("x1", 16).attr("y1", 11)
+                    .attr("x2", 11).attr("y2", 16)
+                    .attr("stroke", "#7c7c7c")
+                    .attr("stroke-width", 3)
             }
         },
         methods: {
@@ -101,12 +147,12 @@
                     this.models.push(model)
                 }
             },
-            async deleteModel(modelID) {
-                let res = await modelBkd.del(modelID)
+            async deleteModel(mname) {
+                let res = await modelBkd.del(mname)
                 if (typeof res === "string") {
                     this.$message(`删除模块失败：${res}`)
                 } else {
-                    this.models.pop(ele => ele.id === modelID)
+                    this.models.pop(ele => ele.name === mname)
                 }
             },
             async addLink(relation) {
