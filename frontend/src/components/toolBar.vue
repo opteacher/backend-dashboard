@@ -6,7 +6,7 @@
         <el-col class="p-10" :span="22">
             <el-button-group class="p-0">
                 <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="showAddMdlDlg = true"/>
-                <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddRelDlg = true" :disabled="disableAddRelBtn"/>
+                <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddLnkDlg = true" :disabled="disableAddLnkBtn"/>
             </el-button-group>
             <el-button-group class="p-0">
                 <el-button class="p-7" type="primary" icon="el-icon-download" size="mini" @click="showExportDlg = true"/>
@@ -24,12 +24,12 @@
             </div>
         </el-dialog>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-        <el-dialog title="新建关联" :visible.sync="showAddRelDlg" :modal-append-to-body="false" width="50vw">
-            <edit-relation ref="add-relation-form" :models="models"/>
+        <el-dialog title="新建关联" :visible.sync="showAddLnkDlg" :modal-append-to-body="false" width="50vw">
+            <edit-link ref="add-link-form" :models="models"/>
             <div slot="footer" class="dialog-footer">
-                <el-button @click="resetRelation">重 置</el-button>
-                <el-button @click="showAddRelDlg = false">取 消</el-button>
-                <el-button type="primary" @click="addRelation">确 定</el-button>
+                <el-button @click="resetLink">重 置</el-button>
+                <el-button @click="showAddLnkDlg = false">取 消</el-button>
+                <el-button type="primary" @click="addLink">确 定</el-button>
             </div>
         </el-dialog>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -48,7 +48,7 @@ import _ from "lodash"
 
 import backend from "../async/backend"
 import editModel from "../forms/editModel"
-import editRelation from "../forms/editRelation"
+import editLink from "../forms/editLink"
 import expProject from "../forms/expProject"
 
 export default {
@@ -57,18 +57,18 @@ export default {
     },
     components: {
         "edit-model": editModel,
-        "edit-relation": editRelation,
+        "edit-link": editLink,
         "exp-project": expProject
     },
     data() { return {
-        disableAddRelBtn: true,
+        disableAddLnkBtn: true,
         showAddMdlDlg: false,
-        showAddRelDlg: false,
+        showAddLnkDlg: false,
         showExportDlg: false
     }},
     watch: {
         models(nv, ov) {
-            this.chkAddRelBtn()
+            this.chkAddLnkBtn()
         }
     },
     methods: {
@@ -87,24 +87,24 @@ export default {
                 }
             })
         },
-        resetRelation() {
-            this.$refs["add-relation-form"].resetRelation()
+        resetLink() {
+            this.$refs["add-link-form"].resetLink()
         },
-        async addRelation() {
-            let form = this.$refs["add-relation-form"]
-            form.$refs["edit-relation-form"].validate(valid => {
+        async addLink() {
+            let form = this.$refs["add-link-form"]
+            form.$refs["edit-link-form"].validate(valid => {
                 if (valid) {
-                    let newRelation = _.clone(form.relation)
-                    this.$emit("add-link", newRelation)
-                    form.resetRelation()
-                    this.showAddRelDlg = false
+                    let newLink = _.clone(form.link)
+                    this.$emit("add-link", newLink)
+                    form.resetLink()
+                    this.showAddLnkDlg = false
                 } else {
                     return false
                 }
             })
         },
-        chkAddRelBtn() {
-            this.disableAddRelBtn = !this.models || this.models.length < 2
+        chkAddLnkBtn() {
+            this.disableAddLnkBtn = !this.models || this.models.length < 2
         },
         async exportProject() {
             let form = this.$refs["exp-project-form"]

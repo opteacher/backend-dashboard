@@ -2,13 +2,14 @@
     <div class="w-100 h-100">
         <tool-bar @add-model="addModel" @add-link="addLink" :models="models"/>
         <div id="pnlModels" class="w-100 h-100"></div>
+        <svg id="pnlGraphs" class="w-100 h-100" style="position: absolute; z-index: -100" />
     </div>
 </template>
 
 <script>
     import toolBar from "../components/toolBar"
     import modelBkd from "../async/model"
-    import relationBkd from "../async/relation"
+    import linkBkd from "../async/link"
 
     export default {
         components: {
@@ -27,12 +28,14 @@
         },
         watch: {
             models() {
-                d3.select("#pnlModels").html("")
                 let mdlPanel = d3.select("#pnlModels")
+                    .html("")
                     .selectAll("div")
                     .data(this.models)
                     .join("div")
                     .style("position", "absolute")
+                    .style("width", 0)
+                    .style("height", 0)
                 let mdlCard = mdlPanel.append("div")
                     .attr("class", "card")
                     .attr("name", model => `model_${model.name}`)
@@ -120,6 +123,31 @@
                     .attr("x2", 11).attr("y2", 16)
                     .attr("stroke", "#7c7c7c")
                     .attr("stroke-width", 3)
+            },
+            links() {
+                let self = this
+                d3.select("#pnlGraphs")
+                    .html("")
+                    .selectAll("g")
+                    .data(this.links)
+                    .join("g")
+                    .append("line")
+                    .each(function (link) {
+                        let model1 = self.models.find(m => m.name === link.modelName1)
+                        let model2 = self.models.find(m => m.name === link.modelName2)
+                        link.x1 = model1.x + (model1.width>>1)
+                        link.y1 = model1.y + (model1.height>>1)
+                        link.x2 = model2.x + (model2.width>>1)
+                        link.y2 = model2.y + (model2.height>>1)
+                        d3.select(this)
+                            .attr("name", link => `link_${link.symbol}`)
+                            .attr("x1", link => link.x1)
+                            .attr("y1", link => link.y1)
+                            .attr("x2", link => link.x2)
+                            .attr("y2", link => link.y2)
+                            .attr("stroke-width", 1)
+                            .attr("stroke", "black")
+                    })
             }
         },
         methods: {
@@ -132,11 +160,11 @@
                 }
             },
             async queryLinks() {
-                let res = await relationBkd.qry()
+                let res = await linkBkd.qry()
                 if (typeof res === "string") {
                     this.$message(`查询关联失败：${res}`)
                 } else {
-                    this.relations = res.data.data || []
+                    this.links = res.data.data || []
                 }
             },
             async addModel(model) {
@@ -155,13 +183,14 @@
                     this.models.pop(ele => ele.name === mname)
                 }
             },
-            async addLink(relation) {
-                let res = await relationBkd.add(relation)
+            async addLink(link) {
+                link.symbol = `${link.modelName1}-${link.modelName2}`.toLowerCase()
+                let res = await linkBkd.add(link)
                 if (typeof res === "string") {
                     this.$message(`创建关联失败：${res}`)
                 } else {
-                    relation.id = res.data.data[0].id
-                    this.relations.push(relation)
+                    link.id = res.data.data.id
+                    this.links.push(link)
                 }
             }
         },

@@ -39,6 +39,23 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc LinkInsert(Link) returns (Link) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/links.insert"
+            body: "*"
+        };
+    };
+    rpc LinkSelectAll(Empty) returns (LinkArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/links.selectAll"
+        };
+    };
+    rpc LinksDeleteBySymbol(SymbolID) returns (Link) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/links.deleteBySymbol"
+            body: "*"
+        };
+    };
     rpc Export(ExpOptions) returns (UrlResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/export"
@@ -111,4 +128,23 @@ message ApiInfo {
     string method = 6;
     string return = 7;
     repeated OperStep flows = 8;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+message SymbolID {
+    string symbol = 1;
+}
+
+message Link {
+    int64 id = 1;
+    string symbol = 2;
+    string modelName1 = 3;
+    int32 modelNumber1 = 4[(gogoproto.jsontag) = 'modelNumber1'];
+    string modelName2 = 5;
+    int32 modelNumber2 = 6[(gogoproto.jsontag) = 'modelNumber2'];
+}
+
+message LinkArray {
+    repeated Link links = 1;
 }

@@ -53,6 +53,117 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/links.deleteBySymbol": {
+            "post": {
+                "summary": "/backend-dashboard/backend/links.deleteBySymbol",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Link"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.SymbolID"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/links.insert": {
+            "post": {
+                "summary": "/backend-dashboard/backend/links.insert",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Link"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Link"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/links.selectAll": {
+            "post": {
+                "summary": "/backend-dashboard/backend/links.selectAll",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.LinkArray"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/models.delete": {
             "post": {
                 "summary": "/backend-dashboard/backend/models.delete",
@@ -261,6 +372,40 @@
                 }
             }
         },
+        ".backend.manager.service.v1.Link": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "modelName1": {
+                    "type": "string"
+                },
+                "modelNumber1": {
+                    "type": "integer"
+                },
+                "modelName2": {
+                    "type": "string"
+                },
+                "modelNumber2": {
+                    "type": "integer"
+                }
+            }
+        },
+        ".backend.manager.service.v1.LinkArray": {
+            "type": "object",
+            "properties": {
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.Link"
+                    }
+                }
+            }
+        },
         ".backend.manager.service.v1.Model": {
             "type": "object",
             "properties": {
@@ -322,6 +467,14 @@
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.SymbolID": {
+            "type": "object",
+            "properties": {
+                "symbol": {
                     "type": "string"
                 }
             }

@@ -63,6 +63,8 @@ func New() (s *Service) {
 		panic(err)
 	} else if err := s.dao.CreateTx(tx, model.MODELS_TABLE, reflect.TypeOf((*pb.Model)(nil)).Elem()); err != nil {
 		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.LINKS_TABLE, reflect.TypeOf((*pb.Link)(nil)).Elem()); err != nil {
+		panic(err)
 	} else if err := s.dao.CreateTx(tx, model.API_INFO_TABLE, reflect.TypeOf((*struct {
 		Name   string `orm:",PRIMARY_KEY|UNIQUE_KEY"`
 		Model  string
@@ -258,6 +260,34 @@ func (s *Service) ModelsSelectAll(ctx context.Context, req *pb.Empty) (*pb.Model
 }
 
 func (s *Service) ModelsSelectByName(context.Context, *pb.NameID) (*pb.Model, error) {
+	// TODO:
+	return nil, nil
+}
+
+func (s *Service) LinkInsert(ctx context.Context, req *pb.Link) (*pb.Link, error) {
+	if bm, err := json.Marshal(req); err != nil {
+		return nil, fmt.Errorf("转JSON失败：%v", err)
+	} else if mm, err := utils.UnmarshalJSON(bm, reflect.TypeOf((*map[string]interface{})(nil)).Elem()); err != nil {
+		return nil, fmt.Errorf("提交的请求参数格式有误：%v", err)
+	} else if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if id, err := s.dao.InsertTx(tx, model.LINKS_TABLE, *(mm.(*map[string]interface{}))); err != nil {
+		return nil, fmt.Errorf("插入数据库失败：%v", err)
+	} else if err := s.dao.CommitTx(tx); err != nil {
+		return nil, fmt.Errorf("提交插入事务失败：%v", err)
+	} else {
+		req.Id = id
+		return req, nil
+	}
+	return nil, nil
+}
+
+func (s *Service) LinkSelectAll(context.Context, *pb.Empty) (*pb.LinkArray, error) {
+	// TODO:
+	return nil, nil
+}
+
+func (s *Service) LinksDeleteBySymbol(context.Context, *pb.SymbolID) (*pb.Link, error) {
 	// TODO:
 	return nil, nil
 }
