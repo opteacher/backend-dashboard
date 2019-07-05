@@ -14,10 +14,7 @@ export default {
     },
     async qry() {
         try {
-            return await axios.post(`${config.url}/backend-dashboard/backend/relations`, {
-                method: "select",
-                params: ["", []]
-            })
+            return await axios.post(`${config.url}/backend-dashboard/backend/links.selectAll`)
         } catch(e) {
             return utils.getErrorMsg(e)
         }

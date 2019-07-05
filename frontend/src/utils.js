@@ -7,5 +7,8 @@ export default {
         } else {
             return null
         }
+    },
+    between(n, a, b) {
+        return n <= Math.max(a, b) && n >= Math.min(a, b)
     }
 }

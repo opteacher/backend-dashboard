@@ -43,13 +43,33 @@ func ToPlural(word string) string {
 func CamelToPascal(word string) string {
 	str := ""
 	for _, w := range word {
-		if w >= 65 && w <= 90 {
+		if w >= 'A' && w <= 'Z' {
 			str += fmt.Sprintf("_%s", string(w+32))
 		} else {
 			str += string(w)
 		}
 	}
 	str = strings.TrimLeft(str, "_")
+	return str
+}
+
+func PascalToCamel(word string) string {
+	str := ""
+	flag := false
+	for _, w := range word {
+		if w == '_' {
+			flag = true
+		} else if flag {
+			flag = false
+			if w >= 'a' && w <= 'z' {
+				str += string(w-32)
+			} else {
+				str += string(w)
+			}
+		} else {
+			str += string(w)
+		}
+	}
 	return str
 }
 
@@ -62,6 +82,14 @@ func Md5Hex(str string) string {
 func Capital(str string) string {
 	if str[0] >= 'a' && str[0] <= 'z' {
 		return string(str[0]-32) + str[1:]
+	} else {
+		return str
+	}
+}
+
+func Uncapital(str string) string {
+	if str[0] >= 'A' && str[0] <= 'Z' {
+		return string(str[0]+32) + str[1:]
 	} else {
 		return str
 	}

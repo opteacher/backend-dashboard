@@ -98,11 +98,23 @@ message ModelArray {
     repeated Model models = 1;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 message ExpOptions {
     string name = 1;
     string type = 2;
     string routePrefix = 3;
     bool isMicoServ = 4;
+    Database database = 5;
+}
+
+message Database {
+    string type = 1;
+    string name = 2;
+    string host = 3;
+    string port = 4;
+    string username = 5;
+    string password = 6;
 }
 
 message UrlResp {
@@ -138,7 +150,7 @@ message SymbolID {
 
 message Link {
     int64 id = 1;
-    string symbol = 2;
+    string symbol = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY|UNIQUE_KEY"'];
     string modelName1 = 3;
     int32 modelNumber1 = 4[(gogoproto.jsontag) = 'modelNumber1'];
     string modelName2 = 5;

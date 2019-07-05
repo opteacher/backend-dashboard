@@ -285,6 +285,9 @@ func (d *Dao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []inter
 		return nil, err
 	} else if ftmapper := chkExistsMapper(table); len(ftmapper) == 0 {
 		// 检查是否有外联属性，没有正常返回
+		for idx, entry := range entries {
+			entries[idx] = FixQueryResult(entry)
+		}
 		return entries, nil
 	} else {
 		// 有外联属性，逐个记录分解
@@ -605,6 +608,13 @@ func FixQueryResult(result map[string]interface{}) map[string]interface{} {
 	// 子集合字段中，集合项和子字段名重合（无视单复数）；则直接用该同名集合项字段代替子集合项
 	// e.g: "methods":[{"id":13,"method":"PUT","model_id":8},...  => "methods":["PUT",...
 	for fname, fvalue := range result {
+		// 修改查询结果的字段名字，下划线分隔改为驼峰命名
+		dname := fname
+		fname = utils.PascalToCamel(fname)
+		if dname != fname {
+			result[fname] = fvalue
+			delete(result, dname)
+		}
 		if reflect.TypeOf(fvalue).Kind() != reflect.Slice {
 			continue
 		}
@@ -612,11 +622,11 @@ func FixQueryResult(result map[string]interface{}) map[string]interface{} {
 		field := fvalue.([]map[string]interface{})
 		for idx, element := range field {
 			for sfname, sfvalue := range element {
-				// NOTE: 结果会删除id和以_id结尾的集合子字段，注意命名！
+				// NOTE: 结果会删除id和以Id结尾的集合子字段，注意命名！
 				if sfname == "id" {
 					delete(element, sfname)
 				}
-				if strings.Contains(sfname, "_id") {
+				if sfname[len(sfname)-2:] == "Id" {
 					delete(element, sfname)
 				}
 				if utils.ToPlural(sfname) == fname {
@@ -644,7 +654,7 @@ func ConvertQueryResultToObj(rmap []map[string]interface{}, tgtTyp reflect.Type)
 	fmap := make(map[string]string)
 	for i := 0; i < tgtTyp.NumField(); i++ {
 		field := tgtTyp.Field(i)
-		mkey := utils.CamelToPascal(field.Name)
+		mkey := utils.Uncapital(field.Name)
 		if _, exs := tstEle[mkey]; exs {
 			fmap[mkey] = field.Name
 		}

@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api.proto",
+        "title": "backend/api/api.proto",
         "version": "1"
     },
     "schemes": [
@@ -351,6 +351,29 @@
         }
     },
     "definitions": {
+        ".backend.manager.service.v1.Database": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         ".backend.manager.service.v1.Empty": {
             "type": "object",
             "properties": {}
@@ -369,6 +392,9 @@
                 },
                 "isMicoServ": {
                     "type": "boolean"
+                },
+                "database": {
+                    "$ref": "#/definitions/.backend.manager.service.v1.Database"
                 }
             }
         },

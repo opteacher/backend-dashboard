@@ -35,11 +35,10 @@ type Service struct {
 	}
 	dao       *dao.Dao
 	operSteps []pb.OperStep
-	info struct{
-		projName string
+	info      struct {
+		option   *pb.ExpOptions
 		pathName string
-		pkgName string
-		isMicoSv bool
+		pkgName  string
 	}
 }
 
@@ -157,7 +156,7 @@ func (s *Service) initOperSteps(tx *sql.Tx) error {
 		"desc":     "做数据库查询操作（事务）",
 		"inputs":   "TABLE_NAME:,QUERY_CONDS:,QUERY_ARGUS:",
 		"outputs":  "res",
-		"code":     "res, err := s.dao.QueryTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
+		"code":     "res, err := s.dao.QueryTx(tx, \"%TABLE_NAME%\", \"%QUERY_CONDS%\", %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
 	}); err != nil {
 		return err
 	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
@@ -165,14 +164,14 @@ func (s *Service) initOperSteps(tx *sql.Tx) error {
 		"desc":     "做数据库查询操作（会话）",
 		"inputs":   "TABLE_NAME:,QUERY_CONDS:,QUERY_ARGUS:",
 		"outputs":  "res",
-		"code":     "res, err := s.dao.Query(ctx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
+		"code":     "res, err := s.dao.Query(ctx, \"%TABLE_NAME%\", \"%QUERY_CONDS%\", %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
 	}); err != nil {
 		return err
 	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
 		"oper_key": "database_deleteTx",
 		"desc":     "做数据库删除操作",
 		"inputs":   "TABLE_NAME:,QUERY_CONDS:,QUERY_ARGUS:",
-		"code":     "_, err := s.dao.DeleteTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n",
+		"code":     "_, err := s.dao.DeleteTx(tx, \"%TABLE_NAME%\", \"%QUERY_CONDS%\", %QUERY_ARGUS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n",
 	}); err != nil {
 		return err
 	} else if _, err := s.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
@@ -180,7 +179,7 @@ func (s *Service) initOperSteps(tx *sql.Tx) error {
 		"desc":     "做数据库更新操作",
 		"inputs":   "TABLE_NAME:,QUERY_CONDS:,QUERY_ARGUS:,OBJ_MAP:",
 		"outputs":  "id",
-		"code":     "id, err := s.dao.SaveTx(tx, \"%TABLE_NAME%\", %QUERY_CONDS%, %QUERY_ARGUS%, %OBJ_MAP%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n",
+		"code":     "id, err := s.dao.SaveTx(tx, \"%TABLE_NAME%\", \"%QUERY_CONDS%\", %QUERY_ARGUS%, %OBJ_MAP%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n",
 	}); err != nil {
 		return err
 	} else {
@@ -282,9 +281,22 @@ func (s *Service) LinkInsert(ctx context.Context, req *pb.Link) (*pb.Link, error
 	return nil, nil
 }
 
-func (s *Service) LinkSelectAll(context.Context, *pb.Empty) (*pb.LinkArray, error) {
-	// TODO:
-	return nil, nil
+func (s *Service) LinkSelectAll(ctx context.Context, req *pb.Empty) (*pb.LinkArray, error) {
+	if res, err := s.dao.Query(ctx, model.LINKS_TABLE, "", []interface{}{}); err != nil {
+		return nil, fmt.Errorf("查询数据库失败：%v", err)
+	} else {
+		resp := new(pb.LinkArray)
+		for _, entry := range res {
+			if bdata, err := json.Marshal(entry); err != nil {
+				return nil, fmt.Errorf("转JSON字节码失败：%v", err)
+			} else if mdl, err := utils.UnmarshalJSON(bdata, reflect.TypeOf((*pb.Link)(nil)).Elem()); err != nil {
+				return nil, fmt.Errorf("转Model对象失败：%v", err)
+			} else {
+				resp.Links = append(resp.Links, mdl.(*pb.Link))
+			}
+		}
+		return resp, nil
+	}
 }
 
 func (s *Service) LinksDeleteBySymbol(context.Context, *pb.SymbolID) (*pb.Link, error) {
@@ -293,13 +305,13 @@ func (s *Service) LinksDeleteBySymbol(context.Context, *pb.SymbolID) (*pb.Link, 
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {
-	if s.info.isMicoSv = req.IsMicoServ; false {
+	if s.info.option = req; false {
 		return nil, nil
-	} else if s.info.projName = strings.TrimRight(req.Name, ".zip"); false {
+	} else if s.info.option.Name = strings.TrimRight(s.info.option.Name, ".zip"); false {
 		return nil, nil
-	} else if s.info.projName = strings.TrimRight(s.info.projName, ".ZIP"); false {
+	} else if s.info.option.Name = strings.TrimRight(s.info.option.Name, ".ZIP"); false {
 		return nil, nil
-	} else if s.info.pkgName = utils.CamelToPascal(s.info.projName); false {
+	} else if s.info.pkgName = utils.CamelToPascal(s.info.option.Name); false {
 		return nil, nil
 	} else if wsPath, err := s.ac.Get("workspace").String(); err != nil {
 		return nil, fmt.Errorf("配置文件中未定义工作区目录：%v", err)
@@ -343,6 +355,8 @@ func (s *Service) editProject(ctx context.Context) error {
 		return fmt.Errorf("读取服务流程项目失败：%v", err)
 	} else if apis, err := s.genKratosProtoFile(ctx); err != nil {
 		return fmt.Errorf("生成Proto文件失败：%v", err)
+	} else if err := s.chgKratosConfig(ctx); err != nil {
+		return fmt.Errorf("修改配置文件失败：%v", err)
 	} else if err := s.chgKratosServiceFile(ctx, apis); err != nil {
 		return fmt.Errorf("修改Service文件失败：%v", err)
 	} else if err := s.switchKratosMicoServ(ctx); err != nil {
@@ -353,20 +367,74 @@ func (s *Service) editProject(ctx context.Context) error {
 	return nil
 }
 
+func (s *Service) chgKratosConfig(ctx context.Context) error {
+	// 修改configs/application.toml
+	appCfgPath := path.Join(s.info.pathName, "configs", "application.toml")
+	if err := utils.InsertTxt(appCfgPath, func(line string, doProc *bool) (string, bool, error) {
+		if strings.Contains(line, "appID") {
+			if s.info.option.IsMicoServ {
+				return fmt.Sprintf("appID = \"%s.service\"", s.info.pkgName), false, nil
+			} else {
+				return "", false, nil
+			}
+		}
+		if strings.Contains(line, "swaggerFile") {
+			if s.info.option.IsMicoServ {
+				return strings.Replace(line, "template", s.info.option.Name, -1), false, nil
+			} else {
+				return "", false, nil
+			}
+		}
+		return line, false, nil
+	}); err != nil {
+		return err
+	}
+	// 修改configs/mysql.toml
+	if len(s.info.option.Database.Type) != 0 {
+		switch s.info.option.Database.Type {
+		case "mysql":
+			mysqlCfgPath := path.Join(s.info.pathName, "configs", "mysql.toml")
+			if err := utils.InsertTxt(mysqlCfgPath, func(line string, doProc *bool) (string, bool, error) {
+				if strings.Contains(line, "{user}") {
+					line = strings.Replace(line, "{user}", s.info.option.Database.Username, -1)
+				}
+				if strings.Contains(line, "{password}") {
+					line = strings.Replace(line, "{password}", s.info.option.Database.Password, -1)
+				}
+				if strings.Contains(line, "{host}") {
+					line = strings.Replace(line, "{host}", s.info.option.Database.Host, -1)
+				}
+				if strings.Contains(line, "{port}") {
+					line = strings.Replace(line, "{port}", s.info.option.Database.Port, -1)
+				}
+				if strings.Contains(line, "{database}") {
+					line = strings.Replace(line, "{database}", s.info.option.Database.Name, -1)
+				}
+				return line, false, nil
+			}); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("目前暂时不支持出MySQL以外的数据源系统，%s", s.info.option.Database.Type)
+		}
+	}
+	return nil
+}
+
 func (s *Service) adjServerFile(pathName string, regSvr string, regSvc string) error {
 	fpath := path.Join(s.info.pathName, "internal", "server", pathName, "server.go")
 	if err := utils.InsertTxt(fpath, func(line string, doProc *bool) (string, bool, error) {
 		if !*doProc {
 			return line, false, nil
 		}
-		if strings.Contains(line, "svr \"") && !s.info.isMicoSv {
+		if strings.Contains(line, "svr \"") && !s.info.option.IsMicoServ {
 			return "", false, nil
 		} else if strings.Contains(line, fmt.Sprintf("pb.%s", regSvr)) {
-			regName := fmt.Sprintf("Register%sServer", utils.Capital(s.info.projName))
+			regName := fmt.Sprintf("Register%sServer", utils.Capital(s.info.option.Name))
 			return strings.Replace(line, regSvr, regName, -1), false, nil
 		} else if strings.Contains(line, fmt.Sprintf("func %s", regSvc)) {
-			*doProc = s.info.isMicoSv
-		} else if strings.Contains(line, regSvc) && !s.info.isMicoSv {
+			*doProc = s.info.option.IsMicoServ
+		} else if strings.Contains(line, regSvc) && !s.info.option.IsMicoServ {
 			return "", false, nil
 		}
 		return line, false, nil
@@ -377,8 +445,19 @@ func (s *Service) adjServerFile(pathName string, regSvr string, regSvc string) e
 }
 
 func (s *Service) switchKratosMicoServ(ctx context.Context) error {
+	// 调整cmd/main.go
+	if !s.info.option.IsMicoServ {
+		if err := utils.InsertTxt(path.Join(s.info.pathName, "cmd", "main.go"), func(line string, doProc *bool) (string, bool, error) {
+			if strings.Contains(line, "resolver") || strings.Contains(line, "discovery") {
+				return "", false, nil
+			}
+			return line, false, nil
+		}); err != nil {
+			return err
+		}
+	}
 	// 删除api/register.*
-	if !s.info.isMicoSv {
+	if !s.info.option.IsMicoServ {
 		for _, p := range []string{
 			path.Join(s.info.pathName, "api", "register.proto"),
 			path.Join(s.info.pathName, "api", "register.bm.go"),
@@ -391,7 +470,7 @@ func (s *Service) switchKratosMicoServ(ctx context.Context) error {
 		}
 	}
 	// 删除internal/server/common.go
-	if !s.info.isMicoSv {
+	if !s.info.option.IsMicoServ {
 		if err := os.Remove(path.Join(s.info.pathName, "internal", "server", "common.go")); err != nil {
 			return err
 		}
@@ -413,7 +492,7 @@ func (s *Service) chgKratosProjName(ctx context.Context) error {
 		path.Join(s.info.pathName, "internal", "server", "grpc", "server.go"),
 		path.Join(s.info.pathName, "internal", "server", "http", "server.go"),
 	}
-	if s.info.isMicoSv {
+	if s.info.option.IsMicoServ {
 		fixLst = append(fixLst, path.Join(s.info.pathName, "internal", "server", "common.go"))
 	}
 	impPkg := fmt.Sprintf("\"%s/", s.info.pkgName)
@@ -492,7 +571,7 @@ func (s *Service) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, error)
 			modelApi := &pb.ApiInfo{
 				Name:   fmt.Sprintf("%s%s", aname, mname),
 				Model:  "pb." + mname,
-				Table: utils.ToPlural(utils.CamelToPascal(mname)),
+				Table:  utils.ToPlural(utils.CamelToPascal(mname)),
 				Params: make(map[string]string),
 				Route:  fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
 				Method: strings.ToLower(m),
@@ -509,7 +588,7 @@ func (s *Service) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, error)
 					}),
 					s.copyStep("json_unmarshal", map[string]interface{}{
 						"Inputs": map[string]string{
-							"PACKAGE":  s.info.projName,
+							"PACKAGE":  s.info.option.Name,
 							"OBJ_TYPE": modelApi.Model,
 						},
 					}),
@@ -582,7 +661,7 @@ func (s *Service) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, error)
 					}),
 					s.copyStep("json_unmarshal", map[string]interface{}{
 						"Inputs": map[string]string{
-							"PACKAGE":  s.info.projName,
+							"PACKAGE":  s.info.option.Name,
 							"OBJ_TYPE": modelApi.Model,
 						},
 					}),
@@ -592,7 +671,7 @@ func (s *Service) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, error)
 							"TABLE_NAME":  modelApi.Table,
 							"QUERY_CONDS": "`id`=?",
 							"QUERY_ARGUS": "iden.Id",
-							"OBJ_MAP": "omap",
+							"OBJ_MAP":     "omap",
 						},
 					}),
 					s.copyStep("database_queryTx", map[string]interface{}{
@@ -650,13 +729,40 @@ func (s *Service) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, error)
 				modelApi.Method = "get"
 				modelApi.Params["params"] = "Nil"
 				modelApi.Return = modelApi.Model
+				/*
+					if res, err := s.dao.Query(ctx, model.MODELS_TABLE, "", []interface{}{}); err != nil {
+						return nil, fmt.Errorf("查询数据库失败：%v", err)
+					} else {
+						resp := new(pb.ModelArray)
+						for _, entry := range res {
+							if bdata, err := json.Marshal(entry); err != nil {
+								return nil, fmt.Errorf("转JSON字节码失败：%v", err)
+							} else if mdl, err := utils.UnmarshalJSON(bdata, reflect.TypeOf((*pb.Model)(nil)).Elem()); err != nil {
+								return nil, fmt.Errorf("转Model对象失败：%v", err)
+							} else {
+								resp.Models = append(resp.Models, mdl.(*pb.Model))
+							}
+						}
+						return resp, nil
+					}
+				*/
+				modelApi.Flows = []*pb.OperStep{
+					s.copyStep("database_query", map[string]interface{}{
+						"Inputs": map[string]string{
+							"TABLE_NAME":  modelApi.Table,
+							"QUERY_CONDS": "\"\"",
+							"QUERY_ARGUS": "nil",
+						},
+						// @_@
+					}),
+				}
 			}
 			modelApis = append(modelApis, modelApi)
 		}
 	}
 
 	if len(modelApis) != 0 {
-		code += fmt.Sprintf("service %s {\n", utils.Capital(s.info.projName))
+		code += fmt.Sprintf("service %s {\n", utils.Capital(s.info.option.Name))
 	}
 	for _, api := range modelApis {
 		sparams := ""
