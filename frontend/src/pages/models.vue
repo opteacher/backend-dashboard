@@ -1,31 +1,32 @@
 <template>
-    <div class="w-100 h-100">
-        <tool-bar @add-model="addModel" @add-link="addLink" :models="models"/>
-        <div id="pnlModels" class="w-100 h-100" style="position: absolute"></div>
-        <svg id="pnlGraphs" class="w-100 h-100" style="position: absolute; z-index: -100" />
-    </div>
+<dashboard>
+    <tool-bar @add-model="addModel" @add-link="addLink" :models="models"/>
+    <div id="pnlModels" class="w-100 h-100" style="position: absolute"></div>
+    <svg id="pnlGraphs" class="w-100 h-100" style="position: absolute; z-index: -100" />
+</dashboard>
 </template>
 
 <script>
-    import toolBar from "../components/toolBar"
-    import modelBkd from "../async/model"
-    import linkBkd from "../async/link"
-    import utils from "../utils"
+import utils from "../utils"
+import dashboard from "../layouts/dashboard"
+import toolBar from "../components/toolBar"
+import modelBkd from "../async/model"
+import linkBkd from "../async/link"
 
-    export default {
+export default {
         components: {
+            "dashboard": dashboard,
             "tool-bar": toolBar,
         },
         data() {
             return {
-                inited: false,
                 models: [],
                 links: []
             }
         },
-        created() {
-            this.queryModels()
-            this.queryLinks()
+        async created() {
+            await this.queryModels()
+            await this.queryLinks()
         },
         watch: {
             models() {
@@ -219,3 +220,11 @@
         },
     }
 </script>
+
+<style lang="scss">
+.models-panel {
+    position: relative;
+    height: 100%;
+}
+</style>
+

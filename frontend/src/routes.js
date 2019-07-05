@@ -1,9 +1,13 @@
-import home from "./pages/home.vue"
+import models from "./pages/models.vue"
+import services from "./pages/services.vue"
 
 export default [{
     path: "/",
-    redirect: "/backend-dashboard/frontend"
+    redirect: "/backend-dashboard/frontend/models"
 }, {
-    path: "/backend-dashboard/frontend",
-    component: home
+    path: "/backend-dashboard/frontend/models",
+    component: models
+}, {
+    path: "/backend-dashboard/frontend/services",
+    component: services
 }]
