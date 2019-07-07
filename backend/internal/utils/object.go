@@ -53,6 +53,9 @@ func FillWithMap(obj interface{}, mp map[string]interface{}) interface{} {
 
 // NOTE: 返回的是src类型的指针
 func Copy(src interface{}) (interface{}, error) {
+	if reflect.TypeOf(src).Kind() == reflect.Ptr {
+		src = reflect.ValueOf(src).Elem().Interface()
+	}
 	if bytes, err := json.Marshal(src); err != nil {
 		return nil, err
 	} else if tgt, err := UnmarshalJSON(bytes, reflect.TypeOf(src)); err != nil {

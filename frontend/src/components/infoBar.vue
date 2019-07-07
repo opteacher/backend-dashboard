@@ -4,39 +4,39 @@
         <el-button class="p-7" plain icon="el-icon-arrow-left" size="mini"/>
     </el-col>
     <el-col class="p-10" :span="22">
-        <el-dropdown size="mini" split-button type="primary">
-            超小尺寸
-            <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item>黄金糕</el-dropdown-item>
-                <el-dropdown-item>狮子头</el-dropdown-item>
-                <el-dropdown-item>螺蛳粉</el-dropdown-item>
-                <el-dropdown-item>双皮奶</el-dropdown-item>
-                <el-dropdown-item>蚵仔煎</el-dropdown-item>
-            </el-dropdown-menu>
-        </el-dropdown>
+        <el-button-group class="p-0">
+            <el-button class="p-7" type="primary" icon="el-icon-menu" size="mini" @click="showSelItfDlg = true"/>
+        </el-button-group>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
     </el-col>
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <el-dialog title="选择接口" :visible.sync="showSelItfDlg" :modal-append-to-body="false" width="40vw">
+        <sel-interface ref="sel-itf-form"/>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="showSelItfDlg = false">取 消</el-button>
+            <el-button type="primary">确 定</el-button>
+        </div>
+    </el-dialog>
 </el-row>
 </template>
 
 <script>
-import modelBkd from "../async/model"
+import apisBkd from "../async/api"
+import selInterface from "../forms/selInterface"
 
 export default {
+    components: {
+        "sel-interface": selInterface
+    },
     data() {
         return {
-
+            showSelItfDlg: false
         }
     },
-    created() {
-        let res = await modelBkd.qry()
-        if (typeof res === "string") {
-            this.$message(`查询模块失败：${res}`)
-        } else {
-            this.models = (res.data.data && res.data.data.models) || []
-        }
+    async created() {
+        console.log(await apisBkd.qry())
     }
 }
 </script>

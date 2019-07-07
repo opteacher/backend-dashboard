@@ -39,13 +39,13 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc LinkInsert(Link) returns (Link) {
+    rpc LinksInsert(Link) returns (Link) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/links.insert"
             body: "*"
         };
     };
-    rpc LinkSelectAll(Empty) returns (LinkArray) {
+    rpc LinksSelectAll(Empty) returns (LinkArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/links.selectAll"
         };
@@ -54,6 +54,11 @@ service BackendManager {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/links.deleteBySymbol"
             body: "*"
+        };
+    };
+    rpc ApisSelectAll(Empty) returns (ApiInfoArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/apis.selectAll"
         };
     };
     rpc Export(ExpOptions) returns (UrlResp) {
@@ -128,7 +133,11 @@ message OperStep {
     string desc = 3;
     map<string,string> inputs = 4;
     repeated string outputs = 5;
-    string code = 6;
+    // 控制着块流程：当遇到blockIn为true的时候，会在添加完该step的code之后，再添加一个块段落，
+    // 之后的steps在没有遇到blockOut为true的时候都写在这个段落中，NOTE：blockOut为true的step写在段落外
+    bool blockIn = 6;
+    bool blockOut = 7;
+    string code = 8;
 }
 
 message ApiInfo {
@@ -140,6 +149,10 @@ message ApiInfo {
     string method = 6;
     string return = 7;
     repeated OperStep flows = 8;
+}
+
+message ApiInfoArray {
+    repeated ApiInfo infos = 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

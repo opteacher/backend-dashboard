@@ -92,6 +92,7 @@ var typeMap = map[reflect.Kind]string{
 	reflect.Int64:  "INT(11)",
 	reflect.Int:    "INT",
 	reflect.Uint8:  "INT",
+	reflect.Bool:   "BOOLEAN",
 }
 
 var ModelMap = make(map[string]reflect.Type)
@@ -642,56 +643,4 @@ func FixQueryResult(result map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return result
-}
-
-func ConvertQueryResultToObj(rmap []map[string]interface{}, tgtTyp reflect.Type) (interface{}, error) {
-	ret := reflect.MakeSlice(reflect.SliceOf(tgtTyp), len(rmap), len(rmap))
-	if len(rmap) == 0 {
-		return ret.Interface(), nil
-	}
-	// 挑出存在于目标对象的属性分量
-	tstEle := rmap[0]
-	fmap := make(map[string]string)
-	for i := 0; i < tgtTyp.NumField(); i++ {
-		field := tgtTyp.Field(i)
-		mkey := utils.Uncapital(field.Name)
-		if _, exs := tstEle[mkey]; exs {
-			fmap[mkey] = field.Name
-		}
-	}
-	// 从map填充进对象
-	for i, mele := range rmap {
-		oele := ret.Index(i)
-		for mfname, ofname := range fmap {
-			ofield := oele.FieldByName(ofname)
-			mfield := reflect.ValueOf(mele[mfname])
-			ofkind := ofield.Type().Kind()
-			mfkind := mfield.Type().Kind()
-			if ofkind == mfkind {
-				ofield.Set(mfield)
-			} else if mfkind == reflect.String {
-				str := mfield.String()
-				if len(str) == 0 {
-					continue
-				}
-				switch ofkind {
-				case reflect.Map:
-					kvs := strings.Split(str, ",")
-					mapstr := make(map[string]string)
-					for _, kv := range kvs {
-						kvAry := strings.Split(kv, ":")
-						mapstr[kvAry[0]] = kvAry[1]
-					}
-					mfield = reflect.ValueOf(mapstr)
-					ofield.Set(mfield)
-				case reflect.Array:
-					fallthrough
-				case reflect.Slice:
-					mfield = reflect.ValueOf(strings.Split(str, ","))
-					ofield.Set(mfield)
-				}
-			}
-		}
-	}
-	return ret.Interface(), nil
 }

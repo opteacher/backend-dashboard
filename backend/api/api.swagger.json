@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "backend/api/api.proto",
+        "title": "api.proto",
         "version": "1"
     },
     "schemes": [
@@ -16,6 +16,43 @@
         "application/json"
     ],
     "paths": {
+        "/backend-dashboard/backend/apis.selectAll": {
+            "post": {
+                "summary": "/backend-dashboard/backend/apis.selectAll",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.ApiInfoArray"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/export": {
             "post": {
                 "summary": "/backend-dashboard/backend/export",
@@ -351,6 +388,52 @@
         }
     },
     "definitions": {
+        ".backend.manager.service.v1.ApiInfo": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "table": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "route": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "return": {
+                    "type": "string"
+                },
+                "flows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
+                    }
+                }
+            }
+        },
+        ".backend.manager.service.v1.ApiInfoArray": {
+            "type": "object",
+            "properties": {
+                "infos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                    }
+                }
+            }
+        },
         ".backend.manager.service.v1.Database": {
             "type": "object",
             "properties": {
@@ -485,6 +568,46 @@
                     "type": "string"
                 }
             }
+        },
+        ".backend.manager.service.v1.OperStep": {
+            "type": "object",
+            "properties": {
+                "operKey": {
+                    "type": "string"
+                },
+                "requires": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "blockIn": {
+                    "type": "boolean",
+                    "description": "控制着块流程：当遇到blockIn为true的时候，会在添加完该step的code之后，再添加一个块段落，\n 之后的steps在没有遇到blockOut为true的时候都写在这个段落中，NOTE：blockOut为true的step写在段落外"
+                },
+                "blockOut": {
+                    "type": "boolean"
+                },
+                "code": {
+                    "type": "string"
+                }
+            },
+            "description": "所有事务流都是函数调用，而且所有的函数返回值都是err结尾"
         },
         ".backend.manager.service.v1.Prop": {
             "type": "object",
