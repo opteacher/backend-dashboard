@@ -3,19 +3,19 @@ package service
 import (
 	"context"
 	"crypto/md5"
-	"reflect"
-	"time"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
+	"reflect"
+	"time"
 
 	pb "backend/api"
 	"backend/internal/dao"
 	"backend/internal/model"
 	"backend/internal/server"
 	"backend/internal/utils"
-	
+
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 )
 
@@ -25,7 +25,7 @@ type Service struct {
 	cc struct {
 		Qiniu *utils.StorageConfig
 	}
-	dao *dao.Dao
+	dao      *dao.Dao
 	gbuilder *ProjGenBuilder
 }
 
@@ -79,6 +79,10 @@ func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, e
 		return nil, fmt.Errorf("开启事务失败：%v", err)
 	} else if id, err := s.dao.InsertTx(tx, model.MODELS_TABLE, mm); err != nil {
 		return nil, fmt.Errorf("插入数据库失败：%v", err)
+	} else if mm, err = s.dao.QueryTxByID(tx, model.MODELS_TABLE, id); err != nil {
+		return nil, fmt.Errorf("查询记录：%d失败：%v", id, err)
+	} else if _, err := GenModelApiInfo(s.dao, tx, mm, nil); err != nil {
+		return nil, fmt.Errorf("生成模块接口失败：%v", err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
 		return nil, fmt.Errorf("提交插入事务失败：%v", err)
 	} else {
@@ -190,7 +194,11 @@ func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfo
 				resp.Infos = append(resp.Infos, api)
 			}
 		}
-		return resp, nil
+		if err := s.dao.CommitTx(tx); err != nil {
+			return nil, fmt.Errorf("提交事务失败：%v", err)
+		} else {
+			return resp, nil
+		}
 	}
 }
 

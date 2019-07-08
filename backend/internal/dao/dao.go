@@ -135,7 +135,11 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 						indexes = append(indexes, fname)
 					case str == "NOT_NULL":
 						fattr += "NOT NULL "
-					case str[0:11] == "FOREIGN_KEY":
+					case str[:7] == "DEFAULT":
+						pattern := regexp.MustCompile(`\(.+\)`)
+						str := strings.Trim(pattern.FindString(str[7:]), "()")
+						fattr += fmt.Sprintf("DEFAULT %s ", str)
+					case str[:11] == "FOREIGN_KEY":
 						pattern := regexp.MustCompile(`(\w+)\.(\w+)`)
 						fkpair := pattern.FindStringSubmatch(str[11:])
 						fkeys[fname] = fmt.Sprintf("`%s`(`%s`)", fkpair[1], fkpair[2])
@@ -610,12 +614,13 @@ func FixQueryResult(result map[string]interface{}) map[string]interface{} {
 	// e.g: "methods":[{"id":13,"method":"PUT","model_id":8},...  => "methods":["PUT",...
 	for fname, fvalue := range result {
 		// 修改查询结果的字段名字，下划线分隔改为驼峰命名
-		dname := fname
-		fname = utils.PascalToCamel(fname)
-		if dname != fname {
-			result[fname] = fvalue
-			delete(result, dname)
-		}
+		// NOTE: 放到前端处理
+		// dname := fname
+		// fname = utils.PascalToCamel(fname)
+		// if dname != fname {
+		// 	result[fname] = fvalue
+		// 	delete(result, dname)
+		// }
 		if reflect.TypeOf(fvalue).Kind() != reflect.Slice {
 			continue
 		}

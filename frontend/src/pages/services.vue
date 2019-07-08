@@ -1,6 +1,6 @@
 <template>
 <dashboard>
-    <info-bar/>
+    <info-bar @sel-interface="selInterface"/>
 </dashboard>
 </template>
 
@@ -13,5 +13,10 @@ export default {
         "dashboard": dashboard,
         "info-bar": infoBar
     },
+    methods: {
+        selInterface(selItf) {
+            console.log(selItf)
+        }
+    }
 }
 </script>

@@ -5,7 +5,10 @@
     </el-col>
     <el-col class="p-10" :span="22">
         <el-button-group class="p-0">
-            <el-button class="p-7" type="primary" icon="el-icon-menu" size="mini" @click="showSelItfDlg = true"/>
+            <el-input class="input-with-select" placeholder="未选定接口" v-model="selItf.name" size="mini" disabled>
+                <el-button class="p-7" icon="el-icon-menu" size="mini" slot="prepend" @click="showSelItfDlg = true"/>
+                <el-button class="p-7" icon="el-icon-warning" size="mini" slot="append" :disabled="selItf.name.length === 0" @click="showItfInfo"/>
+            </el-input>
         </el-button-group>
     </el-col>
     <el-col class="p-10" :span="1">
@@ -16,14 +19,15 @@
         <sel-interface ref="sel-itf-form"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showSelItfDlg = false">取 消</el-button>
-            <el-button type="primary">确 定</el-button>
+            <el-button type="primary" @click="selInterface">确 定</el-button>
         </div>
     </el-dialog>
 </el-row>
 </template>
 
 <script>
-import apisBkd from "../async/api"
+import _ from "lodash"
+
 import selInterface from "../forms/selInterface"
 
 export default {
@@ -32,11 +36,48 @@ export default {
     },
     data() {
         return {
-            showSelItfDlg: false
+            showSelItfDlg: false,
+            selItf: {
+                name: ""
+            }
         }
     },
-    async created() {
-        console.log(await apisBkd.qry())
+    methods: {
+        selInterface() {
+            let selItf = this.$refs["sel-itf-form"].selItf
+            if (selItf) {
+                this.selItf = _.clone(selItf)
+                this.$emit("sel-interface", selItf)
+            }
+            this.showSelItfDlg = false
+        },
+        showItfInfo() {
+            const h = this.$createElement
+            this.$msgbox({
+                title: "接口信息",
+                message: h("dl", {"class": "row"}, [
+                    h("dt", {"class": "col-sm-3"}, "接口名"),
+                    h("dd", {"class": "col-sm-9"}, this.selItf.name),
+                    h("dt", {"class": "col-sm-3"}, "所属模块"),
+                    h("dd", {"class": "col-sm-9"}, this.selItf.model),
+                    h("dt", {"class": "col-sm-3"}, "表名"),
+                    h("dd", {"class": "col-sm-9"}, this.selItf.table),
+                    h("hr"),
+                    h("dt", {"class": "col-sm-3"}, "参数"),
+                    h("dd", {"class": "col-sm-9"}, this.selItf.params),
+                    h("dt", {"class": "col-sm-3"}, "返回值"),
+                    h("dd", {"class": "col-sm-9"}, this.selItf.return),
+                    h("hr"),
+                    h("dt", {"class": "col-sm-3"}, "路由"),
+                    h("dd", {"class": "col-sm-9"}, this.selItf.route),
+                    h("dt", {"class": "col-sm-3"}, "方法"),
+                    h("dd", {"class": "col-sm-9"}, this.selItf.method),
+                ]),
+                confirmButtonText: "确认"
+            }).then(action => {
+                console.log(action)
+            }).catch(error => {})
+        }
     }
 }
 </script>

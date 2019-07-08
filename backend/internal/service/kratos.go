@@ -1,38 +1,34 @@
 package service
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"io"
+	"os"
 	"path"
 	"strings"
-	"os"
-	"reflect"
-	"fmt"
-	"bufio"
-	"io"
 
 	pb "backend/api"
-	"backend/internal/utils"
 	"backend/internal/dao"
 	"backend/internal/model"
+	"backend/internal/utils"
 )
 
 type KratosProjGen struct {
-	operSteps []*pb.OperStep
 	info *GenInfo
-	dao *dao.Dao
+	dao  *dao.Dao
 }
 
 func NewKratosProjGenerator(dao *dao.Dao, gi *GenInfo) (*KratosProjGen, error) {
 	return &KratosProjGen{
 		info: gi,
-		dao: dao,
+		dao:  dao,
 	}, nil
 }
 
 func (kpg *KratosProjGen) Adjust(ctx context.Context) error {
-	if err := kpg.readOperFromDB(ctx); err != nil {
-		return fmt.Errorf("读取服务流程项目失败：%v", err)
-	} else if apis, err := kpg.genKratosProtoFile(ctx); err != nil {
+	if apis, err := kpg.genKratosProtoFile(ctx); err != nil {
 		return fmt.Errorf("生成Proto文件失败：%v", err)
 	} else if err := kpg.chgKratosConfig(ctx); err != nil {
 		return fmt.Errorf("修改配置文件失败：%v", err)
@@ -191,26 +187,6 @@ func (kpg *KratosProjGen) chgKratosProjName(ctx context.Context) error {
 	return nil
 }
 
-func (kpg *KratosProjGen) readOperFromDB(ctx context.Context) error {
-	if amap, err := kpg.dao.Query(ctx, model.OPER_STEP_TABLE, "", nil); err != nil {
-		return err
-	} else {
-		for _, rmap := range amap {
-			step := new(pb.OperStep)
-			step.OperKey = rmap["operKey"].(string)
-			step.Requires = strings.Split(rmap["requires"].(string), ",")
-			step.Desc = rmap["desc"].(string)
-			step.Inputs = StrToStrMap(rmap["inputs"].(string))
-			step.Outputs = strings.Split(rmap["outputs"].(string), ",")
-			step.BlockIn = rmap["blockIn"].(int64) == 1
-			step.BlockOut = rmap["blockOut"].(int64) == 1
-			step.Code = rmap["code"].(string)
-			kpg.operSteps = append(kpg.operSteps, step)
-		}
-		return nil
-	}
-}
-
 // 根据数据库中模型的定义，生成proto的message和service
 func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, error) {
 	// 添加proto文件并根据数据库添加message和service
@@ -223,23 +199,11 @@ func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo
 	code += "message Nil {\n}\n\n"
 	code += "message IdenReqs {\n\tint64 id = 1;\n}\n\n"
 
+	// 收集接口信息
 	res, err := kpg.dao.Query(ctx, model.MODELS_TABLE, "", []interface{}{})
 	if err != nil {
 		return nil, err
 	}
-	actMap := map[string]string{
-		"POST":   "Insert",
-		"DELETE": "Delete",
-		"PUT":    "Update",
-		"GET":    "Select",
-		"ALL":    "SelectAll",
-	}
-	// 收集接口信息
-	tx, err := kpg.dao.BeginTx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var modelApis []*pb.ApiInfo
 	for _, mdl := range res {
 		mname := mdl["name"].(string)
 		code += fmt.Sprintf("message %s {\n", mname)
@@ -251,39 +215,17 @@ func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo
 		mmname := mname + "Array"
 		mmfname := utils.ToPlural(strings.ToLower(mname))
 		code += fmt.Sprintf("message %s {\n\t%s %s = 1;\n}\n\n", mmname, mname, mmfname)
-
-		if !reflect.TypeOf(mdl["methods"]).ConvertibleTo(reflect.TypeOf(([]interface{})(nil))) {
-			continue
-		}
-		for _, method := range mdl["methods"].([]interface{}) {
-			m := method.(string)
-			aname, exs := actMap[m]
-			if !exs {
-				aname = "Select"
-			}
-			modelApi := &pb.ApiInfo{
-				Name:   fmt.Sprintf("%s%s", aname, mname),
-				Model:  mname,
-				Table:  utils.ToPlural(utils.CamelToPascal(mname)),
-				Params: make(map[string]string),
-				Route:  fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
-				Method: strings.ToLower(m),
-			}
-			kpg.genModelApiInfo(modelApi, mname, mmname, mmfname)
-			modelApis = append(modelApis, modelApi)
-			// 接口信息存入数据库
-			ApiInfoToDB(kpg.dao, tx, modelApi)
-		}
-	}
-	if err := kpg.dao.CommitTx(tx); err != nil {
-		return nil, err
 	}
 
 	// 生成proto文件
-	if len(modelApis) != 0 {
+	apis, err := AllApiInfoFmDB(kpg.dao, ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(apis) != 0 {
 		code += fmt.Sprintf("service %s {\n", utils.Capital(kpg.info.option.Name))
 	}
-	for _, api := range modelApis {
+	for _, api := range apis {
 		sparams := ""
 		for _, ptyp := range api.Params {
 			sparams += ptyp + ","
@@ -306,227 +248,7 @@ func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo
 	}
 	defer protoFile.Close()
 	protoFile.WriteString(code)
-	return modelApis, nil
-}
-
-func (kpg *KratosProjGen) genModelApiInfo(modelApi *pb.ApiInfo, mname string, mmname string, mmfname string) {
-	mtypeInCode := "pb." + mname
-	mmtypeInCode := "pb." + mmname
-	switch modelApi.Method {
-	case "post":
-		modelApi.Params["entry"] = mtypeInCode
-		modelApi.Return = mtypeInCode
-		modelApi.Flows = []*pb.OperStep{
-			kpg.copyStep("json_marshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJECT": "entry",
-				},
-			}),
-			kpg.copyStep("json_unmarshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"PACKAGE":  kpg.info.option.Name,
-					"OBJ_TYPE": mtypeInCode,
-				},
-			}),
-			kpg.copyStep("database_beginTx", nil),
-			kpg.copyStep("database_insertTx", map[string]interface{}{
-				"Inputs": map[string]string{
-					"TABLE_NAME": modelApi.Table,
-					"OBJ_MAP":    "omap",
-				},
-			}),
-			kpg.copyStep("database_commitTx", nil),
-			kpg.copyStep("assignment", map[string]interface{}{
-				"Desc": "将改记录的数据库id赋予请求参数",
-				"Inputs": map[string]string{
-					"SOURCE": "id",
-					"TARGET": "entry.Id",
-				},
-			}),
-			kpg.copyStep("return_succeed", map[string]interface{}{
-				"Inputs": map[string]string{
-					"RETURN": "entry",
-				},
-			}),
-		}
-	case "delete":
-		modelApi.Params["iden"] = "pb.IdenReqs"
-		modelApi.Return = mtypeInCode
-		modelApi.Flows = []*pb.OperStep{
-			kpg.copyStep("database_beginTx", nil),
-			kpg.copyStep("database_queryTx", map[string]interface{}{
-				"Inputs": map[string]string{
-					"TABLE_NAME":  modelApi.Table,
-					"QUERY_CONDS": "`id`=?",
-					"QUERY_ARGUS": "iden.Id",
-				},
-			}),
-			kpg.copyStep("database_deleteTx", map[string]interface{}{
-				"Inputs": map[string]string{
-					"TABLE_NAME":  modelApi.Table,
-					"QUERY_CONDS": "`id`=?",
-					"QUERY_ARGUS": "iden.Id",
-				},
-			}),
-			kpg.copyStep("database_commitTx", nil),
-			kpg.copyStep("json_marshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJECT": "res",
-				},
-			}),
-			kpg.copyStep("json_unmarshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJ_TYPE": mtypeInCode,
-				},
-			}),
-			kpg.copyStep("return_succeed", map[string]interface{}{
-				"Inputs": map[string]string{
-					"RETURN": fmt.Sprintf("omap.(*%s)", mtypeInCode),
-				},
-			}),
-		}
-	case "put":
-		modelApi.Params["iden"] = "IdenReqs"
-		modelApi.Params["entry"] = mtypeInCode
-		modelApi.Return = mtypeInCode
-		modelApi.Flows = []*pb.OperStep{
-			kpg.copyStep("json_marshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJECT": "entry",
-				},
-			}),
-			kpg.copyStep("json_unmarshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"PACKAGE":  kpg.info.option.Name,
-					"OBJ_TYPE": mtypeInCode,
-				},
-			}),
-			kpg.copyStep("database_beginTx", nil),
-			kpg.copyStep("database_updateTx", map[string]interface{}{
-				"Inputs": map[string]string{
-					"TABLE_NAME":  modelApi.Table,
-					"QUERY_CONDS": "`id`=?",
-					"QUERY_ARGUS": "iden.Id",
-					"OBJ_MAP":     "omap",
-				},
-			}),
-			kpg.copyStep("database_queryTx", map[string]interface{}{
-				"Inputs": map[string]string{
-					"TABLE_NAME":  modelApi.Table,
-					"QUERY_CONDS": "`id`=?",
-					"QUERY_ARGUS": "iden.Id",
-				},
-			}),
-			kpg.copyStep("database_commitTx", nil),
-			kpg.copyStep("json_marshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJECT": "res",
-				},
-			}),
-			kpg.copyStep("json_unmarshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJ_TYPE": mtypeInCode,
-				},
-			}),
-			kpg.copyStep("return_succeed", map[string]interface{}{
-				"Inputs": map[string]string{
-					"RETURN": fmt.Sprintf("omap.(*%s)", mtypeInCode),
-				},
-			}),
-		}
-	case "get":
-		modelApi.Params["iden"] = "IdenReqs"
-		modelApi.Return = mtypeInCode
-		modelApi.Flows = []*pb.OperStep{
-			kpg.copyStep("database_query", map[string]interface{}{
-				"Inputs": map[string]string{
-					"TABLE_NAME":  modelApi.Table,
-					"QUERY_CONDS": "`id`=?",
-					"QUERY_ARGUS": "iden.Id",
-				},
-			}),
-			kpg.copyStep("json_marshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJECT": "res",
-				},
-			}),
-			kpg.copyStep("json_unmarshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJ_TYPE": mtypeInCode,
-				},
-			}),
-			kpg.copyStep("return_succeed", map[string]interface{}{
-				"Inputs": map[string]string{
-					"RETURN": fmt.Sprintf("omap.(*%s)", mtypeInCode),
-				},
-			}),
-		}
-	case "all":
-		modelApi.Method = "get"
-		modelApi.Params["params"] = "Nil"
-		modelApi.Return = mtypeInCode
-		modelApi.Flows = []*pb.OperStep{
-			kpg.copyStep("database_query", map[string]interface{}{
-				"Inputs": map[string]string{
-					"TABLE_NAME":  modelApi.Table,
-					"QUERY_CONDS": "\"\"",
-					"QUERY_ARGUS": "nil",
-				},
-			}),
-			kpg.copyStep("assignment_create", map[string]interface{}{
-				"Inputs": map[string]string{
-					"SOURCE": fmt.Sprintf("new(%s)", mmtypeInCode),
-					"TARGET": "resp",
-				},
-			}),
-			kpg.copyStep("for_each", map[string]interface{}{
-				"Inputs": map[string]string{
-					"KEY": "_",
-					"VALUE": "entry",
-					"SET": "res",
-				},
-			}),
-			kpg.copyStep("json_marshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJECT": "entry",
-				},
-			}),
-			kpg.copyStep("json_unmarshal", map[string]interface{}{
-				"Inputs": map[string]string{
-					"OBJ_TYPE": mtypeInCode,
-				},
-			}),
-			kpg.copyStep("assignment_append", map[string]interface{}{
-				"Inputs": map[string]string{
-					"ARRAY": "resp." + mmfname,
-					"NEW_ADD": fmt.Sprintf("omap.(*%s)", mmtypeInCode),
-				},
-			}),
-			kpg.copyStep("return_succeed", map[string]interface{}{
-				"Inputs": map[string]string{
-					"RETURN": "resp",
-				},
-				"BlockOut": true,
-			}),
-		}
-	}
-}
-
-func (kpg *KratosProjGen) copyStep(operKey string, values map[string]interface{}) *pb.OperStep {
-	for _, step := range kpg.operSteps {
-		if step.OperKey == operKey {
-			if values == nil {
-				return step
-			}
-			ret, _ := utils.Copy(step)
-			val := reflect.ValueOf(ret).Elem()
-			for fname, fvalue := range values {
-				val.FieldByName(fname).Set(reflect.ValueOf(fvalue))
-			}
-			return val.Addr().Interface().(*pb.OperStep)
-		}
-	}
-	return nil
+	return apis, nil
 }
 
 // 根据抽取的接口信息，生成完整的service
@@ -570,7 +292,7 @@ func (kpg *KratosProjGen) chgKratosServiceFile(ctx context.Context, apis []*pb.A
 					aparams = append(aparams, fmt.Sprintf("%s *%s", pname, ptype))
 				}
 				sparams := strings.Join(aparams, ", ")
-				code += fmt.Sprintf("func (kpg *KratosProjGen) %s(ctx context.Context, %s) (*%s, error) {\n", ai.Name, sparams, ai.Return)
+				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*%s, error) {\n", ai.Name, sparams, ai.Return)
 				preSpaces := 1
 				for _, step := range ai.Flows {
 					// 添加注释

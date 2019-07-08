@@ -5,11 +5,11 @@
     </el-col>
     <el-col class="p-10" :span="22">
         <el-button-group class="p-0">
-            <el-button class="p-7" type="primary" icon="el-icon-plus" size="mini" @click="showAddMdlDlg = true"/>
-            <el-button class="p-7" type="primary" icon="el-icon-share" size="mini" @click="showAddLnkDlg = true" :disabled="disableAddLnkBtn"/>
+            <el-button class="p-7" icon="el-icon-plus" size="mini" @click="showAddMdlDlg = true"/>
+            <el-button class="p-7" icon="el-icon-share" size="mini" @click="showAddLnkDlg = true" :disabled="disableAddLnkBtn"/>
         </el-button-group>
         <el-button-group class="p-0">
-            <el-button class="p-7" type="primary" icon="el-icon-download" size="mini" @click="showExportDlg = true"/>
+            <el-button class="p-7" icon="el-icon-download" size="mini" @click="showExportDlg = true"/>
         </el-button-group>
     </el-col>
     <el-col class="p-10" :span="1">

@@ -90,7 +90,7 @@ message Prop {
 
 message Model {
     int64 id = 1;
-    string name = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    string name = 2[(gogoproto.moretags)='orm:",UNIQUE_KEY|NOT_NULL|PRIMARY_KEY"'];
     repeated Prop props = 3;
     repeated string methods = 4;
     int32 x = 5[(gogoproto.jsontag) = 'x'];
@@ -138,6 +138,7 @@ message OperStep {
     bool blockIn = 6;
     bool blockOut = 7;
     string code = 8;
+    string apiName = 9[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
 }
 
 message ApiInfo {
