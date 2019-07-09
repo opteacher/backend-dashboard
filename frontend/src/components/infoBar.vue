@@ -31,6 +31,7 @@
 <script>
 import _ from "lodash"
 
+import apisBkd from "../async/api"
 import selInterface from "../forms/selInterface"
 import interfaceInfo from "../forms/interfaceInfo"
 
@@ -45,6 +46,19 @@ export default {
                 name: ""
             },
             index: 1
+        }
+    },
+    async created() {
+        let res = await apisBkd.qry()
+        if (typeof res === "string") {
+            this.$message(`查询接口失败：${res}`)
+        } else {
+            let interfaces = res.data.data.infos || []
+            if (interfaces.length === 0) {
+                return
+            }
+            this.selItf = interfaces[0]
+            this.$emit("sel-interface", this.selItf)
         }
     },
     methods: {
@@ -66,10 +80,8 @@ export default {
                     },
                     key: this.index
                 }),
-                confirmButtonText: "确认"
-            }).then(action => {
-                console.log(action)
-            }).catch(error => {})
+                showConfirmButton: false
+            })
         }
     }
 }

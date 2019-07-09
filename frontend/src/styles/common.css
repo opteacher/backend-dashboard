@@ -2,6 +2,14 @@
     padding: 7px !important;
 }
 
+.pr-0 {
+    padding-right: 0 !important;
+}
+
+.pl-0 {
+    padding-left: 0 !important;
+}
+
 .p-10 {
     padding: 10px !important;
 }

@@ -1,12 +1,14 @@
 <template>
 <dashboard>
     <info-bar @sel-interface="selInterface"/>
-    <div id="pnlFLows" class="w-100 h-100" style="position: absolute"></div>
+    <div id="pnlFlows" class="w-100 h-100" style="position: absolute"></div>
     <svg id="pnlGraphs" class="w-100" style="position: absolute; z-index: -100; height: 100%" />
 </dashboard>
 </template>
 
 <script>
+import _ from "lodash"
+
 import dashboard from "../layouts/dashboard"
 import infoBar from "../components/infoBar"
 
@@ -27,10 +29,10 @@ export default {
             this.drawFlowArrow()
         },
         drawFlowBlock() {
-            let pnlWid = parseInt(document.getElementById("pnlFLows").getBoundingClientRect().width)
+            let pnlWid = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
             let flowLoc = 50
-            let flowX = (pnlWid>>1) - 150
-            let card = d3.select("#pnlFLows")
+            let flowX = (pnlWid>>1) - 250
+            let card = d3.select("#pnlFlows")
                 .html("")
                 .selectAll("div")
                 .data(this.selItf.flows)
@@ -44,27 +46,52 @@ export default {
                     flow.y = (idx === 0 ? flowLoc : flowLoc += 200)
                     return `${flow.y}px`
                 })
-                .style("width", "300px")
+                .style("width", "500px")
                 .style("margin-bottom", (flow, idx) => `${idx === this.selItf.flows.length - 1 ? 50 : 0}px`)
                 .append("div")
-                .attr("class", "card-body")
-                .text(flow => flow.desc)
-            card.append("a")
+                .attr("class", "row")
+            card.append("div")
+                .attr("class", "col pr-0")
+                .append("div")
+                .attr("class", "list-group list-group-flush")
+                .selectAll("a")
+                .data(flow => _.toPairs(flow.inputs))
+                .join("a")
+                .attr("class", "list-group-item list-group-item-action api-params")
                 .attr("href", "#")
-                .style("position", "absolute")
-                .style("left", 0)
-                .style("top", 0)
-                .attr("class", "badge badge-primary")
-                .text("abcd")
+                .text(input => input[0])
                 .append("i")
                 .attr("class", "el-icon-arrow-right")
-                .each(function() {
-                    console.log(this.getBoundingClientRect())
-                })
+            card.append("div")
+                .attr("class", "col-6 card-body text-center")
+                .text(flow => flow.desc)
+            card.append("div")
+                .attr("class", "col pl-0")
+                .append("div")
+                .attr("class", "list-group list-group-flush")
+                .selectAll("a")
+                .data(flow => flow.outputs)
+                .join("a")
+                .attr("class", "list-group-item list-group-item-action api-params text-right")
+                .attr("href", "#")
+                .text(output => output)
+                .append("i")
+                .attr("class", "el-icon-arrow-right")
+            d3.select("#pnlFlows")
+                .append("div")
+                .attr("class", "list-group")
+                .style("position", "absolute")
+                .style("left", 0)
+                .style("top", "50px")
+                .selectAll("a")
+                .data(_.toPairs(this.selItf.params))
+                .join("a")
+                .attr("class", "list-group-item list-group-item-action local-vars")
+                .text(param => param[0])
         },
         drawFlowArrow() {
             let self = this
-            let pnlHgt = document.getElementById("pnlFLows").scrollHeight
+            let pnlHgt = document.getElementById("pnlFlows").scrollHeight
             d3.select("#pnlGraphs")
                 .html("")
                 .style("height", `${pnlHgt}px`)
@@ -88,6 +115,7 @@ export default {
                         .attr("y1", y1)
                         .attr("x2", x)
                         .attr("y2", y2)
+                    // 画箭头
                     d3.select("#pnlGraphs")
                         .append("polyline")
                         .attr("fill", "black")
@@ -98,14 +126,24 @@ export default {
                             `${x},${next.y}`,
                             `${x + 5},${next.y - 10}`
                         ].join(" "))
+                    // 画步骤分隔线
+                    let y = ((y2 - y1)>>1) + y1
+                    d3.select("#pnlGraphs")
+                        .append("line")
+                        .attr("x1", 0)
+                        .attr("y1", y)
+                        .attr("x2", document.getElementById("pnlGraphs").getBoundingClientRect().width)
+                        .attr("y2", y)
+                        .attr("stroke", "black")
+                        .attr("stroke-dasharray","5,5")
                     // 按钮宽高40px
-                    d3.select("#pnlFLows")
+                    d3.select("#pnlFlows")
                         .append("button")
                         .attr("class", "btn btn-success rounded-circle")
                         .attr("type", "button")
                         .style("position", "absolute")
                         .style("left", `${x - 20}px`)
-                        .style("top", `${((y2 - y1)>>1) + y1 - 20}px`)
+                        .style("top", `${y - 20}px`)
                         .append("i")
                         .attr("class", "el-icon-plus")
                 })
@@ -113,3 +151,10 @@ export default {
     }
 }
 </script>
+
+<style lang="scss">
+.api-params, .local-vars {
+    font-size: 0.2rem;
+    padding: .5vh .5vw;
+}
+</style>
