@@ -5,6 +5,9 @@
     </el-col>
     <el-col class="p-10" :span="22">
         <el-button-group class="p-0">
+            <el-button class="p-7" icon="el-icon-plus" size="mini"/>
+        </el-button-group>
+        <el-button-group class="p-0">
             <el-input class="input-with-select" placeholder="未选定接口" v-model="selItf.name" size="mini" disabled>
                 <el-button class="p-7" icon="el-icon-menu" size="mini" slot="prepend" @click="showSelItfDlg = true"/>
                 <el-button class="p-7" icon="el-icon-warning" size="mini" slot="append" :disabled="selItf.name.length === 0" @click="showItfInfo"/>
@@ -29,6 +32,7 @@
 import _ from "lodash"
 
 import selInterface from "../forms/selInterface"
+import interfaceInfo from "../forms/interfaceInfo"
 
 export default {
     components: {
@@ -39,7 +43,8 @@ export default {
             showSelItfDlg: false,
             selItf: {
                 name: ""
-            }
+            },
+            index: 1
         }
     },
     methods: {
@@ -52,27 +57,15 @@ export default {
             this.showSelItfDlg = false
         },
         showItfInfo() {
-            const h = this.$createElement
+            this.index++
             this.$msgbox({
                 title: "接口信息",
-                message: h("dl", {"class": "row"}, [
-                    h("dt", {"class": "col-sm-3"}, "接口名"),
-                    h("dd", {"class": "col-sm-9"}, this.selItf.name),
-                    h("dt", {"class": "col-sm-3"}, "所属模块"),
-                    h("dd", {"class": "col-sm-9"}, this.selItf.model),
-                    h("dt", {"class": "col-sm-3"}, "表名"),
-                    h("dd", {"class": "col-sm-9"}, this.selItf.table),
-                    h("hr"),
-                    h("dt", {"class": "col-sm-3"}, "参数"),
-                    h("dd", {"class": "col-sm-9"}, this.selItf.params),
-                    h("dt", {"class": "col-sm-3"}, "返回值"),
-                    h("dd", {"class": "col-sm-9"}, this.selItf.return),
-                    h("hr"),
-                    h("dt", {"class": "col-sm-3"}, "路由"),
-                    h("dd", {"class": "col-sm-9"}, this.selItf.route),
-                    h("dt", {"class": "col-sm-3"}, "方法"),
-                    h("dd", {"class": "col-sm-9"}, this.selItf.method),
-                ]),
+                message: this.$createElement(interfaceInfo, {
+                    props: {
+                        interface: this.selItf,
+                    },
+                    key: this.index
+                }),
                 confirmButtonText: "确认"
             }).then(action => {
                 console.log(action)

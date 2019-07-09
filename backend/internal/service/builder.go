@@ -113,6 +113,8 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 					OperKey:  step.OperKey,
 					Requires: step.Requires,
 					Desc:     step.Desc,
+					Inputs: src.Inputs,
+					Outputs: step.Outputs,
 					// NOTE: 入块标识以模板为准，出块标识则以复制源步骤为准
 					BlockIn:  step.BlockIn,
 					BlockOut: src.BlockOut,
@@ -121,10 +123,8 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				if len(src.Desc) != 0 {
 					tgt.Desc = src.Desc
 				}
-				if len(src.Inputs) != 0 {
-					for k, v := range src.Inputs {
-						tgt.Code = strings.Replace(tgt.Code, fmt.Sprintf("%%%s%%", k), v, -1)
-					}
+				for k, v := range src.Inputs {
+					tgt.Desc = strings.Replace(tgt.Desc, fmt.Sprintf("%%%s%%", k), v, -1)
 				}
 				return tgt
 			}
@@ -455,18 +455,21 @@ func (pgb *ProjGenBuilder) initOperSteps(tx *sql.Tx) error {
 		"oper_key": "assignment",
 		"inputs":   "SOURCE:,TARGET:",
 		"code":     "%TARGET% = %SOURCE%\n",
+		"desc": "将%SOURCE%赋值给%TARGET%",
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
 		"oper_key": "assignment_append",
 		"inputs":   "ARRAY:,NEW_ADD:",
 		"code":     "%ARRAY% = append(%ARRAY%, %NEW_ADD%)\n",
+		"desc": "将%NEW_ADD%添加进%ARRAY%",
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
 		"oper_key": "assignment_create",
 		"inputs":   "SOURCE:,TARGET:",
 		"code":     "%TARGET% := %SOURCE%\n",
+		"desc": "创建%TARGET%并用%SOURCE%初始化",
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
@@ -474,12 +477,14 @@ func (pgb *ProjGenBuilder) initOperSteps(tx *sql.Tx) error {
 		"inputs":   "KEY:,VALUE:,SET:",
 		"code":     "for %KEY%, %VALUE% := range %SET%",
 		"block_in": true,
+		"desc": "循环遍历%SET%",
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
 		"oper_key": "return_succeed",
 		"inputs":   "RETURN:",
 		"code":     "return %RETURN%, nil\n",
+		"desc": "成功返回%RETURN%",
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
