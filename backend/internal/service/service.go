@@ -240,6 +240,13 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 	}
 }
 
+func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SpecialSymbolsResp, error) {
+	return &pb.SpecialSymbolsResp{
+		Values: pb.OperStep_SpecialSym_value,
+		Names: pb.OperStep_SpecialSym_name,
+	}, nil
+}
+
 // Ping ping the resource.
 func (s *Service) Ping(ctx context.Context) (err error) {
 	return s.dao.Ping(ctx)

@@ -32,6 +32,7 @@ var PathBackendManagerLinksSelectAll = "/backend-dashboard/backend/links.selectA
 var PathBackendManagerLinksDeleteBySymbol = "/backend-dashboard/backend/links.deleteBySymbol"
 var PathBackendManagerApisSelectAll = "/backend-dashboard/backend/apis.selectAll"
 var PathBackendManagerExport = "/backend-dashboard/backend/export"
+var PathBackendManagerSpecialSymbols = "/backend-dashboard/backend/specialSymbols"
 
 // BackendManagerBMServer is the server API for BackendManager service.
 type BackendManagerBMServer interface {
@@ -54,6 +55,8 @@ type BackendManagerBMServer interface {
 	ApisSelectAll(ctx context.Context, req *Empty) (resp *ApiInfoArray, err error)
 
 	Export(ctx context.Context, req *ExpOptions) (resp *UrlResp, err error)
+
+	SpecialSymbols(ctx context.Context, req *Empty) (resp *SpecialSymbolsResp, err error)
 }
 
 var BackendManagerSvc BackendManagerBMServer
@@ -148,6 +151,15 @@ func backendManagerExport(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerSpecialSymbols(c *bm.Context) {
+	p := new(Empty)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.SpecialSymbols(c, p)
+	c.JSON(resp, err)
+}
+
 // RegisterBackendManagerBMServer Register the blademaster route
 func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer) {
 	BackendManagerSvc = server
@@ -161,4 +173,5 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/links.deleteBySymbol", backendManagerLinksDeleteBySymbol)
 	e.POST("/backend-dashboard/backend/apis.selectAll", backendManagerApisSelectAll)
 	e.POST("/backend-dashboard/backend/export", backendManagerExport)
+	e.POST("/backend-dashboard/backend/specialSymbols", backendManagerSpecialSymbols)
 }

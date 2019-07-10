@@ -385,6 +385,43 @@
                     "backend.manager.service.v1.BackendManager"
                 ]
             }
+        },
+        "/backend-dashboard/backend/specialSymbols": {
+            "post": {
+                "summary": "/backend-dashboard/backend/specialSymbols",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.SpecialSymbolsResp"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
         }
     },
     "definitions": {
@@ -608,6 +645,9 @@
                 },
                 "apiName": {
                     "type": "string"
+                },
+                "special": {
+                    "type": "integer"
                 }
             },
             "description": "所有事务流都是函数调用，而且所有的函数返回值都是err结尾"
@@ -620,6 +660,23 @@
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.SpecialSymbolsResp": {
+            "type": "object",
+            "properties": {
+                "values": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "names": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },

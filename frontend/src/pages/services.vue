@@ -3,6 +3,14 @@
     <info-bar @sel-interface="selInterface"/>
     <div id="pnlFlows" class="w-100 h-100" style="position: absolute"></div>
     <svg id="pnlGraphs" class="w-100" style="position: absolute; z-index: -100; height: 100%" />
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <el-dialog :title="`步骤 #${selStep.index}`" :visible.sync="showStepDtlDlg" :modal-append-to-body="false" width="50vw">
+        <step-detail ref="step-detail-form" :selStep="selStep"/>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="chgOperStep">编 辑</el-button>
+            <el-button type="primary">确 定</el-button>
+        </div>
+    </el-dialog>
 </dashboard>
 </template>
 
@@ -11,29 +19,57 @@ import _ from "lodash"
 
 import dashboard from "../layouts/dashboard"
 import infoBar from "../components/infoBar"
+import stepDetail from "../forms/stepDetail"
 
 export default {
     components: {
         "dashboard": dashboard,
-        "info-bar": infoBar
+        "info-bar": infoBar,
+        "step-detail": stepDetail
     },
     data() {
         return {
-            selItf: null
+            selItf: null,
+            selStep: {
+                index: -1
+            },
+            index: 1,
+            showStepDtlDlg: false
         }
     },
     methods: {
-        selInterface(selItf) {
-            this.selItf = selItf
+        updatePanel() {
+            d3.select("#pnlFlows").html("")
+            d3.select("#pnlGraphs").html("")
             this.drawFlowBlock()
             this.drawFlowArrow()
+        },
+        selInterface(selItf) {
+            this.selItf = selItf
+            this.selItf.flows = this.selItf.flows.map((flow, idx) => {
+                // 做一些处理：只包含一个元素的输出数组全部设为空
+                if (flow.outputs.length === 1 && flow.outputs[0] === "") {
+                    flow.outputs = []
+                }
+                if (flow.requires.length === 1 && flow.requires[0] === "") {
+                    flow.requires = []
+                }
+                if (idx === 0) {
+                    flow.locVars = _.keys(this.selItf.params)
+                } else {
+                    flow.locVars = this.selItf.flows[idx - 1].outputs
+                }
+                flow.index = idx
+                return flow
+            })
+            this.updatePanel()
         },
         drawFlowBlock() {
             let pnlWid = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
             let flowLoc = 50
             let flowX = (pnlWid>>1) - 250
+            // 绘制步骤卡片
             let card = d3.select("#pnlFlows")
-                .html("")
                 .selectAll("div")
                 .data(this.selItf.flows)
                 .join("div")
@@ -42,58 +78,82 @@ export default {
                 .style("position", "absolute")
                 .style("cursor", "pointer")
                 .style("left", flow => `${flow.x = flowX}px`)
-                .style("top", (flow, idx) => {
-                    flow.y = (idx === 0 ? flowLoc : flowLoc += 200)
-                    return `${flow.y}px`
-                })
+                .style("top", (flow, idx) => `${flow.y = (idx === 0 ? flowLoc : flowLoc += 200)}px`)
                 .style("width", "500px")
                 .style("margin-bottom", (flow, idx) => `${idx === this.selItf.flows.length - 1 ? 50 : 0}px`)
+                .each(flow => {
+                    if (!flow.special) {
+                        return
+                    }
+                    // 收集步骤的特殊标识
+                    switch (flow.special) {
+                        
+                    }
+                })
                 .append("div")
                 .attr("class", "row")
+            // 填充步骤的inputs
             card.append("div")
                 .attr("class", "col pr-0")
                 .append("div")
-                .attr("class", "list-group list-group-flush")
+                .attr("class", "list-group list-group-flush h-100")
                 .selectAll("a")
-                .data(flow => _.toPairs(flow.inputs))
+                .data((flow, idx) => _.toPairs(flow.inputs).map(kv => {
+                    return {
+                        pholder: kv[0],
+                        content: kv[1],
+                        findex: idx
+                    }
+                }))
                 .join("a")
-                .attr("class", "list-group-item list-group-item-action api-params")
+                .attr("class", "list-group-item list-group-item-primary list-group-item-action api-params")
                 .attr("href", "#")
-                .text(input => input[0])
+                .text(input => input.pholder)
                 .append("i")
                 .attr("class", "el-icon-arrow-right")
+            // 填充步骤的描述
             card.append("div")
                 .attr("class", "col-6 card-body text-center")
                 .text(flow => flow.desc)
+                .on("click", flow => {
+                    this.selStep = flow
+                    this.showStepDtlDlg = true
+                })
+            // 填充步骤的outputs
             card.append("div")
                 .attr("class", "col pl-0")
                 .append("div")
-                .attr("class", "list-group list-group-flush")
+                .attr("class", "list-group list-group-flush h-100")
                 .selectAll("a")
                 .data(flow => flow.outputs)
                 .join("a")
-                .attr("class", "list-group-item list-group-item-action api-params text-right")
+                .attr("class", "list-group-item list-group-item-success list-group-item-action api-params text-right")
                 .attr("href", "#")
                 .text(output => output)
                 .append("i")
                 .attr("class", "el-icon-arrow-right")
-            d3.select("#pnlFlows")
-                .append("div")
+            // 绘制局部变量列表
+            card.append("div")
                 .attr("class", "list-group")
                 .style("position", "absolute")
-                .style("left", 0)
-                .style("top", "50px")
+                .style("left", flow => `-${flow.x + 2}px`)
+                .style("top", 0)
                 .selectAll("a")
-                .data(_.toPairs(this.selItf.params))
+                .data(flow => flow.locVars)
                 .join("a")
-                .attr("class", "list-group-item list-group-item-action local-vars")
-                .text(param => param[0])
+                .attr("class", "list-group-item list-group-item-action local-vars rl-0")
+                .text(v => v)
+                .each(function(v) {
+                    let rect = this.getBoundingClientRect()
+                    let x1 = rect.width
+                    let y1 = rect.y + (rect.height>>1)
+                    // @_@
+                })
         },
         drawFlowArrow() {
             let self = this
             let pnlHgt = document.getElementById("pnlFlows").scrollHeight
             d3.select("#pnlGraphs")
-                .html("")
                 .style("height", `${pnlHgt}px`)
                 .selectAll("g")
                 .data(this.selItf.flows)
@@ -106,14 +166,15 @@ export default {
                     }
                     let rect = document.getElementsByName(`flow_${idx}`)[0].getBoundingClientRect()
                     let next = self.selItf.flows[idx + 1]
-                    let x = flow.x + (rect.width>>1)
+                    let x1 = flow.x + (rect.width>>1)
                     let y1 = flow.y + rect.height
+                    let x2 = next.x + (rect.width>>1)
                     let y2 = next.y
                     d3.select(this)
                         .attr("name", `line_${idx}_${idx + 1}`)
-                        .attr("x1", x)
+                        .attr("x1", x1)
                         .attr("y1", y1)
-                        .attr("x2", x)
+                        .attr("x2", x2)
                         .attr("y2", y2)
                     // 画箭头
                     d3.select("#pnlGraphs")
@@ -122,9 +183,9 @@ export default {
                         .attr("stroke", "blue")
                         .attr("stroke-width", 2)
                         .attr("points", [
-                            `${x - 5},${next.y - 10}`,
-                            `${x},${next.y}`,
-                            `${x + 5},${next.y - 10}`
+                            `${x2 - 5},${next.y - 10}`,
+                            `${x2},${next.y}`,
+                            `${x2 + 5},${next.y - 10}`
                         ].join(" "))
                     // 画步骤分隔线
                     let y = ((y2 - y1)>>1) + y1
@@ -137,6 +198,7 @@ export default {
                         .attr("stroke", "black")
                         .attr("stroke-dasharray","5,5")
                     // 按钮宽高40px
+                    let x = ((x2 - x1)>>1) + x1
                     d3.select("#pnlFlows")
                         .append("button")
                         .attr("class", "btn btn-success rounded-circle")
@@ -147,6 +209,27 @@ export default {
                         .append("i")
                         .attr("class", "el-icon-plus")
                 })
+        },
+        drawCurve(x1, y1, x2, y2, dir1, dir2) {
+            let data = [{
+                x: x1, y: y1
+            }, {
+                x: x2, y: y2
+            }]
+            let func = d3.svg.line()
+                .x(d => d.x).y(d => d.y)
+                .interpolate("basis")
+            d3.select("#pnlGraphs")
+                .append("path")
+                .attr("d", func(data))
+                .attr("stroke", "blue")
+                .attr("stroke-width", 1)
+                .attr("fill", "none")
+        },
+        chgOperStep() {
+            this.$refs["step-detail-form"].mode = (
+                this.$refs["step-detail-form"].mode === "display" ? "editing" : "display"
+            )
         }
     }
 }

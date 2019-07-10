@@ -67,6 +67,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc SpecialSymbols(Empty) returns (SpecialSymbolsResp) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/specialSymbols"
+            body: "*"
+        };
+    };
 }
 
 message Empty {
@@ -139,6 +145,17 @@ message OperStep {
     bool blockOut = 7;
     string code = 8;
     string apiName = 9[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
+    enum SpecialSym {
+        NONE = 0;
+        FOR_BEG = 1;
+        FOR_END = 2;
+        IF_BEG = 3;
+        IF_END = 4;
+        ELSE_BEG = 5;
+        ELSE_END = 6;
+        RETURN = 7;
+    }
+    SpecialSym special = 10;
 }
 
 message ApiInfo {
@@ -154,6 +171,11 @@ message ApiInfo {
 
 message ApiInfoArray {
     repeated ApiInfo infos = 1;
+}
+
+message SpecialSymbolsResp {
+    map<string,int32> values = 1;
+    map<int32,string> names = 2;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

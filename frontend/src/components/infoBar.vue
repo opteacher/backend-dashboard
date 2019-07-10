@@ -81,7 +81,7 @@ export default {
                     key: this.index
                 }),
                 showConfirmButton: false
-            })
+            }).catch(err => {})
         }
     }
 }

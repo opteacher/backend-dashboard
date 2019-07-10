@@ -17,3 +17,8 @@
 .br-0 {
     border-right: 0 !important;
 }
+
+.rl-0 {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
