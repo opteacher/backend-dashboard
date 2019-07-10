@@ -20,6 +20,7 @@ import _ from "lodash"
 import dashboard from "../layouts/dashboard"
 import infoBar from "../components/infoBar"
 import stepDetail from "../forms/stepDetail"
+import backend from "../async/backend"
 
 export default {
     components: {
@@ -34,7 +35,8 @@ export default {
                 index: -1
             },
             index: 1,
-            showStepDtlDlg: false
+            showStepDtlDlg: false,
+            fors: [],
         }
     },
     methods: {
@@ -68,7 +70,6 @@ export default {
             let pnlWid = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
             let flowLoc = 50
             let flowX = (pnlWid>>1) - 250
-            // 绘制步骤卡片
             let card = d3.select("#pnlFlows")
                 .selectAll("div")
                 .data(this.selItf.flows)
@@ -87,7 +88,22 @@ export default {
                     }
                     // 收集步骤的特殊标识
                     switch (flow.special) {
-                        
+                        case 1:// 循环开始标识
+                            this.fors.push({
+                                begin: flow
+                            })
+                            break
+                        case 2:// 循环结束标识
+                            // 找出没有结束标识的begin，并用离这个结束块最近的作为end
+                            let noEnds = this.fors.filter(f => !f.end)
+                            let clsEnd = noEnds[0]
+                            for (let fblk of noEnds) {
+                                if (fblk.begin.index < clsEnd.begin.index) {
+                                    clsEnd = fblk
+                                }
+                            }
+                            clsEnd.end = flow
+                            break
                     }
                 })
                 .append("div")
@@ -113,7 +129,7 @@ export default {
                 .attr("class", "el-icon-arrow-right")
             // 填充步骤的描述
             card.append("div")
-                .attr("class", "col-6 card-body text-center")
+                .attr("class", "col-6 card-body text-center desc-panel")
                 .text(flow => flow.desc)
                 .on("click", flow => {
                     this.selStep = flow
@@ -152,9 +168,8 @@ export default {
         },
         drawFlowArrow() {
             let self = this
-            let pnlHgt = document.getElementById("pnlFlows").scrollHeight
             d3.select("#pnlGraphs")
-                .style("height", `${pnlHgt}px`)
+                .style("height", `${document.getElementById("pnlFlows").scrollHeight}px`)
                 .selectAll("g")
                 .data(this.selItf.flows)
                 .join("line")
@@ -209,6 +224,43 @@ export default {
                         .append("i")
                         .attr("class", "el-icon-plus")
                 })
+            // 折线的步进
+            let stepFor = 20
+            // 绘制循环的折线箭头
+            d3.select("#pnlGraphs")
+                .selectAll("g")
+                .data(this.fors)
+                .join("polyline")
+                .attr("fill", "none")
+                .attr("stroke-width", 2)
+                .attr("stroke", "black")
+                .each(function(forBlk) {
+                    let forBeg = forBlk.begin
+                    let begHftHgt = parseInt(document.getElementsByName(`flow_${forBeg.index}`)[0].getBoundingClientRect().height)>>1
+                    let forEnd = forBlk.end
+                    let endHftHgt = parseInt(document.getElementsByName(`flow_${forEnd.index}`)[0].getBoundingClientRect().height)>>1
+                    let width = 500
+                    let points = [
+                        `${forEnd.x + width},${forEnd.y + endHftHgt}`,
+                        `${forEnd.x + width + stepFor},${forEnd.y + endHftHgt}`,
+                        `${forBeg.x + width + stepFor},${forBeg.y + begHftHgt}`,
+                        `${forBeg.x + width},${forBeg.y + begHftHgt}`,
+                    ]
+                    d3.select(this).attr("points", points.join(" "))
+                    // 绘制箭头
+                    let ex = forBeg.x + width
+                    let ey = forBeg.y + begHftHgt
+                    d3.select("#pnlGraphs")
+                        .append("polyline")
+                        .attr("fill", "black")
+                        .attr("stroke", "blue")
+                        .attr("stroke-width", 2)
+                        .attr("points", [
+                            `${ex + 10},${ey + 5}`,
+                            `${ex},${ey}`,
+                            `${ex + 10},${ey - 5}`,
+                        ].join(" "))
+                })
         },
         drawCurve(x1, y1, x2, y2, dir1, dir2) {
             let data = [{
@@ -239,5 +291,8 @@ export default {
 .api-params, .local-vars {
     font-size: 0.2rem;
     padding: .5vh .5vw;
+}
+.desc-panel:hover {
+    background-color: #f8f9fa;
 }
 </style>

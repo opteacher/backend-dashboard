@@ -1,9 +1,9 @@
 
 [demo]
 	addr = "127.0.0.1:3306"
-	dsn = "root:59524148@tcp(127.0.0.1:3306)/backend?timeout=1s&readTimeout=1s&writeTimeout=1s&parseTime=true&loc=Local&charset=utf8mb4,utf8"
+	dsn = "root:12345@tcp(127.0.0.1:3306)/maya?timeout=1s&readTimeout=1s&writeTimeout=1s&parseTime=true&loc=Local&charset=utf8mb4,utf8"
 	readDSN = [
-		"root:59524148@tcp(127.0.0.1:3306)/backend?timeout=1s&readTimeout=1s&writeTimeout=1s&parseTime=true&loc=Local&charset=utf8mb4,utf8"
+		"root:12345@tcp(127.0.0.1:3306)/maya?timeout=1s&readTimeout=1s&writeTimeout=1s&parseTime=true&loc=Local&charset=utf8mb4,utf8"
 	]
 	active = 20
 	idle = 10

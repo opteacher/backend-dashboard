@@ -11,5 +11,12 @@ export default {
         } catch(e) {
             return utils.getErrorMsg(e)
         }
+    },
+    async specials() {
+        try {
+            return await axios.post(`${config.url}/backend-dashboard/backend/specialSymbols`)
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
     }
 }

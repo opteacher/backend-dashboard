@@ -10,6 +10,11 @@
     padding-left: 0 !important;
 }
 
+.plr-0 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 .p-10 {
     padding: 10px !important;
 }
@@ -21,4 +26,12 @@
 .rl-0 {
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
+}
+
+.r-0 {
+    border-radius: 0 !important;
+}
+
+.auto-wrap {
+    word-wrap: break-word;
 }
