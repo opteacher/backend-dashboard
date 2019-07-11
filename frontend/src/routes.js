@@ -1,5 +1,6 @@
 import models from "./pages/models.vue"
 import services from "./pages/services.vue"
+import axports from "./pages/exports"
 
 export default [{
     path: "/",
@@ -10,4 +11,7 @@ export default [{
 }, {
     path: "/backend-dashboard/frontend/services",
     component: services
+}, {
+    path: "/backend-dashboard/frontend/exports",
+    component: axports
 }]

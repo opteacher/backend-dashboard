@@ -61,6 +61,19 @@ service BackendManager {
             post: "/backend-dashboard/backend/apis.selectAll"
         };
     };
+    rpc ApisInsert(ApiInfo) returns (ApiInfo) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/apis.insert"
+        };
+    };
+    rpc FlowInsert()
+    // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
+    // 如果需要插入到流程中间，则需要使用
+    rpc OperStepsInsert(OperStep) returns (OperStep) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/steps.insert"
+        };
+    };
     rpc Export(ExpOptions) returns (UrlResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/export"
@@ -176,6 +189,10 @@ message ApiInfoArray {
 message SpecialSymbolsResp {
     map<string,int32> values = 1;
     map<int32,string> names = 2;
+}
+
+message FlowIden {
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

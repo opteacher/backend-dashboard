@@ -77,7 +77,6 @@ export default {
                 .attr("class", "card")
                 .attr("name", (flow, idx) => `flow_${idx}`)
                 .style("position", "absolute")
-                .style("cursor", "pointer")
                 .style("left", flow => `${flow.x = flowX}px`)
                 .style("top", (flow, idx) => `${flow.y = (idx === 0 ? flowLoc : flowLoc += 200)}px`)
                 .style("width", "500px")
@@ -293,6 +292,7 @@ export default {
     padding: .5vh .5vw;
 }
 .desc-panel:hover {
+    cursor: pointer;
     background-color: #f8f9fa;
 }
 </style>
