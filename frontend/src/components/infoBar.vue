@@ -14,7 +14,7 @@
             </el-input>
         </el-button-group> -->
 
-        <el-dropdown split-button type="primary" @click="handleClick">
+        <el-dropdown split-button size="mini" type="primary" @click="handleClick">
             添加接口
             <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item>黄金糕</el-dropdown-item>

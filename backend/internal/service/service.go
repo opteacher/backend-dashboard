@@ -202,6 +202,20 @@ func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfo
 	}
 }
 
+func (s *Service) ApisInsert(context.Context, *pb.ApiInfo) (*pb.ApiInfo, error) {
+	return nil, nil
+}
+
+func (s *Service) FlowInsert(context.Context, *pb.FlowReqs) (*pb.FlowReqs, error) {
+	return nil, nil
+}
+
+// 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
+// 如果需要插入到流程中间，则需要使用FlowInsert
+func (s *Service) OperStepsInsert(context.Context, *pb.OperStep) (*pb.OperStep, error) {
+	return nil, nil
+}
+
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {
 	if wsPath, err := s.ac.Get("workspace").String(); err != nil {
 		return nil, fmt.Errorf("配置文件中未定义工作区目录：%v", err)
@@ -242,8 +256,8 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 
 func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SpecialSymbolsResp, error) {
 	return &pb.SpecialSymbolsResp{
-		Values: pb.OperStep_SpecialSym_value,
-		Names: pb.OperStep_SpecialSym_name,
+		Values: pb.SpecialSym_value,
+		Names: pb.SpecialSym_name,
 	}, nil
 }
 

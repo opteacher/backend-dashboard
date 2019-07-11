@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "backend/api/api.proto",
+        "title": "api.proto",
         "version": "1"
     },
     "schemes": [
@@ -16,6 +16,43 @@
         "application/json"
     ],
     "paths": {
+        "/backend-dashboard/backend/apis.insert": {
+            "post": {
+                "summary": "/backend-dashboard/backend/apis.insert",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/apis.selectAll": {
             "post": {
                 "summary": "/backend-dashboard/backend/apis.selectAll",
@@ -82,6 +119,43 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/.backend.manager.service.v1.ExpOptions"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/flows.insert": {
+            "post": {
+                "summary": "/backend-dashboard/backend/flows.insert",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.FlowReqs"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.FlowReqs"
                         }
                     }
                 ],
@@ -422,6 +496,44 @@
                     "backend.manager.service.v1.BackendManager"
                 ]
             }
+        },
+        "/backend-dashboard/backend/steps.insert": {
+            "post": {
+                "summary": "这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后",
+                "description": "如果需要插入到流程中间，则需要使用",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
         }
     },
     "definitions": {
@@ -515,6 +627,35 @@
                 },
                 "database": {
                     "$ref": "#/definitions/.backend.manager.service.v1.Database"
+                }
+            }
+        },
+        ".backend.manager.service.v1.FlowReqs": {
+            "type": "object",
+            "properties": {
+                "apiName": {
+                    "type": "string"
+                },
+                "index": {
+                    "type": "integer"
+                },
+                "operKey": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "blockOut": {
+                    "type": "boolean"
+                },
+                "symbol": {
+                    "type": "integer"
                 }
             }
         },
@@ -646,11 +787,10 @@
                 "apiName": {
                     "type": "string"
                 },
-                "special": {
+                "symbol": {
                     "type": "integer"
                 }
-            },
-            "description": "所有事务流都是函数调用，而且所有的函数返回值都是err结尾"
+            }
         },
         ".backend.manager.service.v1.Prop": {
             "type": "object",

@@ -64,14 +64,21 @@ service BackendManager {
     rpc ApisInsert(ApiInfo) returns (ApiInfo) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/apis.insert"
+            body: "*"
         };
     };
-    rpc FlowInsert()
+    rpc FlowInsert(FlowReqs) returns (FlowReqs) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/flows.insert"
+            body: "*"
+        };
+    };
     // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
     // 如果需要插入到流程中间，则需要使用
     rpc OperStepsInsert(OperStep) returns (OperStep) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/steps.insert"
+            body: "*"
         };
     };
     rpc Export(ExpOptions) returns (UrlResp) {
@@ -146,6 +153,16 @@ message UrlResp {
 }
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
+enum SpecialSym {
+    NONE = 0;
+    FOR_BEG = 1;
+    FOR_END = 2;
+    IF_BEG = 3;
+    IF_END = 4;
+    ELSE_BEG = 5;
+    ELSE_END = 6;
+    RETURN = 7;
+}
 message OperStep {
     string operKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
     repeated string requires = 2;
@@ -158,17 +175,7 @@ message OperStep {
     bool blockOut = 7;
     string code = 8;
     string apiName = 9[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
-    enum SpecialSym {
-        NONE = 0;
-        FOR_BEG = 1;
-        FOR_END = 2;
-        IF_BEG = 3;
-        IF_END = 4;
-        ELSE_BEG = 5;
-        ELSE_END = 6;
-        RETURN = 7;
-    }
-    SpecialSym special = 10;
+    SpecialSym symbol = 10;
 }
 
 message ApiInfo {
@@ -191,8 +198,14 @@ message SpecialSymbolsResp {
     map<int32,string> names = 2;
 }
 
-message FlowIden {
-    
+message FlowReqs {
+    string apiName = 1;
+    int32 index = 2;
+    string operKey = 3;
+    string desc = 4;
+    map<string,string> inputs = 5;
+    bool blockOut = 6;
+    SpecialSym symbol = 7;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

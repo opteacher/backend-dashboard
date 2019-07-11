@@ -58,7 +58,7 @@ func NewProjGenBuilder(dao *dao.Dao, tx *sql.Tx) (*ProjGenBuilder, error) {
 			BlockOut bool
 			Code     string
 			ApiName  string `orm:",FOREIGN_KEY(api_infos.name)"`
-			Special  int32
+			Symbol   int32
 		})(nil)).Elem()); err != nil {
 			panic(err)
 		} else if err := pgb.initOperSteps(tx); err != nil {
@@ -117,7 +117,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 					BlockIn:  step.BlockIn,
 					BlockOut: src.BlockOut,
 					Code:     step.Code,
-					Special:  step.Special,
+					Symbol:  step.Symbol,
 				}
 				// 步骤所需模块
 				if len(step.Requires) != 0 {
@@ -142,8 +142,8 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 					tgt.Desc = strings.Replace(tgt.Desc, fmt.Sprintf("%%%s%%", k), v, -1)
 				}
 				// 特殊标识
-				if src.Special != pb.OperStep_NONE {
-					tgt.Special = src.Special
+				if src.Symbol != pb.SpecialSym_NONE {
+					tgt.Symbol = src.Symbol
 				}
 				return tgt
 			}
@@ -398,7 +398,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 						"ARRAY":   "resp." + mmfname,
 						"NEW_ADD": fmt.Sprintf("omap.(*%s)", mmtypeInCode),
 					},
-					Special: pb.OperStep_FOR_END,
+					Symbol: pb.SpecialSym_FOR_END,
 				}),
 				copyStep(&pb.OperStep{
 					OperKey: "return_succeed",
@@ -434,8 +434,8 @@ func ReadStepsFromDB(dao *dao.Dao, tx *sql.Tx) ([]*pb.OperStep, error) {
 			step.BlockOut = rmap["block_out"].(int64) == 1
 			step.Code = rmap["code"].(string)
 			step.ApiName = rmap["api_name"].(string)
-			n, _ := rmap["special"].(int64)
-			step.Special = pb.OperStep_SpecialSym(n)
+			n, _ := rmap["symbol"].(int64)
+			step.Symbol = pb.SpecialSym(n)
 			steps = append(steps, step)
 		}
 		return steps, nil
@@ -501,7 +501,7 @@ func (pgb *ProjGenBuilder) initOperSteps(tx *sql.Tx) error {
 		"code":     "for %KEY%, %VALUE% := range %SET%",
 		"block_in": true,
 		"desc":     "循环遍历%SET%",
-		"special":  pb.OperStep_FOR_BEG,
+		"symbol":  pb.SpecialSym_FOR_BEG,
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
@@ -509,7 +509,7 @@ func (pgb *ProjGenBuilder) initOperSteps(tx *sql.Tx) error {
 		"inputs":   "RETURN:",
 		"code":     "return %RETURN%, nil\n",
 		"desc":     "成功返回%RETURN%",
-		"special":  pb.OperStep_RETURN,
+		"symbol":  pb.SpecialSym_RETURN,
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
@@ -604,7 +604,7 @@ func OperStepToDbByTx(dao *dao.Dao, tx *sql.Tx, step *pb.OperStep) (int64, error
 	mstep["block_out"] = step.BlockOut
 	mstep["code"] = step.Code
 	mstep["api_name"] = step.ApiName
-	mstep["special"] = step.Special
+	mstep["symbol"] = step.Symbol
 	if id, err := dao.InsertTx(tx, model.OPER_STEP_TABLE, mstep); err != nil {
 		return -1, err
 	} else {
@@ -626,8 +626,8 @@ func OperStepFmDbByTx(dao *dao.Dao, tx *sql.Tx, id int64) (*pb.OperStep, error) 
 		step.BlockOut = mstep["block_out"].(int64) == 1
 		step.Code = mstep["code"].(string)
 		step.ApiName = mstep["api_name"].(string)
-		n, _ := mstep["special"].(int64)
-		step.Special = pb.OperStep_SpecialSym(n)
+		n, _ := mstep["symbol"].(int64)
+		step.Symbol = pb.SpecialSym(n)
 		return step, nil
 	}
 }
