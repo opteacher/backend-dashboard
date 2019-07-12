@@ -6,7 +6,7 @@
         </el-input>
     </el-form-item>
     <el-form-item label-width="0">
-        <el-table :data="itfList" highlight-current-row @current-change="handleCurrentChange" style="width: 100%">
+        <el-table :data="apiList" highlight-current-row @current-change="handleCurrentChange" style="width: 100%">
             <el-table-column label="接口名" property="name"/>
             <el-table-column label="所属" property="model" width="100"/>
             <el-table-column label="HTTP方法" property="method" width="100"/>
@@ -23,23 +23,23 @@ export default {
     data() {
         return {
             searchTxt: "",
-            itfList: [],
-            selItf: null,
+            apiList: [],
+            selApi: null,
         }
     },
     async created() {
         await this.queryApis()
     },
     methods: {
-        handleCurrentChange(selItf) {
-            this.selItf = selItf
+        handleCurrentChange(selApi) {
+            this.selApi = selApi
         },
         async queryApis() {
             let res = await apisBkd.qry()
             if (typeof res === "string") {
                 this.$message(`查询接口失败：${res}`)
             } else {
-                this.itfList = res.data.data.infos || []
+                this.apiList = res.data.data.infos || []
             }
         }
     }

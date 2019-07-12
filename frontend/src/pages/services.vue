@@ -1,8 +1,11 @@
 <template>
 <dashboard>
-    <info-bar @sel-interface="selInterface"/>
+    <info-bar @select-api="selectApi"/>
     <div id="pnlFlows" class="w-100 h-100" style="position: absolute"></div>
     <svg id="pnlGraphs" class="w-100" style="position: absolute; z-index: -100; height: 100%" />
+    <el-button id="btnApiInfo" type="primary" size="small" icon="el-icon-info" v-if="selApi" @click="showApiInfo">
+        {{selApi.name}}
+    </el-button>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
     <el-dialog :title="`步骤 #${selStep.index}`" :visible.sync="showStepDtlDlg" :modal-append-to-body="false" width="50vw">
         <step-detail ref="step-detail-form" :selStep="selStep"/>
@@ -21,6 +24,7 @@ import dashboard from "../layouts/dashboard"
 import infoBar from "../components/infoBar"
 import stepDetail from "../forms/stepDetail"
 import backend from "../async/backend"
+import apiInfo from "../forms/apiInfo"
 
 export default {
     components: {
@@ -30,7 +34,7 @@ export default {
     },
     data() {
         return {
-            selItf: null,
+            selApi: null,
             selStep: {
                 index: -1
             },
@@ -46,9 +50,9 @@ export default {
             this.drawFlowBlock()
             this.drawFlowArrow()
         },
-        selInterface(selItf) {
-            this.selItf = selItf
-            this.selItf.flows = this.selItf.flows.map((flow, idx) => {
+        selectApi(selApi) {
+            this.selApi = selApi
+            this.selApi.flows = this.selApi.flows.map((flow, idx) => {
                 // 做一些处理：只包含一个元素的输出数组全部设为空
                 if (flow.outputs.length === 1 && flow.outputs[0] === "") {
                     flow.outputs = []
@@ -57,9 +61,9 @@ export default {
                     flow.requires = []
                 }
                 if (idx === 0) {
-                    flow.locVars = _.keys(this.selItf.params)
+                    flow.locVars = _.keys(this.selApi.params)
                 } else {
-                    flow.locVars = this.selItf.flows[idx - 1].outputs
+                    flow.locVars = this.selApi.flows[idx - 1].outputs
                 }
                 flow.index = idx
                 return flow
@@ -72,7 +76,7 @@ export default {
             let flowX = (pnlWid>>1) - 250
             let card = d3.select("#pnlFlows")
                 .selectAll("div")
-                .data(this.selItf.flows)
+                .data(this.selApi.flows)
                 .join("div")
                 .attr("class", "card")
                 .attr("name", (flow, idx) => `flow_${idx}`)
@@ -80,7 +84,7 @@ export default {
                 .style("left", flow => `${flow.x = flowX}px`)
                 .style("top", (flow, idx) => `${flow.y = (idx === 0 ? flowLoc : flowLoc += 200)}px`)
                 .style("width", "500px")
-                .style("margin-bottom", (flow, idx) => `${idx === this.selItf.flows.length - 1 ? 50 : 0}px`)
+                .style("margin-bottom", (flow, idx) => `${idx === this.selApi.flows.length - 1 ? 50 : 0}px`)
                 .each(flow => {
                     if (!flow.special) {
                         return
@@ -170,16 +174,16 @@ export default {
             d3.select("#pnlGraphs")
                 .style("height", `${document.getElementById("pnlFlows").scrollHeight}px`)
                 .selectAll("g")
-                .data(this.selItf.flows)
+                .data(this.selApi.flows)
                 .join("line")
                 .attr("stroke-width", 2)
                 .attr("stroke", "black")
                 .each(function(flow, idx) {
-                    if (idx === self.selItf.flows.length - 1) {
+                    if (idx === self.selApi.flows.length - 1) {
                         return
                     }
                     let rect = document.getElementsByName(`flow_${idx}`)[0].getBoundingClientRect()
-                    let next = self.selItf.flows[idx + 1]
+                    let next = self.selApi.flows[idx + 1]
                     let x1 = flow.x + (rect.width>>1)
                     let y1 = flow.y + rect.height
                     let x2 = next.x + (rect.width>>1)
@@ -281,7 +285,20 @@ export default {
             this.$refs["step-detail-form"].mode = (
                 this.$refs["step-detail-form"].mode === "display" ? "editing" : "display"
             )
-        }
+        },
+        showApiInfo() {
+            this.index++
+            this.$msgbox({
+                title: "接口信息",
+                message: this.$createElement(apiInfo, {
+                    props: {
+                        api: this.selApi,
+                    },
+                    key: this.index
+                }),
+                showConfirmButton: false
+            }).catch(err => {})
+        },
     }
 }
 </script>
@@ -294,5 +311,11 @@ export default {
 .desc-panel:hover {
     cursor: pointer;
     background-color: #f8f9fa;
+}
+#btnApiInfo {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    border-radius: 4px 0 0 0;
 }
 </style>

@@ -152,7 +152,6 @@ message UrlResp {
     string url = 1;
 }
 
-// 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 enum SpecialSym {
     NONE = 0;
     FOR_BEG = 1;
@@ -163,6 +162,8 @@ enum SpecialSym {
     ELSE_END = 6;
     RETURN = 7;
 }
+
+// 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 message OperStep {
     string operKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
     repeated string requires = 2;

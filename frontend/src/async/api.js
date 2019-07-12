@@ -10,5 +10,12 @@ export default {
         } catch(e) {
             return utils.getErrorMsg(e)
         }
+    },
+    async add() {
+        try {
+            return await axios.post(`${config.url}/backend-dashboard/backend/apis.insert`)
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
     }
 }
