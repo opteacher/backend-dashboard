@@ -1,5 +1,5 @@
 <template>
-<el-form ref="form" :model="step" label-width="100px">
+<el-form ref="form" :model="step" label-width="80px">
     <el-form-item label="操作KEY">
         <el-col :span="18">
             <el-select class="w-100" v-model="step.operKey" placeholder="选择既存操作" @change="hdlSelOper">
@@ -10,7 +10,7 @@
             <el-button class="float-right" @click="hdlAddOper">添加操作</el-button>
         </el-col>
     </el-form-item>
-    <step-detail v-if="operMap && _.keys(operMap).includes(step.operKey)"/>
+    <step-detail v-if="Object.keys(operMap).includes(step.operKey)" :selStep="step" preMode="editing"/>
 </el-form>
 </template>
 
@@ -50,7 +50,7 @@ export default {
 
         },
         hdlSelOper() {
-            console.log(this.step.operKey)
+            this.step = this.operMap[this.step.operKey]
         }
     }
 }
