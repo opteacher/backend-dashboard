@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api.proto",
+        "title": "backend/api/api.proto",
         "version": "1"
     },
     "schemes": [
@@ -534,6 +534,43 @@
                     "backend.manager.service.v1.BackendManager"
                 ]
             }
+        },
+        "/backend-dashboard/backend/steps.selectTemp": {
+            "post": {
+                "summary": "/backend-dashboard/backend/steps.selectTemp",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.OperStepArray"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
         }
     },
     "definitions": {
@@ -561,8 +598,11 @@
                 "method": {
                     "type": "string"
                 },
-                "return": {
-                    "type": "string"
+                "returns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "flows": {
                     "type": "array",
@@ -789,6 +829,18 @@
                 },
                 "symbol": {
                     "type": "integer"
+                }
+            },
+            "description": "所有事务流都是函数调用，而且所有的函数返回值都是err结尾"
+        },
+        ".backend.manager.service.v1.OperStepArray": {
+            "type": "object",
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
+                    }
                 }
             }
         },

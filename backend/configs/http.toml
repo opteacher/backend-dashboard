@@ -1,4 +1,4 @@
 
 [server]
-    addr = "0.0.0.0:8000"
+    addr = "0.0.0.0:8090"
     timeout = "1s"

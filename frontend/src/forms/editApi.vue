@@ -79,6 +79,8 @@
 </template>
 
 <script>
+import modelBkd from "../async/model"
+
 export default {
     data() {
         return {
@@ -113,6 +115,20 @@ export default {
             newReturn: {
                 type: ""
             }
+        }
+    },
+    async created() {
+        let res = await modelBkd.qry()
+        if (typeof res === "string") {
+            this.$message(`查询模块失败：${res}`)
+        } else {
+            let models = res.data.data.models || []
+            this.typeMap = models.map(model => {
+                return {
+                    title: model.name,
+                    value: model.name,
+                }
+            })
         }
     },
     methods: {

@@ -223,6 +223,25 @@ func (s *Service) OperStepsInsert(context.Context, *pb.OperStep) (*pb.OperStep, 
 	return nil, nil
 }
 
+func (s *Service) OperStepsSelectTemp(ctx context.Context, req *pb.Empty) (*pb.OperStepArray, error) {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if res, err := s.dao.QueryTx(tx, model.OPER_STEP_TABLE, "`api_name` IS NULL", nil); err != nil {
+		return nil, fmt.Errorf("查询数据库失败：%v", err)
+	} else {
+		resp := new(pb.OperStepArray)
+		for _, entry := range res {
+			resp.Steps = append(resp.Steps, CvtOperStepFmMap(entry))
+		}
+		if err := s.dao.CommitTx(tx); err != nil {
+			return nil, fmt.Errorf("提交事务失败：%v", err)
+		} else {
+			return resp, nil
+		}
+	}
+	return nil, nil
+}
+
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {
 	if wsPath, err := s.ac.Get("workspace").String(); err != nil {
 		return nil, fmt.Errorf("配置文件中未定义工作区目录：%v", err)

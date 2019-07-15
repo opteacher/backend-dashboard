@@ -231,7 +231,7 @@ func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo
 			sparams += ptyp + ","
 		}
 		sparams = strings.TrimRight(sparams, ",")
-		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.Name, sparams, api.Return)
+		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.Name, sparams, strings.Join(api.Returns, ","))
 		if len(api.Route) != 0 && len(api.Method) != 0 {
 			code += " {\n\t\toption (google.api.http) = {\n"
 			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.Method, api.Route)
@@ -293,7 +293,12 @@ func (kpg *KratosProjGen) chgKratosServiceFile(ctx context.Context, apis []*pb.A
 					aparams = append(aparams, fmt.Sprintf("%s *pb.%s", pname, ptype))
 				}
 				sparams := strings.Join(aparams, ", ")
-				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*pb.%s, error) {\n", ai.Name, sparams, ai.Return)
+				areturns := make([]string, 0)
+				for _, ret := range ai.Returns {
+					areturns = append(areturns, "*pb." + ret)
+				}
+				sreturns := strings.Join(areturns, ", ")
+				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (%s, error) {\n", ai.Name, sparams, sreturns)
 				preSpaces := 1
 				for _, step := range ai.Flows {
 					// 添加注释

@@ -21,11 +21,17 @@
 <script>
 export default {
     props: {
-        "selStep": Object
+        "selStep": Object,
+        "preMode": String,
     },
     data() {
         return {
             mode: "display"
+        }
+    },
+    created() {
+        if (this.preMode && this.preMode.length !== 0) {
+            this.mode = this.preMode
         }
     }
 }

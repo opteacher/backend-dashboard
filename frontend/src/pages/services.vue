@@ -14,6 +14,14 @@
             <el-button type="primary">确 定</el-button>
         </div>
     </el-dialog>
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <el-dialog title="添加步骤" :visible.sync="showAddFlowDlg" :modal-append-to-body="false" width="50vw">
+        <edit-flow ref="add-flow-form"/>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="showAddFlowDlg = false">取 消</el-button>
+            <el-button type="primary">确 定</el-button>
+        </div>
+    </el-dialog>
 </dashboard>
 </template>
 
@@ -25,12 +33,14 @@ import infoBar from "../components/infoBar"
 import stepDetail from "../forms/stepDetail"
 import backend from "../async/backend"
 import apiInfo from "../forms/apiInfo"
+import editFlow from "../forms/editFlow"
 
 export default {
     components: {
         "dashboard": dashboard,
         "info-bar": infoBar,
-        "step-detail": stepDetail
+        "step-detail": stepDetail,
+        "edit-flow": editFlow
     },
     data() {
         return {
@@ -40,6 +50,7 @@ export default {
             },
             index: 1,
             showStepDtlDlg: false,
+            showAddFlowDlg: false,
             fors: [],
         }
     },
@@ -75,6 +86,23 @@ export default {
             this.updatePanel()
         },
         drawFlowBlock() {
+            if (!this.selApi.flows || this.selApi.flows.length === 0) {
+                // 如果没有处理流程，绘制一个添加步骤的按钮之后直接返回
+                d3.select("#pnlFlows")
+                    .append("div")
+                    .attr("class", "h-100 w-100")
+                    .attr("style", "display: flex")
+                    .append("button")
+                    .attr("style", "align-self: center; margin: 0 auto")
+                    .attr("class", "btn btn-success rounded-circle")
+                    .attr("type", "button")
+                    .append("i")
+                    .attr("class", "el-icon-plus")
+                    .on("click", () => {
+                        this.showAddFlowDlg = true
+                    })
+                return
+            }
             let pnlWid = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
             let flowLoc = 50
             let flowX = (pnlWid>>1) - 250
@@ -162,7 +190,6 @@ export default {
                 .text(output => output)
                 .append("i")
                 .attr("class", "el-icon-arrow-right")
-
             // 绘制局部变量列表
             card.append("div")
                 .attr("class", "list-group")
@@ -182,6 +209,10 @@ export default {
                 })
         },
         drawFlowArrow() {
+            if (!this.selApi.flows || this.selApi.flows.length === 0) {
+                // 如果没有处理流程，直接返回
+                return
+            }
             let self = this
             d3.select("#pnlGraphs")
                 .style("height", `${document.getElementById("pnlFlows").scrollHeight}px`)
@@ -227,7 +258,7 @@ export default {
                         .attr("y2", y)
                         .attr("stroke", "black")
                         .attr("stroke-dasharray","5,5")
-                    // 按钮宽高40px
+                    // 绘制添加步骤按钮，按钮宽高40px
                     let x = ((x2 - x1)>>1) + x1
                     d3.select("#pnlFlows")
                         .append("button")
