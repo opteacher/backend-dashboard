@@ -96,11 +96,11 @@ export default {
                     .attr("style", "align-self: center; margin: 0 auto")
                     .attr("class", "btn btn-success rounded-circle")
                     .attr("type", "button")
-                    .append("i")
-                    .attr("class", "el-icon-plus")
                     .on("click", () => {
                         this.showAddFlowDlg = true
                     })
+                    .append("i")
+                    .attr("class", "el-icon-plus")
                 return
             }
             let pnlWid = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)

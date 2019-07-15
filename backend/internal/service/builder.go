@@ -682,19 +682,23 @@ func CvtApiInfoFmMap(dao *dao.Dao, tx *sql.Tx, mapi map[string]interface{}) (*pb
 	return info, nil
 }
 
+func chkStrEmpty(str interface{}) bool {
+	return str != nil && reflect.TypeOf(str).ConvertibleTo(reflect.TypeOf((*string)(nil)).Elem()) && str.(string) != ""
+}
+
 func CvtOperStepFmMap(mstep map[string]interface{}) *pb.OperStep {
 	step := new(pb.OperStep)
 	step.OperKey = mstep["oper_key"].(string)
-	if mstep["requires"] != nil {
+	if chkStrEmpty(mstep["requires"]) {
 		step.Requires = strings.Split(mstep["requires"].(string), ",")
 	}
-	if mstep["desc"] != nil {
+	if chkStrEmpty(mstep["desc"]) {
 		step.Desc = mstep["desc"].(string)
 	}
-	if mstep["inputs"] != nil {
+	if chkStrEmpty(mstep["inputs"]) {
 		step.Inputs = StrToStrMap(mstep["inputs"].(string))
 	}
-	if mstep["outputs"] != nil {
+	if chkStrEmpty(mstep["outputs"]) {
 		step.Outputs = strings.Split(mstep["outputs"].(string), ",")
 	}
 	if mstep["block_in"] != nil {
@@ -704,7 +708,7 @@ func CvtOperStepFmMap(mstep map[string]interface{}) *pb.OperStep {
 		step.BlockOut = mstep["block_out"].(int64) != 0
 	}
 	step.Code = mstep["code"].(string)
-	if mstep["api_name"] != nil {
+	if chkStrEmpty(mstep["api_name"]) {
 		step.ApiName = mstep["api_name"].(string)
 	}
 	return step

@@ -78,9 +78,9 @@ export default {
             this.$emit("select-api", this.selApi)
         },
         addToRecentApis(api) {
-            let apiInRec = this.recentApis.find(ele => ele.api.name === api.name)
-            if (apiInRec) {
-                apiInRec.num++
+            let holder = this.recentApis.find(ele => ele.api.name === api.name)
+            if (holder) {
+                holder.num++
                 return
             } else if (this.recentApis.length > 5) {
                 // 找出num最小的api，从最近api表中剔除
@@ -109,9 +109,8 @@ export default {
             if (apiName === "*more") {
                 this.showSelApiDlg = true
             } else {
-                this.selApiLocal(
-                    this.recentApis.find(ele => ele.api.name === apiName)
-                )
+                let holder = this.recentApis.find(ele => ele.api.name === apiName)
+                this.selApiLocal(holder.api)
             }
         },
         addApi() {

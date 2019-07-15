@@ -1,8 +1,8 @@
 <template>
-<el-form ref="form" :model="step" label-width="80px">
+<el-form ref="form" :model="flow" label-width="80px">
     <el-form-item label="操作KEY">
         <el-col :span="18">
-            <el-select class="w-100" v-model="step.operKey" placeholder="选择既存操作" @change="hdlSelOper">
+            <el-select class="w-100" v-model="flow.operKey" placeholder="选择既存操作" @change="hdlSelOper">
                 <el-option v-for="oper in opers" :key="oper.operKey" :label="oper.operKey" :value="oper.operKey"/>
             </el-select>
         </el-col>
@@ -10,7 +10,7 @@
             <el-button class="float-right" @click="hdlAddOper">添加操作</el-button>
         </el-col>
     </el-form-item>
-    <step-detail v-if="Object.keys(operMap).includes(step.operKey)" :selStep="step" preMode="editing"/>
+    <step-detail v-if="Object.keys(operMap).includes(flow.operKey)" :selStep="flow" preMode="editing-flow"/>
 </el-form>
 </template>
 
@@ -28,9 +28,8 @@ export default {
         return {
             opers: [],
             operMap: {},
-            step: {
-                operKey: "",
-                requires: []
+            flow: {
+                operKey: ""
             }
         }
     },
@@ -50,7 +49,8 @@ export default {
 
         },
         hdlSelOper() {
-            this.step = this.operMap[this.step.operKey]
+            let oper = this.operMap[this.flow.operKey]
+            this.flow = _.cloneDeep(oper)
         }
     }
 }
