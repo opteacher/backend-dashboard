@@ -289,10 +289,11 @@ func (kpg *KratosProjGen) chgKratosServiceFile(ctx context.Context, apis []*pb.A
 			for _, ai := range apis {
 				aparams := make([]string, 0)
 				for pname, ptype := range ai.Params {
-					aparams = append(aparams, fmt.Sprintf("%s *%s", pname, ptype))
+					// 参数都是api包下的类型，所以要附上pb前缀
+					aparams = append(aparams, fmt.Sprintf("%s *pb.%s", pname, ptype))
 				}
 				sparams := strings.Join(aparams, ", ")
-				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*%s, error) {\n", ai.Name, sparams, ai.Return)
+				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (*pb.%s, error) {\n", ai.Name, sparams, ai.Return)
 				preSpaces := 1
 				for _, step := range ai.Flows {
 					// 添加注释
@@ -326,7 +327,7 @@ func (kpg *KratosProjGen) chgKratosServiceFile(ctx context.Context, apis []*pb.A
 		case strings.Contains(string(line), "[INIT]"):
 			code += "\tif err := kpg.dao.BeginTx(ctx); err != nil {\n\t\tpanic(err)\n\t}"
 			for mdl, tbl := range models {
-				str := fmt.Sprintf("kpg.dao.CreateTx(tx, \"%s\", reflect.TypeOf((*%s)(nil)).Elem())", tbl, mdl)
+				str := fmt.Sprintf("kpg.dao.CreateTx(tx, \"%s\", reflect.TypeOf((*pb.%s)(nil)).Elem())", tbl, mdl)
 				code += fmt.Sprintf(" else if err := %s; err != nil {\n\t\tpanic(err)\n\t}", str)
 			}
 			code += " else if err := kpg.dao.CommitTx(tx); err != nil {\n\t\tpanic(err)\n\t}\n"

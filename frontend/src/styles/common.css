@@ -35,3 +35,7 @@
 .auto-wrap {
     word-wrap: break-word;
 }
+
+.mr-2 {
+    margin-right: 2px;
+}

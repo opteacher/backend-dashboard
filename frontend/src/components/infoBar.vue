@@ -30,7 +30,7 @@
         <edit-api ref="add-api-form"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddApiDlg = false">取 消</el-button>
-            <el-button type="primary" @click="selectApi">确 定</el-button>
+            <el-button type="primary" @click="addApi">确 定</el-button>
         </div>
     </el-dialog>
 </el-row>
@@ -68,12 +68,15 @@ export default {
             if (apis.length === 0) {
                 return
             }
-            this.selApi = apis[0]
-            this.addToRecentApis(this.selApi)
-            this.$emit("select-api", this.selApi)
+            this.selApiLocal(apis[0])
         }
     },
     methods: {
+        selApiLocal(api) {
+            this.selApi = api
+            this.addToRecentApis(this.selApi)
+            this.$emit("select-api", this.selApi)
+        },
         addToRecentApis(api) {
             let apiInRec = this.recentApis.find(ele => ele.api.name === api.name)
             if (apiInRec) {
@@ -98,9 +101,7 @@ export default {
         selectApi() {
             let selApi = this.$refs["sel-api-form"].selApi
             if (selApi) {
-                this.selApi = _.clone(selApi)
-                this.addToRecentApis(this.selApi)
-                this.$emit("select-api", selApi)
+                this.selApiLocal(selApi)
             }
             this.showSelApiDlg = false
         },
@@ -108,12 +109,45 @@ export default {
             if (apiName === "*more") {
                 this.showSelApiDlg = true
             } else {
-                this.selApi = this.recentApis.find(ele => ele.api.name === apiName)
-                this.selApi = this.selApi.api
-                this.addToRecentApis(this.selApi)
-                this.$emit("select-api", this.selApi)
+                this.selApiLocal(
+                    this.recentApis.find(ele => ele.api.name === apiName)
+                )
             }
         },
+        addApi() {
+            let form = this.$refs["add-api-form"]
+            if (!form.api.enableHttp) {
+                form.api.route = "/"
+                form.api.method = "GET"
+            }
+            form.$refs["form"].validate(async valid => {
+                if (valid) {
+                    // 根据需要消除http相关信息
+                    let api = _.cloneDeep(form.api)
+                    if (!api.enableHttp) {
+                        delete(api.route)
+                        delete(api.method)
+                    }
+                    delete(api.enableHttp)
+                    // 将params转化成一个对象
+                    let params = {}
+                    api.params.map(param => {
+                        params[param.name] = param.type
+                    })
+                    api.params = params
+                    // 将API信息发送给后台
+                    let res = await apisBkd.add(api)
+                    if (typeof res === "string") {
+                        this.$message(`添加接口失败：${res}`)
+                    } else {
+                        this.selApiLocal(res.data.data)
+                    }
+                    this.showAddApiDlg = false
+                } else {
+                    return false
+                }
+            })
+        }
     }
 }
 </script>

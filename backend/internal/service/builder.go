@@ -168,14 +168,10 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 			Route:  fmt.Sprintf("/api/v1/%s.%s", strings.ToLower(mname), strings.ToLower(aname)),
 			Method: strings.ToLower(m),
 		}
-		mtypeInCode := "pb." + mname
-		mmtypeInCode := "pb." + mmname
-		nilInCode := "pb.Nil"
-		idenReqsInCode := "pb.IdenReqs"
 		switch mdlApi.Method {
 		case "post":
-			mdlApi.Params["entry"] = mtypeInCode
-			mdlApi.Return = mtypeInCode
+			mdlApi.Params["entry"] = mname
+			mdlApi.Return = mname
 			mdlApi.Flows = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "json_marshal",
@@ -186,7 +182,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				copyStep(&pb.OperStep{
 					OperKey: "json_unmarshal",
 					Inputs: map[string]string{
-						"OBJ_TYPE": mtypeInCode,
+						"OBJ_TYPE": mname,
 					},
 				}),
 				copyStep(&pb.OperStep{
@@ -218,8 +214,8 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				}),
 			}
 		case "delete":
-			mdlApi.Params["iden"] = idenReqsInCode
-			mdlApi.Return = mtypeInCode
+			mdlApi.Params["iden"] = "IdenReqs"
+			mdlApi.Return = mname
 			mdlApi.Flows = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "database_beginTx",
@@ -252,20 +248,20 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				copyStep(&pb.OperStep{
 					OperKey: "json_unmarshal",
 					Inputs: map[string]string{
-						"OBJ_TYPE": mtypeInCode,
+						"OBJ_TYPE": mname,
 					},
 				}),
 				copyStep(&pb.OperStep{
 					OperKey: "return_succeed",
 					Inputs: map[string]string{
-						"RETURN": fmt.Sprintf("omap.(*%s)", mtypeInCode),
+						"RETURN": fmt.Sprintf("omap.(*%s)", mname),
 					},
 				}),
 			}
 		case "put":
-			mdlApi.Params["iden"] = idenReqsInCode
-			mdlApi.Params["entry"] = mtypeInCode
-			mdlApi.Return = mtypeInCode
+			mdlApi.Params["iden"] = "IdenReqs"
+			mdlApi.Params["entry"] = mname
+			mdlApi.Return = mname
 			mdlApi.Flows = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "json_marshal",
@@ -276,7 +272,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				copyStep(&pb.OperStep{
 					OperKey: "json_unmarshal",
 					Inputs: map[string]string{
-						"OBJ_TYPE": mtypeInCode,
+						"OBJ_TYPE": mname,
 					},
 				}),
 				copyStep(&pb.OperStep{
@@ -311,19 +307,19 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				copyStep(&pb.OperStep{
 					OperKey: "json_unmarshal",
 					Inputs: map[string]string{
-						"OBJ_TYPE": mtypeInCode,
+						"OBJ_TYPE": mname,
 					},
 				}),
 				copyStep(&pb.OperStep{
 					OperKey: "return_succeed",
 					Inputs: map[string]string{
-						"RETURN": fmt.Sprintf("omap.(*%s)", mtypeInCode),
+						"RETURN": fmt.Sprintf("omap.(*%s)", mname),
 					},
 				}),
 			}
 		case "get":
-			mdlApi.Params["iden"] = idenReqsInCode
-			mdlApi.Return = mtypeInCode
+			mdlApi.Params["iden"] = "IdenReqs"
+			mdlApi.Return = mname
 			mdlApi.Flows = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "database_query",
@@ -342,20 +338,20 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				copyStep(&pb.OperStep{
 					OperKey: "json_unmarshal",
 					Inputs: map[string]string{
-						"OBJ_TYPE": mtypeInCode,
+						"OBJ_TYPE": mname,
 					},
 				}),
 				copyStep(&pb.OperStep{
 					OperKey: "return_succeed",
 					Inputs: map[string]string{
-						"RETURN": fmt.Sprintf("omap.(*%s)", mtypeInCode),
+						"RETURN": fmt.Sprintf("omap.(*%s)", mname),
 					},
 				}),
 			}
 		case "all":
 			mdlApi.Method = "get"
-			mdlApi.Params["params"] = nilInCode
-			mdlApi.Return = mtypeInCode
+			mdlApi.Params["params"] = "Nil"
+			mdlApi.Return = mname
 			mdlApi.Flows = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "database_query",
@@ -368,7 +364,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				copyStep(&pb.OperStep{
 					OperKey: "assignment_create",
 					Inputs: map[string]string{
-						"SOURCE": fmt.Sprintf("new(%s)", mmtypeInCode),
+						"SOURCE": fmt.Sprintf("new(%s)", mmname),
 						"TARGET": "resp",
 					},
 				}),
@@ -389,14 +385,14 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				copyStep(&pb.OperStep{
 					OperKey: "json_unmarshal",
 					Inputs: map[string]string{
-						"OBJ_TYPE": mtypeInCode,
+						"OBJ_TYPE": mname,
 					},
 				}),
 				copyStep(&pb.OperStep{
 					OperKey: "assignment_append",
 					Inputs: map[string]string{
 						"ARRAY":   "resp." + mmfname,
-						"NEW_ADD": fmt.Sprintf("omap.(*%s)", mmtypeInCode),
+						"NEW_ADD": fmt.Sprintf("omap.(*%s)", mmname),
 					},
 					Symbol: pb.SpecialSym_FOR_END,
 				}),
@@ -635,7 +631,9 @@ func OperStepFmDbByTx(dao *dao.Dao, tx *sql.Tx, id int64) (*pb.OperStep, error) 
 func ApiInfoToDbByTx(dao *dao.Dao, tx *sql.Tx, info *pb.ApiInfo) (int64, error) {
 	minfo := make(map[string]interface{})
 	minfo["name"] = info.Name
-	minfo["model"] = info.Model
+	if len(info.Model) != 0 {
+		minfo["model"] = info.Model
+	}
 	minfo["table"] = info.Table
 	minfo["params"] = StrMapToStr(info.Params)
 	minfo["route"] = info.Route
@@ -668,7 +666,11 @@ func CvtApiInfoFmMap(dao *dao.Dao, tx *sql.Tx, mapi map[string]interface{}) (*pb
 	info.Route = mapi["route"].(string)
 	info.Method = mapi["method"].(string)
 	info.Return = mapi["return"].(string)
-	for _, flowID := range strings.Split(mapi["flows"].(string), ",") {
+	sflows := mapi["flows"].(string)
+	if len(sflows) == 0 {
+		return info, nil
+	}
+	for _, flowID := range strings.Split(sflows, ",") {
 		if iflowID, err := strconv.Atoi(flowID); err != nil {
 			return nil, err
 		} else if flow, err := OperStepFmDbByTx(dao, tx, int64(iflowID)); err != nil {

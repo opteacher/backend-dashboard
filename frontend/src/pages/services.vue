@@ -1,6 +1,6 @@
 <template>
 <dashboard>
-    <info-bar @select-api="selectApi"/>
+    <info-bar @select-api="selectApi" @add-api="addApi"/>
     <div id="pnlFlows" class="w-100 h-100" style="position: absolute"></div>
     <svg id="pnlGraphs" class="w-100" style="position: absolute; z-index: -100; height: 100%" />
     <el-button id="btnApiInfo" type="primary" size="small" icon="el-icon-info" v-if="selApi" @click="showApiInfo">
@@ -52,28 +52,33 @@ export default {
         },
         selectApi(selApi) {
             this.selApi = selApi
-            this.selApi.flows = this.selApi.flows.map((flow, idx) => {
-                // 做一些处理：只包含一个元素的输出数组全部设为空
-                if (flow.outputs.length === 1 && flow.outputs[0] === "") {
-                    flow.outputs = []
-                }
-                if (flow.requires.length === 1 && flow.requires[0] === "") {
-                    flow.requires = []
-                }
-                if (idx === 0) {
-                    flow.locVars = _.keys(this.selApi.params)
-                } else {
-                    flow.locVars = this.selApi.flows[idx - 1].outputs
-                }
-                flow.index = idx
-                return flow
-            })
+            if (!this.selApi.flows) {
+                this.selApi.flows = []
+            } else {
+                this.selApi.flows = this.selApi.flows.map((flow, idx) => {
+                    // 做一些处理：只包含一个元素的输出数组全部设为空
+                    if (flow.outputs.length === 1 && flow.outputs[0] === "") {
+                        flow.outputs = []
+                    }
+                    if (flow.requires.length === 1 && flow.requires[0] === "") {
+                        flow.requires = []
+                    }
+                    if (idx === 0) {
+                        flow.locVars = _.keys(this.selApi.params)
+                    } else {
+                        flow.locVars = this.selApi.flows[idx - 1].outputs
+                    }
+                    flow.index = idx
+                    return flow
+                })
+            }
             this.updatePanel()
         },
         drawFlowBlock() {
             let pnlWid = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
             let flowLoc = 50
             let flowX = (pnlWid>>1) - 250
+            let disBetwFlow = 300
             let card = d3.select("#pnlFlows")
                 .selectAll("div")
                 .data(this.selApi.flows)
@@ -82,7 +87,7 @@ export default {
                 .attr("name", (flow, idx) => `flow_${idx}`)
                 .style("position", "absolute")
                 .style("left", flow => `${flow.x = flowX}px`)
-                .style("top", (flow, idx) => `${flow.y = (idx === 0 ? flowLoc : flowLoc += 200)}px`)
+                .style("top", (flow, idx) => `${flow.y = (idx === 0 ? flowLoc : flowLoc += disBetwFlow)}px`)
                 .style("width", "500px")
                 .style("margin-bottom", (flow, idx) => `${idx === this.selApi.flows.length - 1 ? 50 : 0}px`)
                 .each(flow => {
@@ -109,10 +114,16 @@ export default {
                             break
                     }
                 })
-                .append("div")
-                .attr("class", "row")
-            // 填充步骤的inputs
             card.append("div")
+                .attr("class", "card-header")
+                .text((flow, index) => `#${index}`)
+                .append("span")
+                .attr("class", "float-right")
+                .text(flow => flow.operKey)
+            let cardBody = card.append("div")
+                .attr("class", "row") 
+            // 填充步骤的inputs
+            cardBody.append("div")
                 .attr("class", "col pr-0")
                 .append("div")
                 .attr("class", "list-group list-group-flush h-100")
@@ -131,7 +142,7 @@ export default {
                 .append("i")
                 .attr("class", "el-icon-arrow-right")
             // 填充步骤的描述
-            card.append("div")
+            cardBody.append("div")
                 .attr("class", "col-6 card-body text-center desc-panel")
                 .text(flow => flow.desc)
                 .on("click", flow => {
@@ -139,7 +150,7 @@ export default {
                     this.showStepDtlDlg = true
                 })
             // 填充步骤的outputs
-            card.append("div")
+            cardBody.append("div")
                 .attr("class", "col pl-0")
                 .append("div")
                 .attr("class", "list-group list-group-flush h-100")
@@ -151,6 +162,7 @@ export default {
                 .text(output => output)
                 .append("i")
                 .attr("class", "el-icon-arrow-right")
+
             // 绘制局部变量列表
             card.append("div")
                 .attr("class", "list-group")
@@ -299,6 +311,9 @@ export default {
                 showConfirmButton: false
             }).catch(err => {})
         },
+        addApi(newApi) {
+            console.log(newApi)
+        }
     }
 }
 </script>

@@ -11,9 +11,9 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
-    async add() {
+    async add(api) {
         try {
-            return await axios.post(`${config.url}/backend-dashboard/backend/apis.insert`)
+            return await axios.post(`${config.url}/backend-dashboard/backend/apis.insert`, api)
         } catch(e) {
             return utils.getErrorMsg(e)
         }

@@ -202,13 +202,9 @@ func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfo
 }
 
 func (s *Service) ApisInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo, error) {
-	if bm, err := json.Marshal(req); err != nil {
-		return nil, fmt.Errorf("转JSON失败：%v", err)
-	} else if mm, err := utils.UnmarshalJSON(bm, reflect.TypeOf((*map[string]interface{})(nil)).Elem()); err != nil {
-		return nil, fmt.Errorf("提交的请求参数格式有误：%v", err)
-	} else if tx, err := s.dao.BeginTx(ctx); err != nil {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
 		return nil, fmt.Errorf("开启事务失败：%v", err)
-	} else if _, err := s.dao.InsertTx(tx, model.API_INFO_TABLE, *(mm.(*map[string]interface{}))); err != nil {
+	} else if _, err := ApiInfoToDbByTx(s.dao, tx, req); err != nil {
 		return nil, fmt.Errorf("插入数据库失败：%v", err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
 		return nil, fmt.Errorf("提交插入事务失败：%v", err)
