@@ -16,10 +16,10 @@
     </el-dialog>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
     <el-dialog title="添加步骤" :visible.sync="showAddFlowDlg" :modal-append-to-body="false" width="50vw">
-        <edit-flow ref="add-flow-form"/>
+        <edit-flow ref="add-flow-form" :locVars="locVars"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddFlowDlg = false">取 消</el-button>
-            <el-button type="primary">确 定</el-button>
+            <el-button type="primary" @click="addFlow">确 定</el-button>
         </div>
     </el-dialog>
 </dashboard>
@@ -52,6 +52,7 @@ export default {
             showStepDtlDlg: false,
             showAddFlowDlg: false,
             fors: [],
+            locVars: []
         }
     },
     methods: {
@@ -97,6 +98,7 @@ export default {
                     .attr("class", "btn btn-success rounded-circle")
                     .attr("type", "button")
                     .on("click", () => {
+                        this.locVars = Object.keys(this.selApi.params)
                         this.showAddFlowDlg = true
                     })
                     .append("i")
@@ -105,7 +107,7 @@ export default {
             }
             let pnlWid = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
             let flowLoc = 50
-            let flowX = (pnlWid>>1) - 250
+            let flowX = (pnlWid>>1) - 300
             let disBetwFlow = 300
             let card = d3.select("#pnlFlows")
                 .selectAll("div")
@@ -116,7 +118,7 @@ export default {
                 .style("position", "absolute")
                 .style("left", flow => `${flow.x = flowX}px`)
                 .style("top", (flow, idx) => `${flow.y = (idx === 0 ? flowLoc : flowLoc += disBetwFlow)}px`)
-                .style("width", "500px")
+                .style("width", "600px")
                 .style("margin-bottom", (flow, idx) => `${idx === this.selApi.flows.length - 1 ? 50 : 0}px`)
                 .each(flow => {
                     if (!flow.special) {
@@ -267,6 +269,14 @@ export default {
                         .style("position", "absolute")
                         .style("left", `${x - 20}px`)
                         .style("top", `${y - 20}px`)
+                        .on("click", () => {
+                            // 收集局部变量
+                            self.locVars = []
+                            for (let i = idx; i >= 0; i--) {
+                                self.locVars = self.locVars.concat(self.selApi.flows[i].locVars)
+                            }
+                            self.showAddFlowDlg = true
+                        })
                         .append("i")
                         .attr("class", "el-icon-plus")
                 })
@@ -344,6 +354,10 @@ export default {
         },
         addApi(newApi) {
             console.log(newApi)
+        },
+        addFlow() {
+            let form = this.$refs["add-flow-form"]
+            console.log(form.flow)
         }
     }
 }

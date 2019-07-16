@@ -7,10 +7,10 @@
             </el-select>
         </el-col>
         <el-col :span="6">
-            <el-button class="float-right" @click="hdlAddOper">添加操作</el-button>
+            <el-button class="float-right" @click="hdlAddOper">添加操作模板</el-button>
         </el-col>
     </el-form-item>
-    <step-detail v-if="Object.keys(operMap).includes(flow.operKey)" :selStep="flow" preMode="editing-flow"/>
+    <step-detail v-if="Object.keys(operMap).includes(flow.operKey)" :selStep="flow" preMode="editing-flow" :locVars="locVars"/>
 </el-form>
 </template>
 
@@ -23,6 +23,9 @@ import stepDetail from "../forms/stepDetail"
 export default {
     components: {
         "step-detail": stepDetail
+    },
+    props: {
+        "locVars": Array
     },
     data() {
         return {
