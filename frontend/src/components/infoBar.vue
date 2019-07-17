@@ -60,9 +60,9 @@ export default {
         }
     },
     async created() {
-        let res = await apisBkd.qry()
+        let res = await apisBkd.qryAll()
         if (typeof res === "string") {
-            this.$message(`查询接口失败：${res}`)
+            this.$message.error(`查询接口失败：${res}`)
         } else {
             let apis = res.data.data.infos || []
             if (apis.length === 0) {
@@ -137,7 +137,7 @@ export default {
                     // 将API信息发送给后台
                     let res = await apisBkd.add(api)
                     if (typeof res === "string") {
-                        this.$message(`添加接口失败：${res}`)
+                        this.$message.error(`添加接口失败：${res}`)
                     } else {
                         this.selApiLocal(res.data.data)
                     }

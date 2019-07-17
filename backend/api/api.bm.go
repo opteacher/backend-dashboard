@@ -30,6 +30,7 @@ var PathBackendManagerModelsSelectByName = "/backend-dashboard/backend/models.se
 var PathBackendManagerLinksInsert = "/backend-dashboard/backend/links.insert"
 var PathBackendManagerLinksSelectAll = "/backend-dashboard/backend/links.selectAll"
 var PathBackendManagerLinksDeleteBySymbol = "/backend-dashboard/backend/links.deleteBySymbol"
+var PathBackendManagerApisSelectByName = "/backend-dashboard/backend/apis.selectByName"
 var PathBackendManagerApisSelectAll = "/backend-dashboard/backend/apis.selectAll"
 var PathBackendManagerApisInsert = "/backend-dashboard/backend/apis.insert"
 var PathBackendManagerFlowInsert = "/backend-dashboard/backend/flows.insert"
@@ -56,16 +57,16 @@ type BackendManagerBMServer interface {
 
 	LinksDeleteBySymbol(ctx context.Context, req *SymbolID) (resp *Link, err error)
 
+	ApisSelectByName(ctx context.Context, req *NameID) (resp *ApiInfo, err error)
+
 	ApisSelectAll(ctx context.Context, req *Empty) (resp *ApiInfoArray, err error)
 
 	ApisInsert(ctx context.Context, req *ApiInfo) (resp *ApiInfo, err error)
 
-	FlowInsert(ctx context.Context, req *FlowReqs) (resp *FlowReqs, err error)
+	FlowInsert(ctx context.Context, req *FlowReqs) (resp *Empty, err error)
 
 	OperStepsSelectTemp(ctx context.Context, req *Empty) (resp *OperStepArray, err error)
 
-	// 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
-	// 如果需要插入到流程中间，则需要使用
 	OperStepsInsert(ctx context.Context, req *OperStep) (resp *OperStep, err error)
 
 	Export(ctx context.Context, req *ExpOptions) (resp *UrlResp, err error)
@@ -147,6 +148,15 @@ func backendManagerLinksDeleteBySymbol(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerApisSelectByName(c *bm.Context) {
+	p := new(NameID)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ApisSelectByName(c, p)
+	c.JSON(resp, err)
+}
+
 func backendManagerApisSelectAll(c *bm.Context) {
 	p := new(Empty)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
@@ -221,6 +231,7 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/links.insert", backendManagerLinksInsert)
 	e.POST("/backend-dashboard/backend/links.selectAll", backendManagerLinksSelectAll)
 	e.POST("/backend-dashboard/backend/links.deleteBySymbol", backendManagerLinksDeleteBySymbol)
+	e.POST("/backend-dashboard/backend/apis.selectByName", backendManagerApisSelectByName)
 	e.POST("/backend-dashboard/backend/apis.selectAll", backendManagerApisSelectAll)
 	e.POST("/backend-dashboard/backend/apis.insert", backendManagerApisInsert)
 	e.POST("/backend-dashboard/backend/flows.insert", backendManagerFlowInsert)

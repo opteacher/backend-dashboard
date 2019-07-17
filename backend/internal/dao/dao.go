@@ -276,6 +276,18 @@ func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, e
 	}
 }
 
+func (d *Dao) QueryOneTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) (map[string]interface{}, error) {
+	if ary, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
+		d.RollbackTx(tx)
+		return nil, err
+	} else if len(ary) == 0 {
+		d.RollbackTx(tx)
+		return nil, errors.New("Queried data empty")
+	} else {
+		return ary[0], nil
+	}
+}
+
 func (d *Dao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
 	str := fmt.Sprintf("SELECT * FROM `%s`", table)
 	if len(condStr) != 0 {

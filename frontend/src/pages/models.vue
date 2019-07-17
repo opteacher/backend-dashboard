@@ -178,7 +178,7 @@ export default {
             async queryModels() {
                 let res = await modelBkd.qry()
                 if (typeof res === "string") {
-                    this.$message(`查询模块失败：${res}`)
+                    this.$message.error(`查询模块失败：${res}`)
                 } else {
                     this.models = (res.data.data && res.data.data.models) || []
                 }
@@ -186,7 +186,7 @@ export default {
             async queryLinks() {
                 let res = await linkBkd.qry()
                 if (typeof res === "string") {
-                    this.$message(`查询关联失败：${res}`)
+                    this.$message.error(`查询关联失败：${res}`)
                 } else {
                     this.links = res.data.data.links || []
                 }
@@ -194,7 +194,7 @@ export default {
             async addModel(model) {
                 let res = await modelBkd.add(model)
                 if (typeof res === "string") {
-                    this.$message(`创建模块失败：${res}`)
+                    this.$message.error(`创建模块失败：${res}`)
                 } else {
                     this.models.push(model)
                 }
@@ -202,7 +202,7 @@ export default {
             async deleteModel(mname) {
                 let res = await modelBkd.del(mname)
                 if (typeof res === "string") {
-                    this.$message(`删除模块失败：${res}`)
+                    this.$message.error(`删除模块失败：${res}`)
                 } else {
                     this.models.pop(ele => ele.name === mname)
                 }
@@ -211,7 +211,7 @@ export default {
                 link.symbol = `${link.modelName1}-${link.modelName2}`.toLowerCase()
                 let res = await linkBkd.add(link)
                 if (typeof res === "string") {
-                    this.$message(`创建关联失败：${res}`)
+                    this.$message.error(`创建关联失败：${res}`)
                 } else {
                     link.id = res.data.data.id
                     this.links.push(link)

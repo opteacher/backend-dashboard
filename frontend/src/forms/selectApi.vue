@@ -37,7 +37,7 @@ export default {
         async queryApis() {
             let res = await apisBkd.qry()
             if (typeof res === "string") {
-                this.$message(`查询接口失败：${res}`)
+                this.$message.error(`查询接口失败：${res}`)
             } else {
                 this.apiList = res.data.data.infos || []
             }

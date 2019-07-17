@@ -10,7 +10,7 @@
             <el-button class="float-right" @click="hdlAddOper">添加操作模板</el-button>
         </el-col>
     </el-form-item>
-    <step-detail v-if="Object.keys(operMap).includes(flow.operKey)" :selStep="flow" preMode="editing-flow" :locVars="locVars"/>
+    <step-detail v-if="Object.keys(operMap).includes(flow.operKey)" :selStep="flow" preMode="editing-flow" :locVars="flowInfo.locVars"/>
 </el-form>
 </template>
 
@@ -25,7 +25,7 @@ export default {
         "step-detail": stepDetail
     },
     props: {
-        "locVars": Array
+        "flowInfo": Object
     },
     data() {
         return {
@@ -39,7 +39,7 @@ export default {
     async created() {
         let res = await stepBkd.qryTmp()
         if (typeof res === "string") {
-            this.$message(`查询模板步骤失败：${res}`)
+            this.$message.error(`查询模板步骤失败：${res}`)
         } else {
             this.opers = res.data.data.steps || []
             for (let oper of this.opers) {
@@ -52,8 +52,7 @@ export default {
 
         },
         hdlSelOper() {
-            let oper = this.operMap[this.flow.operKey]
-            this.flow = _.cloneDeep(oper)
+            this.flow = _.cloneDeep(this.operMap[this.flow.operKey])
         }
     }
 }

@@ -15,8 +15,8 @@
         </div>
     </el-dialog>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog title="添加步骤" :visible.sync="showAddFlowDlg" :modal-append-to-body="false" width="50vw">
-        <edit-flow ref="add-flow-form" :locVars="locVars"/>
+    <el-dialog :title="`添加步骤 #${flowInfo.flowIdx}`" :visible.sync="showAddFlowDlg" :modal-append-to-body="false" width="50vw">
+        <edit-flow ref="add-flow-form" :flowInfo="flowInfo"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddFlowDlg = false">取 消</el-button>
             <el-button type="primary" @click="addFlow">确 定</el-button>
@@ -34,6 +34,8 @@ import stepDetail from "../forms/stepDetail"
 import backend from "../async/backend"
 import apiInfo from "../forms/apiInfo"
 import editFlow from "../forms/editFlow"
+import stepBkd from "../async/step"
+import apisBkd from "../async/api"
 
 export default {
     components: {
@@ -52,10 +54,21 @@ export default {
             showStepDtlDlg: false,
             showAddFlowDlg: false,
             fors: [],
-            locVars: []
+            istFlowBtns: [],
+            flowInfo: {
+                flowIdx: -1
+            }
         }
     },
     methods: {
+        async refresh() {
+            let res = await apisBkd.queryByName(this.selApi.name)
+            if (typeof res === "string") {
+                this.$message.error(`查询名为${this.selApi.name}的接口时发生错误：${res}`)
+            } else {
+                this.selectApi(res.data.data)
+            }
+        },
         updatePanel() {
             d3.select("#pnlFlows").html("")
             d3.select("#pnlGraphs").html("")
@@ -64,26 +77,34 @@ export default {
         },
         selectApi(selApi) {
             this.selApi = selApi
-            if (!this.selApi.flows) {
-                this.selApi.flows = []
-            } else {
-                this.selApi.flows = this.selApi.flows.map((flow, idx) => {
-                    // 做一些处理：只包含一个元素的输出数组全部设为空
-                    if (flow.outputs.length === 1 && flow.outputs[0] === "") {
-                        flow.outputs = []
-                    }
-                    if (flow.requires.length === 1 && flow.requires[0] === "") {
-                        flow.requires = []
-                    }
-                    if (idx === 0) {
-                        flow.locVars = _.keys(this.selApi.params)
-                    } else {
-                        flow.locVars = this.selApi.flows[idx - 1].outputs
-                    }
-                    flow.index = idx
-                    return flow
-                })
-            }
+            this.istFlowBtns = [{
+                apiName: selApi.name,
+                flowIdx: 0,
+                stepId: -1,
+                locVars: this.selApi.params ? _.keys(this.selApi.params) : []
+            }]
+            this.selApi.flows = this.selApi.flows ? this.selApi.flows.map((flow, idx) => {
+                // 做一些处理：只包含一个元素的输出数组全部设为空
+                if (flow.outputs.length === 1 && flow.outputs[0] === "") {
+                    flow.outputs = []
+                }
+                if (flow.requires.length === 1 && flow.requires[0] === "") {
+                    flow.requires = []
+                }
+                flow.index = idx
+
+                if (idx !== 0) {
+                    let prevLocVars = this.istFlowBtns[this.istFlowBtns.length - 1].locVars
+                    let prevOutputs = this.selApi.flows[idx - 1].outputs
+                    this.istFlowBtns.push({
+                        apiName: selApi.name,
+                        flowIdx: idx + 1,
+                        stepId: flow.id,
+                        locVars: prevLocVars.concat(prevOutputs)
+                    })
+                }
+                return flow
+            }) : []
             this.updatePanel()
         },
         drawFlowBlock() {
@@ -98,7 +119,7 @@ export default {
                     .attr("class", "btn btn-success rounded-circle")
                     .attr("type", "button")
                     .on("click", () => {
-                        this.locVars = Object.keys(this.selApi.params)
+                        this.flowInfo = this.istFlowBtns[0]
                         this.showAddFlowDlg = true
                     })
                     .append("i")
@@ -192,23 +213,6 @@ export default {
                 .text(output => output)
                 .append("i")
                 .attr("class", "el-icon-arrow-right")
-            // 绘制局部变量列表
-            card.append("div")
-                .attr("class", "list-group")
-                .style("position", "absolute")
-                .style("left", flow => `-${flow.x + 2}px`)
-                .style("top", 0)
-                .selectAll("a")
-                .data(flow => flow.locVars)
-                .join("a")
-                .attr("class", "list-group-item list-group-item-action local-vars rl-0")
-                .text(v => v)
-                .each(function(v) {
-                    let rect = this.getBoundingClientRect()
-                    let x1 = rect.width
-                    let y1 = rect.y + (rect.height>>1)
-                    // @_@
-                })
         },
         drawFlowArrow() {
             if (!this.selApi.flows || this.selApi.flows.length === 0) {
@@ -224,44 +228,47 @@ export default {
                 .attr("stroke-width", 2)
                 .attr("stroke", "black")
                 .each(function(flow, idx) {
-                    if (idx === self.selApi.flows.length - 1) {
+                    // 如果存在return特殊标识，则返回
+                    if (flow.symbol && flow.symbol === 7) {
                         return
                     }
                     let rect = document.getElementsByName(`flow_${idx}`)[0].getBoundingClientRect()
-                    let next = self.selApi.flows[idx + 1]
+                    let next = idx === self.selApi.flows.length - 1 ? null : self.selApi.flows[idx + 1]
                     let x1 = flow.x + (rect.width>>1)
                     let y1 = flow.y + rect.height
-                    let x2 = next.x + (rect.width>>1)
-                    let y2 = next.y
+                    let x2 = next ? (next.x + (rect.width>>1)) : x1
+                    let y2 = next ? next.y : 200
                     d3.select(this)
                         .attr("name", `line_${idx}_${idx + 1}`)
                         .attr("x1", x1)
                         .attr("y1", y1)
                         .attr("x2", x2)
                         .attr("y2", y2)
-                    // 画箭头
-                    d3.select("#pnlGraphs")
-                        .append("polyline")
-                        .attr("fill", "black")
-                        .attr("stroke", "blue")
-                        .attr("stroke-width", 2)
-                        .attr("points", [
-                            `${x2 - 5},${next.y - 10}`,
-                            `${x2},${next.y}`,
-                            `${x2 + 5},${next.y - 10}`
-                        ].join(" "))
-                    // 画步骤分隔线
-                    let y = ((y2 - y1)>>1) + y1
-                    d3.select("#pnlGraphs")
-                        .append("line")
-                        .attr("x1", 0)
-                        .attr("y1", y)
-                        .attr("x2", document.getElementById("pnlGraphs").getBoundingClientRect().width)
-                        .attr("y2", y)
-                        .attr("stroke", "black")
-                        .attr("stroke-dasharray","5,5")
-                    // 绘制添加步骤按钮，按钮宽高40px
                     let x = ((x2 - x1)>>1) + x1
+                    let y = next ? ((y2 - y1)>>1) + y1 : y2
+                    if (next) {
+                        // 画箭头
+                        d3.select("#pnlGraphs")
+                            .append("polyline")
+                            .attr("fill", "black")
+                            .attr("stroke", "blue")
+                            .attr("stroke-width", 2)
+                            .attr("points", [
+                                `${x2 - 5},${next.y - 10}`,
+                                `${x2},${next.y}`,
+                                `${x2 + 5},${next.y - 10}`
+                            ].join(" "))
+                        // 画步骤分隔线
+                        d3.select("#pnlGraphs")
+                            .append("line")
+                            .attr("x1", 0)
+                            .attr("y1", y)
+                            .attr("x2", document.getElementById("pnlGraphs").getBoundingClientRect().width)
+                            .attr("y2", y)
+                            .attr("stroke", "black")
+                            .attr("stroke-dasharray","5,5")
+                    }
+                    // 绘制添加步骤按钮，按钮宽高40px
                     d3.select("#pnlFlows")
                         .append("button")
                         .attr("class", "btn btn-success rounded-circle")
@@ -270,11 +277,7 @@ export default {
                         .style("left", `${x - 20}px`)
                         .style("top", `${y - 20}px`)
                         .on("click", () => {
-                            // 收集局部变量
-                            self.locVars = []
-                            for (let i = idx; i >= 0; i--) {
-                                self.locVars = self.locVars.concat(self.selApi.flows[i].locVars)
-                            }
+                            self.flowInfo = self.istFlowBtns.find(ele => ele.flowIdx === idx)
                             self.showAddFlowDlg = true
                         })
                         .append("i")
@@ -355,9 +358,24 @@ export default {
         addApi(newApi) {
             console.log(newApi)
         },
-        addFlow() {
+        async addFlow() {
             let form = this.$refs["add-flow-form"]
-            console.log(form.flow)
+            let res = await stepBkd.addFlow({
+                index: form.flowInfo.flowIdx,
+                operStep: Object.assign(form.flow, {
+                    apiName: form.flowInfo.apiName
+                })
+            })
+            if (typeof res === "string") {
+                this.$message.error(`插入流程发生错误：${res}`)
+            } else {
+                this.$message({
+                    type: "success",
+                    message: "插入成功！"
+                })
+                this.showAddFlowDlg = false
+                this.updatePanel()
+            }
         }
     }
 }

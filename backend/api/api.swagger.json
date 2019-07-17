@@ -90,6 +90,43 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/apis.selectByName": {
+            "post": {
+                "summary": "/backend-dashboard/backend/apis.selectByName",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.NameID"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/export": {
             "post": {
                 "summary": "/backend-dashboard/backend/export",
@@ -143,7 +180,7 @@
                                     "type": "string"
                                 },
                                 "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.FlowReqs"
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Empty"
                                 }
                             }
                         }
@@ -499,8 +536,7 @@
         },
         "/backend-dashboard/backend/steps.insert": {
             "post": {
-                "summary": "这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后",
-                "description": "如果需要插入到流程中间，则需要使用",
+                "summary": "/backend-dashboard/backend/steps.insert",
                 "responses": {
                     "200": {
                         "description": "A successful response.",
@@ -673,29 +709,11 @@
         ".backend.manager.service.v1.FlowReqs": {
             "type": "object",
             "properties": {
-                "apiName": {
-                    "type": "string"
-                },
                 "index": {
                     "type": "integer"
                 },
-                "operKey": {
-                    "type": "string"
-                },
-                "desc": {
-                    "type": "string"
-                },
-                "inputs": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "blockOut": {
-                    "type": "boolean"
-                },
-                "symbol": {
-                    "type": "integer"
+                "operStep": {
+                    "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
                 }
             }
         },
@@ -790,6 +808,9 @@
         ".backend.manager.service.v1.OperStep": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "operKey": {
                     "type": "string"
                 },

@@ -70,10 +70,6 @@ export default {
     data() {
         return {
             mode: "display",
-            options: [{
-                label: "test",
-                value: 1234
-            }],
             spcSymbols: {},
             enableBlk: false,
             blkInOut: true
@@ -85,7 +81,7 @@ export default {
         }
         let res = await backend.specials()
         if (typeof res === "string") {
-            this.$message(`查询特殊标识失败：${res}`)
+            this.$message.error(`查询特殊标识失败：${res}`)
         } else {
             this.spcSymbols = res.data.data.values || {}
         }

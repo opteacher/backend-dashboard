@@ -56,6 +56,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc ApisSelectByName(NameID) returns (ApiInfo) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/apis.selectByName"
+            body: "*"
+        };
+    };
     rpc ApisSelectAll(Empty) returns (ApiInfoArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/apis.selectAll"
@@ -67,7 +73,7 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc FlowInsert(FlowReqs) returns (FlowReqs) {
+    rpc FlowInsert(FlowReqs) returns (Empty) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/flows.insert"
             body: "*"
@@ -78,8 +84,6 @@ service BackendManager {
             post: "/backend-dashboard/backend/steps.selectTemp"
         };
     };
-    // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
-    // 如果需要插入到流程中间，则需要使用
     rpc OperStepsInsert(OperStep) returns (OperStep) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/steps.insert"
@@ -170,18 +174,19 @@ enum SpecialSym {
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 message OperStep {
-    string operKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
-    repeated string requires = 2;
-    string desc = 3;
-    map<string,string> inputs = 4;
-    repeated string outputs = 5;
+    int64 id = 1;
+    string operKey = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    repeated string requires = 3;
+    string desc = 4;
+    map<string,string> inputs = 5;
+    repeated string outputs = 6;
     // 控制着块流程：当遇到blockIn为true的时候，会在添加完该step的code之后，再添加一个块段落，
     // 之后的steps在没有遇到blockOut为true的时候都写在这个段落中，NOTE：blockOut为true的step写在段落外
-    bool blockIn = 6;
-    bool blockOut = 7;
-    string code = 8;
-    string apiName = 9[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
-    SpecialSym symbol = 10;
+    bool blockIn = 7;
+    bool blockOut = 8;
+    string code = 9;
+    string apiName = 10[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
+    SpecialSym symbol = 11;
 }
 
 message ApiInfo {
@@ -209,13 +214,8 @@ message SpecialSymbolsResp {
 }
 
 message FlowReqs {
-    string apiName = 1;
-    int32 index = 2;
-    string operKey = 3;
-    string desc = 4;
-    map<string,string> inputs = 5;
-    bool blockOut = 6;
-    SpecialSym symbol = 7;
+    int32 index = 1;
+    OperStep operStep = 2;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

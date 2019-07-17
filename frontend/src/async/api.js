@@ -4,9 +4,16 @@ import config from "../../config/backend"
 import utils from "../utils"
 
 export default {
-    async qry() {
+    async qryAll() {
         try {
             return await axios.post(`${config.url}/backend-dashboard/backend/apis.selectAll`)
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
+    async qryByName(name) {
+        try {
+            return await axios.post(`${config.url}/backend-dashboard/backend/apis.selectByName`)
         } catch(e) {
             return utils.getErrorMsg(e)
         }

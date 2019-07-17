@@ -613,6 +613,7 @@ func OperStepFmDbByTx(dao *dao.Dao, tx *sql.Tx, id int64) (*pb.OperStep, error) 
 		return nil, err
 	} else {
 		step := new(pb.OperStep)
+		step.Id = id
 		step.OperKey = mstep["oper_key"].(string)
 		step.Requires = strings.Split(mstep["requires"].(string), ",")
 		step.Desc = mstep["desc"].(string)

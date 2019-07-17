@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	pb "backend/api"
@@ -179,6 +181,18 @@ func (s *Service) LinksDeleteBySymbol(context.Context, *pb.SymbolID) (*pb.Link, 
 	return nil, nil
 }
 
+func (s *Service) ApisSelectByName(ctx context.Context, req *pb.NameID) (*pb.ApiInfo, error) {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if api, err := ApiInfoFmDbByTx(s.dao, tx, req.Name); err != nil {
+		return nil, fmt.Errorf("查询接口信息失败：%v", err)
+	} else if err := s.dao.CommitTx(tx); err != nil {
+		return nil, fmt.Errorf("提交事务失败：%v", err)
+	} else {
+		return api, nil
+	}
+}
+
 func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfoArray, error) {
 	if tx, err := s.dao.BeginTx(ctx); err != nil {
 		return nil, fmt.Errorf("开启事务失败：%v", err)
@@ -213,8 +227,35 @@ func (s *Service) ApisInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo,
 	}
 }
 
-func (s *Service) FlowInsert(context.Context, *pb.FlowReqs) (*pb.FlowReqs, error) {
-	return nil, nil
+func (s *Service) FlowInsert(ctx context.Context, req *pb.FlowReqs) (*pb.Empty, error) {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if id, err := OperStepToDbByTx(s.dao, tx, req.OperStep); err != nil {
+		// 添加OperStep
+		return nil, fmt.Errorf("插入步骤失败：%v", err)
+	} else if mapi, err := s.dao.QueryOneTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{
+		req.OperStep.ApiName,
+	}); err != nil {
+		// 获取当前API的flow流程
+		return nil, fmt.Errorf("查询接口信息失败：%v", err)
+	} else if flows := strings.Split(mapi["flows"].(string), ","); false {
+		// 修改Api的flows顺序
+		return nil, nil
+	} else if flows = append(flows[:req.Index], strconv.Itoa(int(id))); false {
+		return nil, nil
+	} else if flows = append(flows, flows[req.Index+1:]...); false {
+		return nil, nil
+	} else if _, err := s.dao.SaveTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{
+		req.OperStep.ApiName,
+	}, map[string]interface{}{
+		"flows": strings.Join(flows, ","),
+	}, false); err != nil {
+		return nil, fmt.Errorf("保存接口信息失败：%v", err)
+	} else if err := s.dao.CommitTx(tx); err != nil {
+		return nil, fmt.Errorf("提交保存事务失败：%v", err)
+	} else {
+		return &pb.Empty{}, nil
+	}
 }
 
 // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
@@ -283,7 +324,7 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SpecialSymbolsResp, error) {
 	return &pb.SpecialSymbolsResp{
 		Values: pb.SpecialSym_value,
-		Names: pb.SpecialSym_name,
+		Names:  pb.SpecialSym_name,
 	}, nil
 }
 
