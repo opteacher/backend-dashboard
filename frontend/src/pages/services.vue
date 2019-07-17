@@ -62,7 +62,7 @@ export default {
     },
     methods: {
         async refresh() {
-            let res = await apisBkd.queryByName(this.selApi.name)
+            let res = await apisBkd.qryByName(this.selApi.name)
             if (typeof res === "string") {
                 this.$message.error(`查询名为${this.selApi.name}的接口时发生错误：${res}`)
             } else {
@@ -374,7 +374,7 @@ export default {
                     message: "插入成功！"
                 })
                 this.showAddFlowDlg = false
-                this.updatePanel()
+                await this.refresh()
             }
         }
     }

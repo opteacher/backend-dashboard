@@ -35,7 +35,7 @@ export default {
             this.selApi = selApi
         },
         async queryApis() {
-            let res = await apisBkd.qry()
+            let res = await apisBkd.qryAll()
             if (typeof res === "string") {
                 this.$message.error(`查询接口失败：${res}`)
             } else {

@@ -13,7 +13,7 @@ export default {
     },
     async qryByName(name) {
         try {
-            return await axios.post(`${config.url}/backend-dashboard/backend/apis.selectByName`)
+            return await axios.post(`${config.url}/backend-dashboard/backend/apis.selectByName`, {name})
         } catch(e) {
             return utils.getErrorMsg(e)
         }
