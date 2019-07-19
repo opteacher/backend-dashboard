@@ -152,6 +152,10 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 		// 提取类型
 		ftype := field.Type
 		fkind := ftype.Kind()
+		if fkind == reflect.Ptr {
+			ftype = ftype.Elem()
+			fkind = ftype.Kind()
+		}
 		pidField := reflect.StructField{
 			Name: "ParentID",
 			Type: reflect.TypeOf(int64(0)),
