@@ -71,7 +71,7 @@ type BackendManagerBMServer interface {
 
 	Export(ctx context.Context, req *ExpOptions) (resp *UrlResp, err error)
 
-	SpecialSymbols(ctx context.Context, req *Empty) (resp *SpecialSymbolsResp, err error)
+	SpecialSymbols(ctx context.Context, req *Empty) (resp *SymbolsResp, err error)
 }
 
 var BackendManagerSvc BackendManagerBMServer

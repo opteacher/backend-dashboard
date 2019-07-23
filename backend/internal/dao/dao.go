@@ -101,6 +101,7 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 	sql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` INT(11) AUTO_INCREMENT,", table)
 	var pkeys = []string{"id"}
 	var fkeys = make(map[string]string)
+	var ukeys = []string{}
 	var indexes []string
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
@@ -130,7 +131,8 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 					case str == "PRIMARY_KEY":
 						pkeys = append(pkeys, fname)
 					case str == "UNIQUE_KEY":
-						fattr += "UNIQUE "
+						ukeys = append(ukeys, fname)
+						//fattr += "UNIQUE "
 					case str == "INDEX":
 						indexes = append(indexes, fname)
 					case str == "NOT_NULL":
@@ -210,7 +212,7 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 				sqls = append(sqls, subsqls...)
 			}
 			// 自定义类型，递归建表
-		} else if subsqls, err := genCreateSQL(fname, reflect.StructOf(append(utils.GetAllFields(ftype), pidField))); err != nil {
+		} else if subsqls, err := genCreateSQL(stable, reflect.StructOf(append(utils.GetAllFields(ftype), pidField))); err != nil {
 			return nil, err
 		} else {
 			sqls = append(sqls, subsqls...)
@@ -224,6 +226,13 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 		}
 		sql = strings.TrimRight(sql, ",")
 		sql += ")"
+	}
+	if len(ukeys) != 0 {
+		sql += ",UNIQUE("
+		for _, uk := range ukeys {
+			sql += fmt.Sprintf("`%s`,", uk)
+		}
+		sql = strings.TrimRight(sql, ",") + ")"
 	}
 	if len(indexes) != 0 {
 		sql += ",INDEX "
@@ -292,13 +301,26 @@ func (d *Dao) QueryOneTx(tx *sql.Tx, table string, condStr string, condArgs []in
 	}
 }
 
-func (d *Dao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) ([]map[string]interface{}, error) {
-	str := fmt.Sprintf("SELECT * FROM `%s`", table)
-	if len(condStr) != 0 {
-		str += fmt.Sprintf(" WHERE %s", condStr)
+func genQuerySQL(table string, columns []string, cstr string, options []string) string {
+	str := "SELECT "
+	if columns != nil && len(columns) != 0 {
+		str += strings.Join(columns, ", ")
+	} else {
+		str += "*"
 	}
-	log.Info("database: SQL(%s); ARGS(%v)", str, condArgs)
-	if rows, err := tx.Query(str, condArgs...); err != nil {
+	str += fmt.Sprintf(" FROM `%s`", table)
+	if len(cstr) != 0 {
+		str += fmt.Sprintf(" WHERE %s", cstr)
+	}
+	if options != nil && len(options) != 0 {
+		str += " " + strings.Join(options, " ")
+	}
+	return str
+}
+
+func (d *Dao) QueryTxBySQL(tx *sql.Tx, table string, sql string, carg []interface{}) ([]map[string]interface{}, error) {
+	log.Info("database: SQL(%s); ARGS(%v)", sql, carg)
+	if rows, err := tx.Query(sql, carg...); err != nil {
 		d.RollbackTx(tx)
 		return nil, err
 	} else if entries, err := d.ProcsResult(rows); err != nil {
@@ -333,6 +355,18 @@ func (d *Dao) QueryTx(tx *sql.Tx, table string, condStr string, condArgs []inter
 		}
 		return entries, nil
 	}
+}
+
+func (d *Dao) QueryTxOfOption(tx *sql.Tx, table string, cstr string, carg []interface{}, options []string) ([]map[string]interface{}, error) {
+	return d.QueryTxBySQL(tx, table, genQuerySQL(table, nil, cstr, options), carg)
+}
+
+func (d *Dao) QueryTxIdenCol(tx *sql.Tx, table string, cols []string, cstr string, carg []interface{}) ([]map[string]interface{}, error) {
+	return d.QueryTxBySQL(tx, table, genQuerySQL(table, cols, cstr, nil), carg)
+}
+
+func (d *Dao) QueryTx(tx *sql.Tx, table string, cstr string, carg []interface{}) ([]map[string]interface{}, error) {
+	return d.QueryTxOfOption(tx, table, cstr, carg, nil)
 }
 
 func (d *Dao) QueryTxByID(tx *sql.Tx, table string, id interface{}) (map[string]interface{}, error) {

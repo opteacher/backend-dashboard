@@ -513,7 +513,7 @@
                                     "type": "string"
                                 },
                                 "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.SpecialSymbolsResp"
+                                    "$ref": "#/definitions/.backend.manager.service.v1.SymbolsResp"
                                 }
                             }
                         }
@@ -835,13 +835,6 @@
                         "type": "string"
                     }
                 },
-                "blockIn": {
-                    "type": "boolean",
-                    "description": "控制着块流程：当遇到blockIn为true的时候，会在添加完该step的code之后，再添加一个块段落，\n 之后的steps在没有遇到blockOut为true的时候都写在这个段落中，NOTE：blockOut为true的step写在段落外"
-                },
-                "blockOut": {
-                    "type": "boolean"
-                },
                 "code": {
                     "type": "string"
                 },
@@ -876,7 +869,15 @@
                 }
             }
         },
-        ".backend.manager.service.v1.SpecialSymbolsResp": {
+        ".backend.manager.service.v1.SymbolID": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.SymbolsResp": {
             "type": "object",
             "properties": {
                 "values": {
@@ -890,14 +891,6 @@
                     "additionalProperties": {
                         "type": "string"
                     }
-                }
-            }
-        },
-        ".backend.manager.service.v1.SymbolID": {
-            "type": "object",
-            "properties": {
-                "symbol": {
-                    "type": "string"
                 }
             }
         },

@@ -85,10 +85,10 @@ export default {
             }]
             this.selApi.flows = this.selApi.flows ? this.selApi.flows.map((flow, idx) => {
                 // 做一些处理：只包含一个元素的输出数组全部设为空
-                if (flow.outputs.length === 1 && flow.outputs[0] === "") {
+                if (!flow.outputs || (flow.outputs.length === 1 && flow.outputs[0] === "")) {
                     flow.outputs = []
                 }
-                if (flow.requires.length === 1 && flow.requires[0] === "") {
+                if (!flow.requires || (flow.requires.length === 1 && flow.requires[0] === "")) {
                     flow.requires = []
                 }
                 flow.index = idx
@@ -229,11 +229,11 @@ export default {
                 .attr("stroke", "black")
                 .each(function(flow, idx) {
                     // 如果存在return特殊标识，则返回
-                    if (flow.symbol && flow.symbol === 7) {
+                    if (self.selApi.flows.length !== 1 && idx === self.selApi.flows.length - 1) {
                         return
                     }
                     let rect = document.getElementsByName(`flow_${idx}`)[0].getBoundingClientRect()
-                    let next = idx === self.selApi.flows.length - 1 ? null : self.selApi.flows[idx + 1]
+                    let next = self.selApi.flows.length === 1 ? null : self.selApi.flows[idx + 1]
                     let x1 = flow.x + (rect.width>>1)
                     let y1 = flow.y + rect.height
                     let x2 = next ? (next.x + (rect.width>>1)) : x1
@@ -245,7 +245,7 @@ export default {
                         .attr("x2", x2)
                         .attr("y2", y2)
                     let x = ((x2 - x1)>>1) + x1
-                    let y = next ? ((y2 - y1)>>1) + y1 : y2
+                    let y = next ? (((y2 - y1)>>1) + y1) : y2
                     if (next) {
                         // 画箭头
                         d3.select("#pnlGraphs")

@@ -54,8 +54,6 @@ func NewProjGenBuilder(dao *dao.Dao, tx *sql.Tx) (*ProjGenBuilder, error) {
 			Desc     string
 			Inputs   string
 			Outputs  string
-			BlockIn  bool
-			BlockOut bool
 			Code     string
 			ApiName  string `orm:",FOREIGN_KEY(api_infos.name)"`
 			Symbol   int32
@@ -113,9 +111,6 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				tgt := &pb.OperStep{
 					OperKey: step.OperKey,
 					Desc:    step.Desc,
-					// NOTE: 入块标识以模板为准，出块标识则以复制源步骤为准
-					BlockIn:  step.BlockIn,
-					BlockOut: src.BlockOut,
 					Code:     step.Code,
 					Symbol:   step.Symbol,
 				}
@@ -142,7 +137,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 					tgt.Desc = strings.Replace(tgt.Desc, fmt.Sprintf("%%%s%%", k), v, -1)
 				}
 				// 特殊标识
-				if src.Symbol != pb.SpecialSym_NONE {
+				if src.Symbol != pb.SpcSymbol_NONE {
 					tgt.Symbol = src.Symbol
 				}
 				return tgt
@@ -394,14 +389,14 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 						"ARRAY":   "resp." + mmfname,
 						"NEW_ADD": fmt.Sprintf("omap.(*%s)", mmname),
 					},
-					Symbol: pb.SpecialSym_FOR_END,
+					Symbol: pb.SpcSymbol_BLOCK_OUT,
 				}),
 				copyStep(&pb.OperStep{
 					OperKey: "return_succeed",
 					Inputs: map[string]string{
 						"RETURN": "resp",
 					},
-					BlockOut: true,
+					Symbol: pb.SpcSymbol_BLOCK_OUT,
 				}),
 			}
 		}
@@ -426,12 +421,10 @@ func ReadStepsFromDB(dao *dao.Dao, tx *sql.Tx) ([]*pb.OperStep, error) {
 			step.Desc = rmap["desc"].(string)
 			step.Inputs = StrToStrMap(rmap["inputs"].(string))
 			step.Outputs = strings.Split(rmap["outputs"].(string), ",")
-			step.BlockIn = rmap["block_in"].(int64) == 1
-			step.BlockOut = rmap["block_out"].(int64) == 1
 			step.Code = rmap["code"].(string)
 			step.ApiName = rmap["api_name"].(string)
 			n, _ := rmap["symbol"].(int64)
-			step.Symbol = pb.SpecialSym(n)
+			step.Symbol = pb.SpcSymbol(n)
 			steps = append(steps, step)
 		}
 		return steps, nil
@@ -495,9 +488,8 @@ func (pgb *ProjGenBuilder) initOperSteps(tx *sql.Tx) error {
 		"oper_key": "for_each",
 		"inputs":   "KEY:,VALUE:,SET:",
 		"code":     "for %KEY%, %VALUE% := range %SET%",
-		"block_in": true,
 		"desc":     "循环遍历%SET%",
-		"symbol":   pb.SpecialSym_FOR_BEG,
+		"symbol":   pb.SpcSymbol_BLOCK_IN,
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
@@ -505,7 +497,7 @@ func (pgb *ProjGenBuilder) initOperSteps(tx *sql.Tx) error {
 		"inputs":   "RETURN:",
 		"code":     "return %RETURN%, nil\n",
 		"desc":     "成功返回%RETURN%",
-		"symbol":   pb.SpecialSym_RETURN,
+		"symbol":   pb.SpcSymbol_END,
 	}); err != nil {
 		return err
 	} else if _, err := pgb.dao.InsertTx(tx, model.OPER_STEP_TABLE, map[string]interface{}{
@@ -596,8 +588,6 @@ func OperStepToDbByTx(dao *dao.Dao, tx *sql.Tx, step *pb.OperStep) (int64, error
 	mstep["desc"] = step.Desc
 	mstep["inputs"] = StrMapToStr(step.Inputs)
 	mstep["outputs"] = strings.Join(step.Outputs, ",")
-	mstep["block_in"] = step.BlockIn
-	mstep["block_out"] = step.BlockOut
 	mstep["code"] = step.Code
 	mstep["api_name"] = step.ApiName
 	mstep["symbol"] = step.Symbol
@@ -619,12 +609,10 @@ func OperStepFmDbByTx(dao *dao.Dao, tx *sql.Tx, id int64) (*pb.OperStep, error) 
 		step.Desc = mstep["desc"].(string)
 		step.Inputs = StrToStrMap(mstep["inputs"].(string))
 		step.Outputs = strings.Split(mstep["outputs"].(string), ",")
-		step.BlockIn = mstep["block_in"].(int64) == 1
-		step.BlockOut = mstep["block_out"].(int64) == 1
 		step.Code = mstep["code"].(string)
 		step.ApiName = mstep["api_name"].(string)
 		n, _ := mstep["symbol"].(int64)
-		step.Symbol = pb.SpecialSym(n)
+		step.Symbol = pb.SpcSymbol(n)
 		return step, nil
 	}
 }
@@ -671,14 +659,12 @@ func CvtApiInfoFmMap(dao *dao.Dao, tx *sql.Tx, mapi map[string]interface{}) (*pb
 	if len(sflows) == 0 {
 		return info, nil
 	}
-	for _, flowID := range strings.Split(sflows, ",") {
-		if iflowID, err := strconv.Atoi(flowID); err != nil {
-			return nil, err
-		} else if flow, err := OperStepFmDbByTx(dao, tx, int64(iflowID)); err != nil {
-			return nil, err
-		} else {
-			info.Flows = append(info.Flows, flow)
-		}
+	mps, err := dao.QueryTx(tx, model.OPER_STEP_TABLE, fmt.Sprintf("`id` IN (%s)", sflows), nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, mp := range mps {
+		info.Flows = append(info.Flows, CvtOperStepFmMap(mp))
 	}
 	return info, nil
 }
@@ -701,12 +687,6 @@ func CvtOperStepFmMap(mstep map[string]interface{}) *pb.OperStep {
 	}
 	if chkStrEmpty(mstep["outputs"]) {
 		step.Outputs = strings.Split(mstep["outputs"].(string), ",")
-	}
-	if mstep["block_in"] != nil {
-		step.BlockIn = mstep["block_in"].(int64) != 0
-	}
-	if mstep["block_out"] != nil {
-		step.BlockOut = mstep["block_out"].(int64) != 0
 	}
 	step.Code = mstep["code"].(string)
 	if chkStrEmpty(mstep["api_name"]) {

@@ -39,12 +39,12 @@
         <el-tag v-for="output in selStep.outputs" :key="output" type="success">{{output}}</el-tag>
     </el-form-item>
     <el-form :inline="true" label-width="80px" v-show="mode === 'editing-flow'">
-        <el-form-item label="特殊标识">
+        <el-form-item label="标识">
             <el-select v-model="selStep.symbol" placeholder="请选择">
                 <el-option v-for="(value, name) in spcSymbols" :key="name" :label="name" :value="value"/>
             </el-select>
         </el-form-item>
-        <el-form-item label="特殊效果">
+        <el-form-item label="效果">
             <el-tag>abcd</el-tag>
         </el-form-item>
     </el-form>

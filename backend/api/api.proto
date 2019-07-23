@@ -96,7 +96,7 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc SpecialSymbols(Empty) returns (SpecialSymbolsResp) {
+    rpc SpecialSymbols(Empty) returns (SymbolsResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/specialSymbols"
             body: "*"
@@ -161,15 +161,11 @@ message UrlResp {
     string url = 1;
 }
 
-enum SpecialSym {
+enum SpcSymbol {
     NONE = 0;
-    FOR_BEG = 1;
-    FOR_END = 2;
-    IF_BEG = 3;
-    IF_END = 4;
-    ELSE_BEG = 5;
-    ELSE_END = 6;
-    RETURN = 7;
+    BLOCK_IN = 1;
+    BLOCK_OUT = 2;
+    END = 3;
 }
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
@@ -180,13 +176,9 @@ message OperStep {
     string desc = 4;
     map<string,string> inputs = 5;
     repeated string outputs = 6;
-    // 控制着块流程：当遇到blockIn为true的时候，会在添加完该step的code之后，再添加一个块段落，
-    // 之后的steps在没有遇到blockOut为true的时候都写在这个段落中，NOTE：blockOut为true的step写在段落外
-    bool blockIn = 7;
-    bool blockOut = 8;
     string code = 9;
     string apiName = 10[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
-    SpecialSym symbol = 11;
+    SpcSymbol symbol = 11;
 }
 
 message ApiInfo {
@@ -208,7 +200,7 @@ message OperStepArray {
     repeated OperStep steps = 1;
 }
 
-message SpecialSymbolsResp {
+message SymbolsResp {
     map<string,int32> values = 1;
     map<int32,string> names = 2;
 }

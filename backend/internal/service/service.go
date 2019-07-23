@@ -241,14 +241,16 @@ func (s *Service) FlowInsert(ctx context.Context, req *pb.FlowReqs) (*pb.Empty, 
 	} else if flows := strings.Split(mapi["flows"].(string), ","); false {
 		// 修改Api的flows顺序
 		return nil, nil
+	} else if rear := append([]string{}, flows[req.Index:]...); false {
+		return nil, nil
 	} else if flows = append(flows[:req.Index], strconv.Itoa(int(id))); false {
 		return nil, nil
-	} else if flows = append(flows, flows[req.Index+1:]...); false {
+	} else if flows = append(flows, rear...); false {
 		return nil, nil
 	} else if _, err := s.dao.SaveTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{
 		req.OperStep.ApiName,
 	}, map[string]interface{}{
-		"flows": strings.Join(flows, ","),
+		"flows": strings.Trim(strings.Join(flows, ","), ","),
 	}, false); err != nil {
 		return nil, fmt.Errorf("保存接口信息失败：%v", err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
@@ -321,10 +323,10 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 	}
 }
 
-func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SpecialSymbolsResp, error) {
-	return &pb.SpecialSymbolsResp{
-		Values: pb.SpecialSym_value,
-		Names:  pb.SpecialSym_name,
+func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SymbolsResp, error) {
+	return &pb.SymbolsResp{
+		Values: pb.SpcSymbol_value,
+		Names:  pb.SpcSymbol_name,
 	}, nil
 }
 
