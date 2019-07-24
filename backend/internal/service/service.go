@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"errors"
 
 	pb "backend/api"
 	"backend/internal/dao"
@@ -113,9 +114,22 @@ func (s *Service) ModelsDelete(ctx context.Context, req *pb.NameID) (*pb.Model, 
 	}
 }
 
-func (s *Service) ModelsUpdate(context.Context, *pb.Model) (*pb.Empty, error) {
-	// TODO:
-	return nil, nil
+func (s *Service) ModelsUpdate(ctx context.Context, req *pb.Model) (*pb.Empty, error) {
+	if req.Id == 0 {
+		return nil, errors.New("需要给出要更新的模型ID")
+	} else if bytes, err := json.Marshal(req); err != nil {
+		return nil, fmt.Errorf("转JSON字节码失败：%v", err)
+	} else if pmp, err := utils.UnmarshalJSON(bytes, reflect.TypeOf((*map[string]interface{})(nil)).Elem()); err != nil {
+		return nil, fmt.Errorf("转Map失败：%v", err)
+	} else if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if _, err := s.dao.UpdateTxByID(tx, model.MODELS_TABLE, *(pmp.(*map[string]interface{}))); err != nil {
+		return nil, fmt.Errorf("更新模型失败：%v", err)
+	} else if err := s.dao.CommitTx(tx); err != nil {
+		return nil, fmt.Errorf("数据库提交失败：%v", err)
+	} else {
+		return &pb.Empty{}, nil
+	}
 }
 
 func (s *Service) ModelsSelectAll(ctx context.Context, req *pb.Empty) (*pb.ModelArray, error) {

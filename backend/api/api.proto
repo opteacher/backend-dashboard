@@ -219,9 +219,9 @@ message SymbolID {
 message Link {
     int64 id = 1;
     string symbol = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY|UNIQUE_KEY"'];
-    string modelName1 = 3;
+    string modelName1 = 3[(gogoproto.moretags)='orm:",FOREIGN_KEY(model1:models.name)"'];
     int32 modelNumber1 = 4[(gogoproto.jsontag) = 'modelNumber1'];
-    string modelName2 = 5;
+    string modelName2 = 5[(gogoproto.moretags)='orm:",FOREIGN_KEY(model2:models.name)"'];
     int32 modelNumber2 = 6[(gogoproto.jsontag) = 'modelNumber2'];
 }
 

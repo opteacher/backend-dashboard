@@ -142,9 +142,15 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 						str := strings.Trim(pattern.FindString(str[7:]), "()")
 						fattr += fmt.Sprintf("DEFAULT %s ", str)
 					case str[:11] == "FOREIGN_KEY":
-						pattern := regexp.MustCompile(`(\w+)\.(\w+)`)
+						pattern := regexp.MustCompile(`(\w+):`)
+						cname := pattern.FindStringSubmatch(str[11:])
+						pattern = regexp.MustCompile(`(\w+)\.(\w+)`)
 						fkpair := pattern.FindStringSubmatch(str[11:])
-						fkeys[fname] = fmt.Sprintf("`%s`(`%s`)", fkpair[1], fkpair[2])
+						fkey := fname
+						if len(cname) >= 2 {
+							fkey += ":" + cname[1]
+						}
+						fkeys[fkey] = fmt.Sprintf("`%s`(`%s`)", fkpair[1], fkpair[2])
 					}
 				}
 			default:
@@ -244,7 +250,14 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 	if len(fkeys) != 0 {
 		for pn, ref := range fkeys {
 			// 关联父表的删除操作，无视更新操作
-			sql += fmt.Sprintf(",CONSTRAINT `%s` FOREIGN KEY (`%s`) REFERENCES %s ON DELETE CASCADE ON UPDATE NO ACTION", strings.TrimRight(table, "_mapper"), pn, ref)
+			cname := strings.TrimRight(table, "_mapper")
+			splitIdx := strings.Index(pn, ":")
+			fmt.Println(pn)
+			if splitIdx != -1 {
+				cname = pn[splitIdx + 1:]
+				pn = pn[0:splitIdx]
+			}
+			sql += fmt.Sprintf(",CONSTRAINT `%s` FOREIGN KEY (`%s`) REFERENCES %s ON DELETE CASCADE ON UPDATE NO ACTION", cname, pn, ref)
 		}
 	}
 	sql += ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
@@ -281,8 +294,18 @@ func (d *Dao) CreateTx(tx *sql.Tx, table string, typ reflect.Type) error {
 	}
 }
 
+func (d *Dao) DropTx(tx *sql.Tx, table string) error {
+	if _, err := tx.Exec("DROP TABLE IF EXISTS " + table, []interface{}{}...); err != nil {
+		d.RollbackTx(tx)
+		return err
+	} else {
+		return nil
+	}
+}
+
 func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, error) {
 	if res, err := tx.Exec(sql, args...); err != nil {
+		d.RollbackTx(tx)
 		return nil, err
 	} else {
 		return res, nil

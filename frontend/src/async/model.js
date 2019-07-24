@@ -21,10 +21,7 @@ export default {
     },
     async upd(model) {
         try {
-            return await axios.post(`${config.url}/backend-dashboard/backend/models`, {
-                method: "update",
-                params: ["`id`=?", [model.id], model]
-            })
+            return await axios.post(`${config.url}/backend-dashboard/backend/models.update`, model)
         } catch(e) {
             return utils.getErrorMsg(e)
         }

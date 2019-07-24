@@ -4,13 +4,13 @@
         <el-button class="p-7" plain icon="el-icon-arrow-left" size="mini"/>
     </el-col>
     <el-col class="p-10" :span="22">
-        <el-dropdown trigger="click">
+        <el-dropdown trigger="click" @command="hdlSelAdd">
             <el-button size="mini" type="primary">
                 添加组件<i class="el-icon-arrow-down el-icon--right"></i>
             </el-button>
             <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item icon="el-icon-menu" @click="showAddMdlDlg = true">模块</el-dropdown-item>
-                <el-dropdown-item icon="el-icon-share" @click="showAddLnkDlg = true" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
+                <el-dropdown-item icon="el-icon-menu" command="showAddMdlDlg">模块</el-dropdown-item>
+                <el-dropdown-item icon="el-icon-share" command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
     </el-col>
@@ -97,6 +97,9 @@ export default {
         },
         chkAddLnkBtn() {
             this.disableAddLnkBtn = !this.models || this.models.length < 2
+        },
+        hdlSelAdd(cmd) {
+            this[cmd] = true
         }
     }
 }

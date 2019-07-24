@@ -37,7 +37,11 @@ func NewProjGenBuilder(dao *dao.Dao, tx *sql.Tx) (*ProjGenBuilder, error) {
 	pgb.dao = dao
 	pgb.Once = sync.Once{}
 	pgb.Once.Do(func() {
-		if err := dao.CreateTx(tx, model.API_INFO_TABLE, reflect.TypeOf((*struct {
+		if err := dao.DropTx(tx, model.OPER_STEP_TABLE); err != nil {
+			panic(err)
+		} else if err := dao.DropTx(tx, model.API_INFO_TABLE); err != nil {
+			panic(err)
+		} else if err := dao.CreateTx(tx, model.API_INFO_TABLE, reflect.TypeOf((*struct {
 			Name    string `orm:",PRIMARY_KEY|UNIQUE_KEY"`
 			Model   string `orm:",FOREIGN_KEY(models.name)"`
 			Table   string
