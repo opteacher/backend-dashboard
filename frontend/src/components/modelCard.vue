@@ -88,7 +88,7 @@ export default {
                     this.$emit("delete-model", this.model.name)
                     this.$message({
                         type: "info",
-                        message: `模块（${eve.name}）删除成功！`
+                        message: `模块（${this.model.name}）删除成功！`
                     })
                 }
             })

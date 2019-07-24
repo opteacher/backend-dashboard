@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"reflect"
 	"encoding/json"
+	"reflect"
 )
 
 func UnmarshalJSON(bdata []byte, outTyp reflect.Type) (interface{}, error) {

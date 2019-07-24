@@ -54,14 +54,14 @@ export default {
     methods: {
         updateLinksByModel(mname) {
             for (let link of this.links) {
-                if (mname === link.modelName1 || mname === link.modelName2) {
+                if (mname === link.mname1 || mname === link.mname2) {
                     this.updateLink(link)
                 }
             }
         },
         updateLink(link, lnkInPnl) {
-            let model1 = this.models.find(m => m.name === link.modelName1)
-            let model2 = this.models.find(m => m.name === link.modelName2)
+            let model1 = this.models.find(m => m.name === link.mname1)
+            let model2 = this.models.find(m => m.name === link.mname2)
             link.x1 = model1.x + (model1.width>>1)
             link.y1 = model1.y + (model1.height>>1)
             link.x2 = model2.x + (model2.width>>1)
@@ -105,10 +105,11 @@ export default {
                 this.$message.error(`删除模块失败：${res}`)
             } else {
                 this.models.pop(ele => ele.name === mname)
+                await this.queryLinks()
             }
         },
         async addLink(link) {
-            link.symbol = `${link.modelName1}-${link.modelName2}`.toLowerCase()
+            link.symbol = `${link.mname1}-${link.mname2}`.toLowerCase()
             let res = await linkBkd.add(link)
             if (typeof res === "string") {
                 this.$message.error(`创建关联失败：${res}`)

@@ -181,7 +181,7 @@ func (s *Service) LinksSelectAll(ctx context.Context, req *pb.Empty) (*pb.LinkAr
 			if bdata, err := json.Marshal(entry); err != nil {
 				return nil, fmt.Errorf("转JSON字节码失败：%v", err)
 			} else if mdl, err := utils.UnmarshalJSON(bdata, reflect.TypeOf((*pb.Link)(nil)).Elem()); err != nil {
-				return nil, fmt.Errorf("转Model对象失败：%v", err)
+				return nil, fmt.Errorf("转Link对象失败：%v", err)
 			} else {
 				resp.Links = append(resp.Links, mdl.(*pb.Link))
 			}

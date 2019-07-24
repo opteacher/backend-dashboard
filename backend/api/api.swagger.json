@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "backend/api/api.proto",
+        "title": "api.proto",
         "version": "1"
     },
     "schemes": [
@@ -726,16 +726,16 @@
                 "symbol": {
                     "type": "string"
                 },
-                "modelName1": {
+                "mname1": {
                     "type": "string"
                 },
-                "modelNumber1": {
+                "mnumber1": {
                     "type": "integer"
                 },
-                "modelName2": {
+                "mname2": {
                     "type": "string"
                 },
-                "modelNumber2": {
+                "mnumber2": {
                     "type": "integer"
                 }
             }
