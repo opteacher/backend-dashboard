@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import backend from "../async/backend"
+import backend from "../backend"
 
 export default {
     props: {
@@ -79,11 +79,11 @@ export default {
         if (this.preMode && this.preMode.length !== 0) {
             this.mode = this.preMode
         }
-        let res = await backend.specials()
+        let res = await backend.qryStepSymbols()
         if (typeof res === "string") {
             this.$message.error(`查询特殊标识失败：${res}`)
         } else {
-            this.spcSymbols = res.data.data.values || {}
+            this.spcSymbols = res.values || {}
         }
     },
     methods: {

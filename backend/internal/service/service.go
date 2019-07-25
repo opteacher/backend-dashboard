@@ -241,6 +241,20 @@ func (s *Service) ApisInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo,
 	}
 }
 
+func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.ApiInfo, error) {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if api, err := ApiInfoFmDbByTx(s.dao, tx, req.Name); err != nil {
+		return nil, fmt.Errorf("查询接口信息失败：%v", err)
+	} else if _, err := s.dao.DeleteTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{req.Name}); err != nil {
+		return nil, fmt.Errorf("删除接口失败：%v", err)
+	} else if err := s.dao.CommitTx(tx); err != nil {
+		return nil, fmt.Errorf("提交事务失败：%v", err)
+	} else {
+		return api, nil
+	}
+}
+
 func (s *Service) FlowInsert(ctx context.Context, req *pb.FlowReqs) (*pb.Empty, error) {
 	if tx, err := s.dao.BeginTx(ctx); err != nil {
 		return nil, fmt.Errorf("开启事务失败：%v", err)

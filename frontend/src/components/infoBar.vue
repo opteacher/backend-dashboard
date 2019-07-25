@@ -13,6 +13,7 @@
                 <el-dropdown-item command="*more">...</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
+        <el-button size="mini" @click="hdlDelApi">删除接口</el-button>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
@@ -38,8 +39,7 @@
 
 <script>
 import _ from "lodash"
-
-import apisBkd from "../async/api"
+import backend from "../backend"
 import selectApi from "../forms/selectApi"
 import editApi from "../forms/editApi"
 
@@ -60,18 +60,22 @@ export default {
         }
     },
     async created() {
-        let res = await apisBkd.qryAll()
-        if (typeof res === "string") {
-            this.$message.error(`查询接口失败：${res}`)
-        } else {
-            let apis = res.data.data.infos || []
-            if (apis.length === 0) {
-                return
-            }
-            this.selApiLocal(apis[0])
-        }
+        await this.refresh()
     },
     methods: {
+        async refresh() {
+            this.recentApis = []
+            let res = await backend.qryAllApis()
+            if (typeof res === "string") {
+                this.$message.error(`查询接口失败：${res}`)
+            } else {
+                let apis = res.infos || []
+                if (apis.length === 0) {
+                    return
+                }
+                this.selApiLocal(apis[0])
+            }
+        },
         selApiLocal(api) {
             this.selApi = api
             this.addToRecentApis(this.selApi)
@@ -135,15 +139,35 @@ export default {
                     })
                     api.params = params
                     // 将API信息发送给后台
-                    let res = await apisBkd.add(api)
+                    let res = await backend.addApi(api)
                     if (typeof res === "string") {
                         this.$message.error(`添加接口失败：${res}`)
                     } else {
-                        this.selApiLocal(res.data.data)
+                        this.selApiLocal(res)
                     }
                     this.showAddApiDlg = false
                 } else {
                     return false
+                }
+            })
+        },
+        hdlDelApi() {
+            this.$alert("确定删除接口？", "提示", {
+                confirmButtonText: "确定",
+                callback: async action => {
+                    if (action !== "confirm") {
+                        return
+                    }
+                    let res = await backend.delApiByName(this.selApi.name)
+                    if (typeof res === "string") {
+                        this.$message.error(`删除接口时发生错误：${res}`)
+                    } else {
+                        this.$message({
+                            type: "info",
+                            message: `模块（${this.selApi.name}）删除成功！`
+                        })
+                        await this.refresh()
+                    }
                 }
             })
         }

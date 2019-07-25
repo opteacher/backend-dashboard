@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import apisBkd from "../async/api"
+import backend from "../backend"
 
 export default {
     data() {
@@ -35,11 +35,11 @@ export default {
             this.selApi = selApi
         },
         async queryApis() {
-            let res = await apisBkd.qryAll()
+            let res = await backend.qryAllApis()
             if (typeof res === "string") {
                 this.$message.error(`查询接口失败：${res}`)
             } else {
-                this.apiList = res.data.data.infos || []
+                this.apiList = res.infos || []
             }
         }
     }

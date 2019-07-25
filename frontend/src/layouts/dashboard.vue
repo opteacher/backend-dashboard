@@ -1,7 +1,7 @@
 <template>
 <el-container class="h-100">
     <el-header class="p-0"><header-bar/></el-header>
-    <el-aside class="sidebar" width="20vw"><side-bar/></el-aside>
+    <el-aside class="sidebar" width="10vw"><side-bar/></el-aside>
     <el-main class="main p-0"><slot/></el-main>
 </el-container>
 </template>
@@ -30,7 +30,7 @@ export default {
     position: fixed;
     top: 60px;
     bottom: 0;
-    left: 20vw;
+    left: 10vw;
     right: 0;
     background-color: #f8f9fa !important;
 }

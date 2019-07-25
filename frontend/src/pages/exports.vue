@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import backend from "../async/backend"
+import backend from "../backend"
 import dashboard from "../layouts/dashboard"
 import expProject from "../forms/expProject"
 
@@ -38,8 +38,10 @@ export default {
                         form.exportOption.name += ".zip"
                     }
                     let res = await backend.export(form.exportOption)
-                    if (res.data.data && res.data.data.url) {
-                        window.open(res.data.data.url, "_blank")
+                    if (typeof res === "string") {
+                        this.$message.error(`导出时发生错误：${res}`)
+                    } else {
+                        window.open(res.url, "_blank")
                     }
                     this.showExportDlg = false
                 } else {

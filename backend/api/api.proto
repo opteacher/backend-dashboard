@@ -73,6 +73,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc ApisDeleteByName(NameID) returns (ApiInfo) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/apis.deleteByName"
+            body: "*"
+        };
+    };
     rpc FlowInsert(FlowReqs) returns (Empty) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/flows.insert"

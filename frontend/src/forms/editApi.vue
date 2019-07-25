@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import modelBkd from "../async/model"
+import backend from "../backend"
 
 export default {
     data() {
@@ -118,11 +118,11 @@ export default {
         }
     },
     async created() {
-        let res = await modelBkd.qry()
+        let res = await backend.qryAllModels()
         if (typeof res === "string") {
             this.$message.error(`查询模块失败：${res}`)
         } else {
-            let models = res.data.data.models || []
+            let models = res.models || []
             this.typeMap = models.map(model => {
                 return {
                     title: model.name,

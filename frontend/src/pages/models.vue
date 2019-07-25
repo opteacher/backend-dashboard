@@ -2,9 +2,11 @@
 <dashboard>
     <tool-bar @add-model="addModel" @add-link="addLink" :models="models"/>
     <div id="pnlModels" class="w-100 h-100" style="position: absolute">
-        <model-card v-for="model in models" :key="model.name" :model="model"
-            @delete-model="deleteModel"
-            @update="updateLinksByModel"/>
+        <div style="position: absolute; width: 0; height: 0">
+            <model-card v-for="model in models" :key="model.name" :model="model"
+                @delete-model="deleteModel"
+                @update="updateLinksByModel"/>
+        </div>
     </div>
     <svg id="pnlGraphs" class="w-100 h-100" style="position: absolute; z-index: -100"/>
 </dashboard>
@@ -14,9 +16,8 @@
 import utils from "../utils"
 import dashboard from "../layouts/dashboard"
 import toolBar from "../components/toolBar"
-import modelBkd from "../async/model"
-import linkBkd from "../async/link"
 import modelCard from "../components/modelCard"
+import backend from "../backend"
 
 export default {
     components: {
@@ -76,23 +77,23 @@ export default {
                 .attr("y2", link => link.y2)
         },
         async queryModels() {
-            let res = await modelBkd.qry()
+            let res = await backend.qryAllModels()
             if (typeof res === "string") {
                 this.$message.error(`查询模块失败：${res}`)
             } else {
-                this.models = (res.data.data && res.data.data.models) || []
+                this.models = res.models || []
             }
         },
         async queryLinks() {
-            let res = await linkBkd.qry()
+            let res = await backend.qryAllLinks()
             if (typeof res === "string") {
                 this.$message.error(`查询关联失败：${res}`)
             } else {
-                this.links = res.data.data.links || []
+                this.links = res.links || []
             }
         },
         async addModel(model) {
-            let res = await modelBkd.add(model)
+            let res = await backend.addModel(model)
             if (typeof res === "string") {
                 this.$message.error(`创建模块失败：${res}`)
             } else {
@@ -100,7 +101,7 @@ export default {
             }
         },
         async deleteModel(mname) {
-            let res = await modelBkd.del(mname)
+            let res = await backend.delModel(mname)
             if (typeof res === "string") {
                 this.$message.error(`删除模块失败：${res}`)
             } else {
@@ -110,11 +111,11 @@ export default {
         },
         async addLink(link) {
             link.symbol = `${link.mname1}-${link.mname2}`.toLowerCase()
-            let res = await linkBkd.add(link)
+            let res = await backend.addLink(link)
             if (typeof res === "string") {
                 this.$message.error(`创建关联失败：${res}`)
             } else {
-                link.id = res.data.data.id
+                link.id = res.id
                 this.links.push(link)
             }
         }

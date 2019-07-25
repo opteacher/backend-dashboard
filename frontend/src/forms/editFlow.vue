@@ -17,7 +17,7 @@
 <script>
 import _ from "lodash"
 
-import stepBkd from "../async/step"
+import backend from "../backend"
 import stepDetail from "../forms/stepDetail"
 
 export default {
@@ -37,11 +37,11 @@ export default {
         }
     },
     async created() {
-        let res = await stepBkd.qryTmp()
+        let res = await backend.qryStepTmp()
         if (typeof res === "string") {
             this.$message.error(`查询模板步骤失败：${res}`)
         } else {
-            this.opers = res.data.data.steps || []
+            this.opers = res.steps || []
             for (let oper of this.opers) {
                 this.operMap[oper.operKey] = oper
             }
