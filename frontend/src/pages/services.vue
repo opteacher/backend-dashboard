@@ -80,6 +80,7 @@ export default {
             this.selApi = selApi
             this.istFlowBtns = []
             let locVars = this.selApi.params ? _.keys(this.selApi.params) : []
+            console.log(this.selApi)
             this.selApi.flows = this.selApi.flows ? this.selApi.flows.map((flow, idx) => {
                 // 做一些处理：只包含一个元素的输出数组全部设为空
                 if (!flow.outputs || (flow.outputs.length === 1 && flow.outputs[0] === "")) {
@@ -114,6 +115,14 @@ export default {
                 }
                 return flow
             }) : []
+            if (this.istFlowBtns.length === 0) {
+                // 没有按钮，说明流程中没有步骤，添加一个按钮用于初始化
+                this.istFlowBtns.push({
+                    apiName: selApi.name,
+                    nsuffix: "_0",
+                    locVars: locVars
+                })
+            }
         },
         chgOperStep() {
             this.$refs["step-detail-form"].mode = (

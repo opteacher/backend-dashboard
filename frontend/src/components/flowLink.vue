@@ -16,17 +16,24 @@ export default {
             .style("height", `${document.getElementById("pnlFlows").scrollHeight}px`)
 
         let prev = this.istFlowBtn.prev
+        // 如果是结尾标识，则不继续显示下面的内容
+        if (prev.symbol === 3/* SpcSymbol.END */) {
+            d3.select(`button[name="istFlowBtn${this.istFlowBtn.nsuffix}"]`)
+                .style("display", "none")
+            return
+        }
         let prevName = `flow_${prev.index}`
         let prevRect = document.getElementsByName(prevName)[0].getBoundingClientRect()
         let x1 = prev.x + (prevRect.width>>1)
         let y1 = prev.y + prevRect.height
 
         let next = this.istFlowBtn.next
-        // TODO: 没有next不代表结束
-        if (!next)  return
         let nextRect = prevRect //@_@
         let x2 = next ? (next.x + (nextRect.width>>1)) : x1
         let y2 = next ? next.y : 200
+
+        let x = ((x2 - x1)>>1) + x1
+        let y = next ? (((y2 - y1)>>1) + y1) : y2
 
         // 画连线
         d3.select(`line[name="flowLink${this.istFlowBtn.nsuffix}"]`)
@@ -40,9 +47,7 @@ export default {
                 `${x2},${next.y}`,
                 `${x2 + 5},${next.y - 10}`
             ].join(" "))
-
-        let x = ((x2 - x1)>>1) + x1
-        let y = next ? (((y2 - y1)>>1) + y1) : y2
+        
         // 画分隔线
         d3.select(`line[name="flowSplit${this.istFlowBtn.nsuffix}"]`)
             .attr("y1", y)
