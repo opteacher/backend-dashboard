@@ -94,9 +94,9 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
-    async addFlow(flow) {
+    async addStep(flow) {
         try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/flows.insert`, flow)).data.data
+            return (await axios.post(`${config.url}/backend-dashboard/backend/steps.insert`, flow)).data.data
         } catch(e) {
             return utils.getErrorMsg(e)
         }

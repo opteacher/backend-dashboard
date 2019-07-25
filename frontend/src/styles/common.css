@@ -36,6 +36,10 @@
     word-wrap: break-word;
 }
 
+.mb-0 {
+    margin-bottom: 0;
+}
+
 .mr-2 {
     margin-right: 2px;
 }

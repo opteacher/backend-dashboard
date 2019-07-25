@@ -265,7 +265,7 @@ func (kpg *KratosProjGen) chgKratosServiceFile(ctx context.Context, apis []*pb.A
 	models := make(map[string]string)
 	for _, ai := range apis {
 		models[ai.Model] = ai.Table
-		for _, step := range ai.Flows {
+		for _, step := range ai.Steps {
 			for _, i := range step.Requires {
 				requires[i] = nil
 			}
@@ -300,7 +300,7 @@ func (kpg *KratosProjGen) chgKratosServiceFile(ctx context.Context, apis []*pb.A
 				sreturns := strings.Join(areturns, ", ")
 				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (%s, error) {\n", ai.Name, sparams, sreturns)
 				preSpaces := 1
-				for _, step := range ai.Flows {
+				for _, step := range ai.Steps {
 					// 添加注释
 					if len(step.Desc) != 0 {
 						code += utils.AddSpacesBeforeRow(fmt.Sprintf("// %s\n", step.Desc), preSpaces)

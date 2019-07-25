@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "backend/api/api.proto",
+        "title": "api.proto",
         "version": "1"
     },
     "schemes": [
@@ -193,43 +193,6 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/.backend.manager.service.v1.ExpOptions"
-                        }
-                    }
-                ],
-                "tags": [
-                    "backend.manager.service.v1.BackendManager"
-                ]
-            }
-        },
-        "/backend-dashboard/backend/flows.insert": {
-            "post": {
-                "summary": "/backend-dashboard/backend/flows.insert",
-                "responses": {
-                    "200": {
-                        "description": "A successful response.",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "code": {
-                                    "type": "integer"
-                                },
-                                "message": {
-                                    "type": "string"
-                                },
-                                "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.Empty"
-                                }
-                            }
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/.backend.manager.service.v1.FlowReqs"
                         }
                     }
                 ],
@@ -587,6 +550,43 @@
                                     "type": "string"
                                 },
                                 "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.StepReqs"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/steps.insertTemp": {
+            "post": {
+                "summary": "/backend-dashboard/backend/steps.insertTemp",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
                                     "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
                                 }
                             }
@@ -677,7 +677,7 @@
                         "type": "string"
                     }
                 },
-                "flows": {
+                "steps": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
@@ -740,17 +740,6 @@
                 },
                 "database": {
                     "$ref": "#/definitions/.backend.manager.service.v1.Database"
-                }
-            }
-        },
-        ".backend.manager.service.v1.FlowReqs": {
-            "type": "object",
-            "properties": {
-                "index": {
-                    "type": "integer"
-                },
-                "operStep": {
-                    "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
                 }
             }
         },
@@ -903,6 +892,17 @@
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.StepReqs": {
+            "type": "object",
+            "properties": {
+                "index": {
+                    "type": "integer"
+                },
+                "operStep": {
+                    "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
                 }
             }
         },

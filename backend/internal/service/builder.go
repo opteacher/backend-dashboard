@@ -49,7 +49,7 @@ func NewProjGenBuilder(dao *dao.Dao, tx *sql.Tx) (*ProjGenBuilder, error) {
 			Route   string
 			Method  string
 			Returns string
-			Flows   string
+			Steps   string
 		})(nil)).Elem()); err != nil {
 			panic(err)
 		} else if err := dao.CreateTx(tx, model.OPER_STEP_TABLE, reflect.TypeOf((*struct {
@@ -171,7 +171,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 		case "post":
 			mdlApi.Params["entry"] = mname
 			mdlApi.Returns = []string{mname}
-			mdlApi.Flows = []*pb.OperStep{
+			mdlApi.Steps = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "json_marshal",
 					Inputs: map[string]string{
@@ -215,7 +215,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 		case "delete":
 			mdlApi.Params["iden"] = "IdenReqs"
 			mdlApi.Returns = []string{mname}
-			mdlApi.Flows = []*pb.OperStep{
+			mdlApi.Steps = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "database_beginTx",
 				}),
@@ -261,7 +261,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 			mdlApi.Params["iden"] = "IdenReqs"
 			mdlApi.Params["entry"] = mname
 			mdlApi.Returns = []string{mname}
-			mdlApi.Flows = []*pb.OperStep{
+			mdlApi.Steps = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "json_marshal",
 					Inputs: map[string]string{
@@ -319,7 +319,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 		case "get":
 			mdlApi.Params["iden"] = "IdenReqs"
 			mdlApi.Returns = []string{mname}
-			mdlApi.Flows = []*pb.OperStep{
+			mdlApi.Steps = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "database_query",
 					Inputs: map[string]string{
@@ -351,7 +351,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 			mdlApi.Method = "get"
 			mdlApi.Params["params"] = "Nil"
 			mdlApi.Returns = []string{mmname}
-			mdlApi.Flows = []*pb.OperStep{
+			mdlApi.Steps = []*pb.OperStep{
 				copyStep(&pb.OperStep{
 					OperKey: "database_query",
 					Inputs: map[string]string{
@@ -635,17 +635,17 @@ func ApiInfoToDbByTx(dao *dao.Dao, tx *sql.Tx, info *pb.ApiInfo) (int64, error) 
 	if id, err := dao.InsertTx(tx, model.API_INFO_TABLE, minfo); err != nil {
 		return -1, err
 	} else {
-		sflows := ""
-		for _, flow := range info.Flows {
-			flow.ApiName = info.Name
-			if id, err := OperStepToDbByTx(dao, tx, flow); err != nil {
+		ssteps := ""
+		for _, step := range info.Steps {
+			step.ApiName = info.Name
+			if id, err := OperStepToDbByTx(dao, tx, step); err != nil {
 				return -1, err
 			} else {
-				sflows += strconv.Itoa(int(id)) + ","
+				ssteps += strconv.Itoa(int(id)) + ","
 			}
 		}
 		return dao.SaveTx(tx, model.API_INFO_TABLE, "`id`=?", []interface{}{id}, map[string]interface{}{
-			"flows": strings.TrimRight(sflows, ","),
+			"steps": strings.TrimRight(ssteps, ","),
 		}, false)
 	}
 }
@@ -659,16 +659,16 @@ func CvtApiInfoFmMap(dao *dao.Dao, tx *sql.Tx, mapi map[string]interface{}) (*pb
 	info.Route = mapi["route"].(string)
 	info.Method = mapi["method"].(string)
 	info.Returns = strings.Split(mapi["returns"].(string), ",")
-	sflows := mapi["flows"].(string)
-	if len(sflows) == 0 {
+	ssteps := mapi["steps"].(string)
+	if len(ssteps) == 0 {
 		return info, nil
 	}
-	mps, err := dao.QueryTx(tx, model.OPER_STEP_TABLE, fmt.Sprintf("`id` IN (%s)", sflows), nil)
+	mps, err := dao.QueryTx(tx, model.OPER_STEP_TABLE, fmt.Sprintf("`id` IN (%s)", ssteps), nil)
 	if err != nil {
 		return nil, err
 	}
 	for _, mp := range mps {
-		info.Flows = append(info.Flows, CvtOperStepFmMap(mp))
+		info.Steps = append(info.Steps, CvtOperStepFmMap(mp))
 	}
 	return info, nil
 }
@@ -695,6 +695,9 @@ func CvtOperStepFmMap(mstep map[string]interface{}) *pb.OperStep {
 	step.Code = mstep["code"].(string)
 	if chkStrEmpty(mstep["api_name"]) {
 		step.ApiName = mstep["api_name"].(string)
+	}
+	if mstep["symbol"] != nil {
+		step.Symbol = pb.SpcSymbol(mstep["symbol"].(int64))
 	}
 	return step
 }

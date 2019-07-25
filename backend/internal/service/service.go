@@ -255,7 +255,7 @@ func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.Api
 	}
 }
 
-func (s *Service) FlowInsert(ctx context.Context, req *pb.FlowReqs) (*pb.Empty, error) {
+func (s *Service) StepsInsert(ctx context.Context, req *pb.StepReqs) (*pb.Empty, error) {
 	if tx, err := s.dao.BeginTx(ctx); err != nil {
 		return nil, fmt.Errorf("开启事务失败：%v", err)
 	} else if id, err := OperStepToDbByTx(s.dao, tx, req.OperStep); err != nil {
@@ -264,21 +264,21 @@ func (s *Service) FlowInsert(ctx context.Context, req *pb.FlowReqs) (*pb.Empty, 
 	} else if mapi, err := s.dao.QueryOneTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{
 		req.OperStep.ApiName,
 	}); err != nil {
-		// 获取当前API的flow流程
+		// 获取当前API的所有步骤
 		return nil, fmt.Errorf("查询接口信息失败：%v", err)
-	} else if flows := strings.Split(mapi["flows"].(string), ","); false {
-		// 修改Api的flows顺序
+	} else if steps := strings.Split(mapi["steps"].(string), ","); false {
+		// 修改Api的步骤顺序
 		return nil, nil
-	} else if rear := append([]string{}, flows[req.Index:]...); false {
+	} else if rear := append([]string{}, steps[req.Index:]...); false {
 		return nil, nil
-	} else if flows = append(flows[:req.Index], strconv.Itoa(int(id))); false {
+	} else if steps = append(steps[:req.Index], strconv.Itoa(int(id))); false {
 		return nil, nil
-	} else if flows = append(flows, rear...); false {
+	} else if steps = append(steps, rear...); false {
 		return nil, nil
 	} else if _, err := s.dao.SaveTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{
 		req.OperStep.ApiName,
 	}, map[string]interface{}{
-		"flows": strings.Trim(strings.Join(flows, ","), ","),
+		"steps": strings.Trim(strings.Join(steps, ","), ","),
 	}, false); err != nil {
 		return nil, fmt.Errorf("保存接口信息失败：%v", err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
@@ -289,7 +289,7 @@ func (s *Service) FlowInsert(ctx context.Context, req *pb.FlowReqs) (*pb.Empty, 
 }
 
 // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
-// 如果需要插入到流程中间，则需要使用FlowInsert
+// 如果需要插入到流程中间，则需要使用StepsInsert
 func (s *Service) OperStepsInsert(context.Context, *pb.OperStep) (*pb.OperStep, error) {
 	return nil, nil
 }

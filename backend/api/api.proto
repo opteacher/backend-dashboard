@@ -79,9 +79,9 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc FlowInsert(FlowReqs) returns (Empty) {
+    rpc StepsInsert(StepReqs) returns (Empty) {
         option (google.api.http) = {
-            post: "/backend-dashboard/backend/flows.insert"
+            post: "/backend-dashboard/backend/steps.insert"
             body: "*"
         };
     };
@@ -92,7 +92,7 @@ service BackendManager {
     };
     rpc OperStepsInsert(OperStep) returns (OperStep) {
         option (google.api.http) = {
-            post: "/backend-dashboard/backend/steps.insert"
+            post: "/backend-dashboard/backend/steps.insertTemp"
             body: "*"
         };
     };
@@ -195,7 +195,7 @@ message ApiInfo {
     string route = 5;
     string method = 6;
     repeated string returns = 7;
-    repeated OperStep flows = 8;
+    repeated OperStep steps = 8;
 }
 
 message ApiInfoArray {
@@ -211,7 +211,7 @@ message SymbolsResp {
     map<int32,string> names = 2;
 }
 
-message FlowReqs {
+message StepReqs {
     int32 index = 1;
     OperStep operStep = 2;
 }
