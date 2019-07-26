@@ -142,7 +142,7 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 				}
 				// 特殊标识
 				if src.Symbol != pb.SpcSymbol_NONE {
-					tgt.Symbol = src.Symbol
+					tgt.Symbol |= src.Symbol
 				}
 				return tgt
 			}
@@ -393,7 +393,6 @@ func GenModelApiInfo(dao *dao.Dao, tx *sql.Tx, mdl map[string]interface{}, steps
 						"ARRAY":   "resp." + mmfname,
 						"NEW_ADD": fmt.Sprintf("omap.(*%s)", mmname),
 					},
-					Symbol: pb.SpcSymbol_BLOCK_OUT,
 				}),
 				copyStep(&pb.OperStep{
 					OperKey: "return_succeed",
@@ -679,6 +678,7 @@ func chkStrEmpty(str interface{}) bool {
 
 func CvtOperStepFmMap(mstep map[string]interface{}) *pb.OperStep {
 	step := new(pb.OperStep)
+	step.Id = int64(mstep["id"].(int32))
 	step.OperKey = mstep["oper_key"].(string)
 	if chkStrEmpty(mstep["requires"]) {
 		step.Requires = strings.Split(mstep["requires"].(string), ",")

@@ -1,7 +1,5 @@
 <template>
-<div class="card" :name="`flow_${step.index}`" :style="`
-    width:${flowWidth}px;margin-bottom:${step.isLast ? marginTB : 0}px
-`">
+<div class="card" :name="`step_${step.index}`" :style="`width:${stepWidth}px;margin-bottom:${step.isLast ? marginTB : 0}px`">
     <div class="card-header text-center">
         <h5 class="mb-0 float-left">#{{step.index}}</h5>
         <span>{{step.operKey}}</span>
@@ -32,6 +30,7 @@
 </template>
 
 <script>
+import backend from '../backend';
 export default {
     props: {
         "step": Object
@@ -39,26 +38,42 @@ export default {
     data() {
         return {
             marginTB: 50,
-            flowWidth: 600,
-            flowSpan: 300,
+            stepWidth: 600,
+            stepSpan: 300,
         }
     },
-    created() {
-        let panelWidth = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
-        this.step.x = (panelWidth>>1) - (this.flowWidth>>1)
-        this.step.y = this.marginTB + this.flowSpan * this.step.index
-    },
     mounted() {
-        d3.select(`[name="flow_${this.step.index}"]`)
-            .style("left", `${this.step.x}px`)
-            .style("top", `${this.step.y}px`)
+        let panelWidth = parseInt(document.getElementById("pnlFlows").getBoundingClientRect().width)
+        d3.select(`[name="step_${this.step.index}"]`)
+            .style("left", `${(panelWidth>>1) - (this.stepWidth>>1)}px`)
+            .style("top", `${this.marginTB + this.stepSpan * this.step.index}px`)
     },
     methods: {
         showOperDetail() {
             this.$emit("show-detail", this.step)
         },
         hdlDelete() {
-            // TODO: 删除步骤
+            this.$alert("确定删除该步骤？", "提示", {
+                confirmButtonText: "确定",
+                callback: async action => {
+                    if (action !== "confirm") {
+                        return
+                    }
+                    let res = await backend.delStep({
+                        apiName: this.step.apiName,
+                        stepId: this.step.id
+                    })
+                    if (typeof res === "string") {
+                        this.$message.error(`删除步骤时发生错误${res}`)
+                    } else {
+                        this.$message({
+                            type: "info",
+                            message: `步骤#${this.step.id} ${this.step.operKey}删除成功！`
+                        })
+                        this.$emit("be-deleted")
+                    }
+                }
+            })
         }
     }
 }

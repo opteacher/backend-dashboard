@@ -103,11 +103,11 @@ export default {
             })
         },
         selectApi() {
+            this.showSelApiDlg = false
             let selApi = this.$refs["sel-api-form"].selApi
             if (selApi) {
                 this.selApiLocal(selApi)
             }
-            this.showSelApiDlg = false
         },
         hdlSelApi(apiName) {
             if (apiName === "*more") {

@@ -12,7 +12,7 @@
         <el-input v-if="mode !== 'display'" v-model="selStep.desc"/>
         <p v-else>{{selStep.desc}}</p>
     </el-form-item>
-    <el-form-item label="输入" v-show="mode === 'editing-flow' && selStep.inputs && selStep.inputs.length !== 0">
+    <el-form-item label="输入" v-show="mode === 'editing-step' && selStep.inputs && selStep.inputs.length !== 0">
         <div class="card input-card" v-for="(input, symbol) in selStep.inputs" :key="symbol">
             <div class="card-body input-card-body">
                 <el-row>
@@ -35,10 +35,10 @@
             </div>
         </div>
     </el-form-item>
-    <el-form-item label="输出" v-show="mode === 'editing-flow' && selStep.outputs && selStep.outputs.length !== 0">
+    <el-form-item label="输出" v-show="mode === 'editing-step' && selStep.outputs && selStep.outputs.length !== 0">
         <el-tag v-for="output in selStep.outputs" :key="output" type="success">{{output}}</el-tag>
     </el-form-item>
-    <el-form :inline="true" label-width="80px" v-show="mode === 'editing-flow'">
+    <el-form :inline="true" label-width="80px" v-show="mode === 'editing-step'">
         <el-form-item label="标识">
             <el-select v-model="selStep.symbol" placeholder="请选择">
                 <el-option v-for="(value, name) in spcSymbols" :key="name" :label="name" :value="value"/>
@@ -48,10 +48,6 @@
             <el-tag>abcd</el-tag>
         </el-form-item>
     </el-form>
-    <el-form-item label="进退格" v-show="mode === 'new'">
-        <el-checkbox v-model="enableBlk">启用进退格</el-checkbox>
-        <el-switch v-model="blkInOut" active-text="进格" inactive-text="退格" :disabled="!enableBlk" @change="hdlSwhBlkInOut"/>
-    </el-form-item>
     <el-form-item label="代码">
         <el-input type="textarea" v-model="selStep.code" :autosize="{minRows: 5, maxRows: 100}" :disabled="mode === 'display'"/>
     </el-form-item>
@@ -93,8 +89,8 @@ export default {
         },
         hdlSwhBlkInOut() {
             if (this.enableBlk) {
-                if (this.mode === "editing-flow") {
-                    // 使用模板，blockIn在new模式下已经确定，无法在editing-flow修改
+                if (this.mode === "editing-step") {
+                    // 使用模板，blockIn在new模式下已经确定，无法在editing-step修改
                     if (!this.selStep.blockIn) {
                         this.blkInOut = false
                         this.selStep.blockOut = true

@@ -702,9 +702,7 @@ func FixQueryResult(result map[string]interface{}) map[string]interface{} {
 		for idx, element := range field {
 			for sfname, sfvalue := range element {
 				// NOTE: 结果会删除id和以_id结尾的集合子字段，注意命名！
-				if sfname == "id" {
-					delete(element, sfname)
-				} else if sfname[len(sfname)-3:] == "_id" {
+				if len(sfname) >= 3 && sfname[len(sfname)-3:] == "_id" {
 					delete(element, sfname)
 				} else if utils.ToPlural(sfname) == fname {
 					farray = append(farray, sfvalue)

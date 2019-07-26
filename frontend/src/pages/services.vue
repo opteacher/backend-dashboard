@@ -1,17 +1,19 @@
 <template>
 <dashboard>
     <info-bar @select-api="selectApi" @add-api="addApi"/>
-    <div id="pnlFlows" class="w-100 h-100" style="position: absolute">
-        <div style="position:absolute;width:0;height:0" v-for="flow in selApi.steps" :key="flow.index">
-            <step-block :step="flow" @show-detail="showOperDetail"/>
+    <div v-if="forceUpdateFlg">
+        <div id="pnlFlows" class="w-100 h-100" style="position: absolute">
+            <div style="position:absolute;width:0;height:0" v-for="step in selApi.steps" :key="step.index">
+                <step-block :step="step" @show-detail="showOperDetail" @be-deleted="delStep(step)"/>
+            </div>
+            <button v-for="btn in istStepBtns" :key="btn.nsuffix" :name="`istStepBtn${btn.nsuffix}`" class="btn btn-success rounded-circle" type="button" style="position:absolute" @click="insertStep(btn.prev ? btn.prev.index : 0)">
+                <i class="el-icon-plus"/>
+            </button>
         </div>
-        <button v-for="btn in istStepBtns" :key="btn.nsuffix" :name="`istFlowBtn${btn.nsuffix}`" class="btn btn-success rounded-circle" type="button" style="position:absolute" @click="insertStep(btn.prev.index)">
-            <i class="el-icon-plus"/>
-        </button>
+        <svg id="pnlGraphs" class="w-100" style="position: absolute; z-index: -100; height: 100%">
+            <step-link v-for="btn in istStepBtns" :key="btn.nsuffix" :istStepBtn="btn"/>
+        </svg>
     </div>
-    <svg id="pnlGraphs" class="w-100" style="position: absolute; z-index: -100; height: 100%">
-        <flow-link v-for="btn in istStepBtns" :key="btn.nsuffix" :istFlowBtn="btn"/>        
-    </svg>
     <el-button id="btnApiInfo" type="primary" size="small" icon="el-icon-info" v-if="selApi" @click="showApiInfo">
         {{selApi.name}}
     </el-button>
@@ -24,8 +26,8 @@
         </div>
     </el-dialog>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog :title="`添加步骤 #${flowInfo.flowIdx}`" :visible.sync="showAddStepDlg" :modal-append-to-body="false" width="50vw">
-        <edit-flow ref="add-flow-form" :flowInfo="flowInfo"/>
+    <el-dialog :title="`添加步骤 #${stepInfo.index}`" :visible.sync="showAddStepDlg" :modal-append-to-body="false" width="50vw">
+        <edit-step ref="add-step-form" :stepInfo="stepInfo"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddStepDlg = false">取 消</el-button>
             <el-button type="primary" @click="addStep">确 定</el-button>
@@ -42,21 +44,22 @@ import infoBar from "../components/infoBar"
 import stepDetail from "../forms/stepDetail"
 import backend from "../backend"
 import apiInfo from "../forms/apiInfo"
-import editFlow from "../forms/editFlow"
+import editStep from "../forms/editStep"
 import stepBlock from "../components/stepBlock"
-import flowLink from "../components/flowLink"
+import stepLink from "../components/stepLink"
 
 export default {
     components: {
         "dashboard": dashboard,
         "info-bar": infoBar,
         "step-detail": stepDetail,
-        "edit-flow": editFlow,
+        "edit-step": editStep,
         "step-block": stepBlock,
-        "flow-link": flowLink
+        "step-link": stepLink
     },
     data() {
         return {
+            forceUpdateFlg: true,
             selApi: {steps: []},
             selStep: {index: -1},
             index: 1,
@@ -64,7 +67,7 @@ export default {
             showAddStepDlg: false,
             fors: [],
             istStepBtns: [],
-            flowInfo: {flowIdx: -1}
+            stepInfo: {index: -1}
         }
     },
     methods: {
@@ -80,48 +83,57 @@ export default {
             this.selApi = selApi
             this.istStepBtns = []
             let locVars = this.selApi.params ? _.keys(this.selApi.params) : []
-            this.selApi.steps = this.selApi.steps ? this.selApi.steps.map((flow, idx) => {
+            this.selApi.steps = this.selApi.steps ? this.selApi.steps.map((step, idx) => {
                 // 做一些处理：只包含一个元素的输出数组全部设为空
-                if (!flow.outputs || (flow.outputs.length === 1 && flow.outputs[0] === "")) {
-                    flow.outputs = []
+                if (!step.outputs || (step.outputs.length === 1 && step.outputs[0] === "")) {
+                    step.outputs = []
                 }
-                if (!flow.requires || (flow.requires.length === 1 && flow.requires[0] === "")) {
-                    flow.requires = []
+                if (!step.requires || (step.requires.length === 1 && step.requires[0] === "")) {
+                    step.requires = []
                 }
-                flow.index = idx
+                step.index = idx
 
                 if (idx === this.selApi.steps.length - 1) {
-                    flow.isLast = true
-                    this.istStepBtns.push({
-                        apiName: selApi.name,
-                        nsuffix: `_${idx}`,
-                        prev: flow,
-                        next: null,
-                        locVars: locVars
-                    })
+                    step.isLast = true
+                    // 如果最后一个步骤的标识不是结尾标识，则添加按钮用于后续增加步骤
+                    if (!step.symbol || step.symbol & 4 /* SpcSymbol_END */ === 0) {
+                        this.istStepBtns.push({
+                            apiName: selApi.name,
+                            nsuffix: `_${idx}`,
+                            prev: step,
+                            next: null,
+                            locVars: locVars
+                        })
+                    }
                 } else {
                     this.istStepBtns.push({
                         apiName: selApi.name,
                         nsuffix: `_${idx}_${idx + 1}`,
-                        prev: flow,
+                        prev: step,
                         next: this.selApi.steps[idx + 1],
                         locVars: locVars
                     })
                 }
 
                 if (idx !== 0) {
-                    locVars.concat(flow.outputs)
+                    locVars.concat(step.outputs)
                 }
-                return flow
+                return step
             }) : []
             if (this.istStepBtns.length === 0) {
                 // 没有按钮，说明流程中没有步骤，添加一个按钮用于初始化
                 this.istStepBtns.push({
                     apiName: selApi.name,
-                    nsuffix: "_0",
+                    nsuffix: "__0",
                     locVars: locVars
                 })
             }
+            // 强制pnlFlows刷新
+            // NOTE: 如果不强制刷新，同名的step块会相互覆盖并影响link的定位
+            this.forceUpdateFlg = false
+            this.$nextTick(() => {
+                this.forceUpdateFlg = true
+            })
         },
         chgOperStep() {
             this.$refs["step-detail-form"].mode = (
@@ -145,11 +157,11 @@ export default {
             console.log(newApi)
         },
         async addStep() {
-            let form = this.$refs["add-flow-form"]
+            let form = this.$refs["add-step-form"]
             let res = await backend.addStep({
-                index: form.flowInfo.flowIdx,
-                operStep: Object.assign(form.flow, {
-                    apiName: form.flowInfo.apiName
+                index: form.stepInfo.index,
+                operStep: Object.assign(form.step, {
+                    apiName: this.selApi.name
                 })
             })
             if (typeof res === "string") {
@@ -168,8 +180,11 @@ export default {
             this.showStepDtlDlg = true
         },
         insertStep(prevIdx) {
-            this.flowInfo.flowIdx = prevIdx + 1
+            this.stepInfo.index = prevIdx + 1
             this.showAddStepDlg = true
+        },
+        delStep(step) {
+            // TODO: TTTT
         }
     }
 }

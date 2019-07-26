@@ -87,6 +87,13 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
+    async delStep(delInfo) {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/steps.delete`, delInfo)).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
     async qryStepSymbols() {
         try {
             return (await axios.post(`${config.url}/backend-dashboard/backend/specialSymbols`)).data.data

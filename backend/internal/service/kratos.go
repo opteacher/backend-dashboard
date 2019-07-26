@@ -312,12 +312,12 @@ func (kpg *KratosProjGen) chgKratosServiceFile(ctx context.Context, apis []*pb.A
 						cd = strings.Replace(cd, fmt.Sprintf("%%%s%%", o), n, -1)
 					}
 					// 跳进或者跳出块段落
-					if step.Symbol == pb.SpcSymbol_BLOCK_IN {
+					if step.Symbol & pb.SpcSymbol_BLOCK_IN != 0 {
 						cd = cd + " {\n"
 						code += utils.AddSpacesBeforeRow(cd, preSpaces)
 						preSpaces++
 						continue
-					} else if step.Symbol == pb.SpcSymbol_BLOCK_OUT {
+					} else if step.Symbol & pb.SpcSymbol_BLOCK_OUT != 0 {
 						cd = "}\n" + cd
 						preSpaces--
 					}

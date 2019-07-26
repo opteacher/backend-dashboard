@@ -85,6 +85,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc StepsDelete(DelStepReqs) returns (Empty) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/steps.delete"
+            body: "*"
+        };
+    };
     rpc OperStepsSelectTemp(Empty) returns (OperStepArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/steps.selectTemp"
@@ -171,7 +177,7 @@ enum SpcSymbol {
     NONE = 0;
     BLOCK_IN = 1;
     BLOCK_OUT = 2;
-    END = 3;
+    END = 4;
 }
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
@@ -214,6 +220,11 @@ message SymbolsResp {
 message StepReqs {
     int32 index = 1;
     OperStep operStep = 2;
+}
+
+message DelStepReqs {
+    string apiName = 1;
+    int32 stepId = 2;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

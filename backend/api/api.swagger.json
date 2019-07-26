@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api.proto",
+        "title": "backend/api/api.proto",
         "version": "1"
     },
     "schemes": [
@@ -534,6 +534,43 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/steps.delete": {
+            "post": {
+                "summary": "/backend-dashboard/backend/steps.delete",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.DelStepReqs"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/steps.insert": {
             "post": {
                 "summary": "/backend-dashboard/backend/steps.insert",
@@ -716,6 +753,17 @@
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.DelStepReqs": {
+            "type": "object",
+            "properties": {
+                "apiName": {
+                    "type": "string"
+                },
+                "stepId": {
+                    "type": "integer"
                 }
             }
         },

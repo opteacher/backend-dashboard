@@ -288,6 +288,36 @@ func (s *Service) StepsInsert(ctx context.Context, req *pb.StepReqs) (*pb.Empty,
 	}
 }
 
+func delStepFmApiSteps(steps string, delId string) string {
+	ary := strings.Split(steps, ",")
+	for i := 0; i < len(ary); i++ {
+		if ary[i] == delId {
+			return strings.Join(append(ary[:i], ary[i+1:]...), ",")
+		}
+	}
+	return steps
+}
+
+func (s *Service) StepsDelete(ctx context.Context, req *pb.DelStepReqs) (*pb.Empty, error) {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if _, err := s.dao.DeleteTxByID(tx, model.OPER_STEP_TABLE, req.StepId); err != nil {
+		return nil, fmt.Errorf("删除步骤失败：%v", err)
+	} else if mps, err := s.dao.QueryTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{req.ApiName}); err != nil {
+		return nil, fmt.Errorf("查询接口失败：%v", err)
+	} else if len(mps) == 0 {
+		return &pb.Empty{}, nil
+	} else if mp := mps[0]; false {
+		return nil, nil
+	} else if _, err := s.dao.SaveTx(tx, model.API_INFO_TABLE, "`name`=?", []interface{}{req.ApiName}, map[string]interface{}{
+		"steps": delStepFmApiSteps(mp["steps"].(string), strconv.Itoa(int(req.StepId))),
+	}, true); err != nil {
+		return nil, fmt.Errorf("更新接口的流程失败：%v", err)
+	} else {
+		return &pb.Empty{}, nil
+	}
+}
+
 // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
 // 如果需要插入到流程中间，则需要使用StepsInsert
 func (s *Service) OperStepsInsert(context.Context, *pb.OperStep) (*pb.OperStep, error) {
