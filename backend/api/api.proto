@@ -137,13 +137,14 @@ message Prop {
 
 message Model {
     int64 id = 1;
-    string name = 2[(gogoproto.moretags)='orm:",UNIQUE_KEY|NOT_NULL|PRIMARY_KEY"'];
+    string name = 2[(gogoproto.moretags)='orm:",UNIQUE_KEY|NOT_NULL|PRIMARY_KEY|COMMENT(模块名)"'];
     repeated Prop props = 3;
     repeated string methods = 4;
-    int32 x = 5[(gogoproto.jsontag) = 'x'];
-    int32 y = 6[(gogoproto.jsontag) = 'y'];
-    int32 width = 7;
-    int32 height = 8;
+    string type = 5[(gogoproto.moretags)='orm:",DEFAULT(\'model\')"'];
+    int32 x = 6[(gogoproto.jsontag) = 'x'];
+    int32 y = 7[(gogoproto.jsontag) = 'y'];
+    int32 width = 8;
+    int32 height = 9;
 }
 
 message ModelArray {

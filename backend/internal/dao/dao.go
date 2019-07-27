@@ -138,9 +138,8 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 					case str == "NOT_NULL":
 						fattr += "NOT NULL "
 					case str[:7] == "DEFAULT":
-						pattern := regexp.MustCompile(`\(.+\)`)
-						str := strings.Trim(pattern.FindString(str[7:]), "()")
-						fattr += fmt.Sprintf("DEFAULT %s ", str)
+						pattern := regexp.MustCompile(`\((.|\'|\")+\)`)
+						fattr += fmt.Sprintf("DEFAULT %s ", strings.Trim(pattern.FindString(str[7:]), "()"))
 					case str[:11] == "FOREIGN_KEY":
 						pattern := regexp.MustCompile(`(\w+):`)
 						cname := pattern.FindStringSubmatch(str[11:])
@@ -151,6 +150,9 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 							fkey += ":" + cname[1]
 						}
 						fkeys[fkey] = fmt.Sprintf("`%s`(`%s`)", fkpair[1], fkpair[2])
+					case str[:7] == "COMMENT":
+						pattern := regexp.MustCompile(`\(.+\)`)
+						fattr += fmt.Sprintf("COMMENT '%s' ", strings.Trim(pattern.FindString(str[7:]), "()"))
 					}
 				}
 			default:

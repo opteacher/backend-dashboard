@@ -14,7 +14,7 @@
                 <el-dropdown-item command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
-        <el-checkbox border size="mini">显示碎片</el-checkbox>
+        <el-checkbox border size="mini">显示结构</el-checkbox>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
@@ -81,7 +81,7 @@ export default {
             form.model.propName = "test"
             form.$refs["edit-model-form"].validate(valid => {
                 if (valid) {
-                    let newModel = _.clone(form.model)
+                    let newModel = _.cloneDeep(form.model)
                     delete newModel.propName
                     this.$emit("add-model", newModel)
                     form.resetModel()
@@ -98,7 +98,7 @@ export default {
             let form = this.$refs["add-link-form"]
             form.$refs["edit-link-form"].validate(valid => {
                 if (valid) {
-                    let newLink = _.clone(form.link)
+                    let newLink = _.cloneDeep(form.link)
                     this.$emit("add-link", newLink)
                     form.resetLink()
                     this.showAddLnkDlg = false
@@ -114,7 +114,17 @@ export default {
             this[cmd] = true
         },
         addStruct() {
-
+            let form = this.$refs["add-struct-form"]
+            form.$refs["edit-model-form"].validate(valid => {
+                if (valid) {
+                    let newStruct = _.cloneDeep(form.model)
+                    this.$emit("add-struct", newStruct)
+                    form.resetModel()
+                    this.showAddSttDlg = false
+                } else {
+                    return false
+                }
+            })
         }
     }
 }

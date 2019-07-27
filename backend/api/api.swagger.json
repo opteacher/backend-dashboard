@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "backend/api/api.proto",
+        "title": "api.proto",
         "version": "1"
     },
     "schemes": [
@@ -845,6 +845,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "type": {
+                    "type": "string"
                 },
                 "x": {
                     "type": "integer"
