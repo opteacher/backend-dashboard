@@ -10,11 +10,11 @@
             </el-button>
             <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="showAddMdlDlg">模块</el-dropdown-item>
-                <el-dropdown-item command="showAddFrgDlg">碎片</el-dropdown-item>
+                <el-dropdown-item command="showAddSttDlg">结构</el-dropdown-item>
                 <el-dropdown-item command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
-        <el-checkbox>显示碎片</el-checkbox>
+        <el-checkbox border size="mini">显示碎片</el-checkbox>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
@@ -36,6 +36,14 @@
             <el-button type="primary" @click="addLink">确 定</el-button>
         </div>
     </el-dialog>
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <el-dialog title="新建结构" :visible.sync="showAddSttDlg" :modal-append-to-body="false" width="50vw">
+        <edit-model ref="add-struct-form" :structFlag="true"/>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="showAddSttDlg = false">取 消</el-button>
+            <el-button type="primary" @click="addStruct">确 定</el-button>
+        </div>
+    </el-dialog>
 </el-row>
 </template>
 
@@ -55,10 +63,11 @@ export default {
     },
     data() {
         return {
+            checkboxGroup4: [],
             disableAddLnkBtn: true,
             showAddMdlDlg: false,
             showAddLnkDlg: false,
-            showAddFrgDlg: false
+            showAddSttDlg: false
         }
     },
     watch: {
@@ -103,6 +112,9 @@ export default {
         },
         hdlSelAdd(cmd) {
             this[cmd] = true
+        },
+        addStruct() {
+
         }
     }
 }

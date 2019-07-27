@@ -1,6 +1,6 @@
 <template>
 <el-form :model="model" label-width="80px" label-position="right" ref="edit-model-form">
-    <el-form-item label="模块名" :rules="[
+    <el-form-item :label="`${structFlag ? '结构名' : '模块名'}`" :rules="[
         { required: true, message: '请输入模块名称', trigger: 'blur' },
         { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
     ]" prop="name">
@@ -37,7 +37,7 @@
             </el-col>
         </el-row>
     </el-form-item>
-    <el-form-item label="RPC接口">
+    <el-form-item label="RPC接口" v-if="!structFlag">
         <el-checkbox-group class="w-100" v-model="model.methods">
             <el-checkbox-button label="POST" name="methods"/>
             <el-checkbox-button label="DELETE" name="methods"/>
@@ -52,34 +52,37 @@
 <script>
 export default {
     props: {
-        "input-model": Object
+        "input-model": Object,
+        "structFlag": Boolean
     },
-    data() { return {
-        model: {
-            id: "",
-            name: "",
-            props: [],
-            propName: "",
-            methods: [],
-            x: 0,
-            y: 0,
-            width: 400,
-            height: 300
-        },
-        propOptions: [{
-            title: "文本",
-            value: "string"
-        }, {
-            title: "数字",
-            value: "int32"
-        }, {
-            title: "日期",
-            value: "uint64"
-        }, {
-            title: "布尔",
-            value: "bool"
-        }]
-    }},
+    data() {
+        return {
+            model: {
+                id: "",
+                name: "",
+                props: [],
+                propName: "",
+                methods: [],
+                x: 0,
+                y: 0,
+                width: 400,
+                height: 300
+            },
+            propOptions: [{
+                title: "文本",
+                value: "string"
+            }, {
+                title: "数字",
+                value: "int32"
+            }, {
+                title: "日期",
+                value: "uint64"
+            }, {
+                title: "布尔",
+                value: "bool"
+            }]
+        }
+    },
     created() {
         if (this["input-model"] && this["input-model"].name) {
             this.model.name = this["input-model"].name
