@@ -666,8 +666,13 @@ func CvtApiInfoFmMap(dao *dao.Dao, tx *sql.Tx, mapi map[string]interface{}) (*pb
 	if err != nil {
 		return nil, err
 	}
+	stepMap := make(map[string]*pb.OperStep)
 	for _, mp := range mps {
-		info.Steps = append(info.Steps, CvtOperStepFmMap(mp))
+		step := CvtOperStepFmMap(mp)
+		stepMap[strconv.Itoa(int(step.Id))] = step
+	}
+	for _, stepId := range strings.Split(ssteps, ",") {
+		info.Steps = append(info.Steps, stepMap[stepId])
 	}
 	return info, nil
 }

@@ -4,7 +4,7 @@
     <div v-if="forceUpdateFlg">
         <div id="pnlFlows" class="w-100 h-100" style="position: absolute">
             <div style="position:absolute;width:0;height:0" v-for="step in selApi.steps" :key="step.index">
-                <step-block :step="step" @show-detail="showOperDetail" @be-deleted="delStep(step)"/>
+                <step-block :step="step" @show-detail="showOperDetail" @be-deleted="refresh"/>
             </div>
             <button v-for="btn in istStepBtns" :key="btn.nsuffix" :name="`istStepBtn${btn.nsuffix}`" class="btn btn-success rounded-circle" type="button" style="position:absolute" @click="insertStep(btn.prev ? btn.prev.index : 0)">
                 <i class="el-icon-plus"/>
@@ -70,6 +70,13 @@ export default {
             stepInfo: {index: -1}
         }
     },
+    updated() {
+        let pnlFlows = document.getElementById("pnlFlows")
+        if (pnlFlows) {
+            d3.select("#pnlGraphs")
+            .style("height", `${pnlFlows.scrollHeight}px`)
+        }
+    },
     methods: {
         async refresh() {
             let res = await backend.qryApiByName(this.selApi.name)
@@ -94,7 +101,6 @@ export default {
                 step.index = idx
 
                 if (idx === this.selApi.steps.length - 1) {
-                    step.isLast = true
                     // 如果最后一个步骤的标识不是结尾标识，则添加按钮用于后续增加步骤
                     if (!step.symbol || step.symbol & 4 /* SpcSymbol_END */ === 0) {
                         this.istStepBtns.push({
@@ -104,6 +110,8 @@ export default {
                             next: null,
                             locVars: locVars
                         })
+                    } else {
+                        step.isLast = true
                     }
                 } else {
                     this.istStepBtns.push({
@@ -182,9 +190,6 @@ export default {
         insertStep(prevIdx) {
             this.stepInfo.index = prevIdx + 1
             this.showAddStepDlg = true
-        },
-        delStep(step) {
-            // TODO: TTTT
         }
     }
 }

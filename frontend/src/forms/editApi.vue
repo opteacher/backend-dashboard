@@ -18,7 +18,7 @@
         ]" prop="paramType">
             <el-col :span="18">
                 <el-select class="w-100" v-model="newParam.paramType" placeholder="请选择">
-                    <el-option v-for="typ in typeMap" :key="typ.value" :label="typ.title" :value="typ.value"/>
+                    <el-option v-for="model in models" :key="model.name" :label="model.name" :value="model.name"/>
                 </el-select>
             </el-col>
             <el-col :span="6">
@@ -47,7 +47,7 @@
         ]" prop="type">
             <el-col :span="18">
                 <el-select class="w-100" v-model="newReturn.type" placeholder="请选择">
-                    <el-option v-for="typ in typeMap" :key="typ.value" :label="typ.title" :value="typ.value"/>
+                    <el-option v-for="model in models" :key="model.name" :label="model.name" :value="model.name"/>
                 </el-select>
             </el-col>
             <el-col :span="6">
@@ -75,6 +75,11 @@
             <el-option v-for="method in methodMap" :key="method" :label="method" :value="method"/>
         </el-select>
     </el-form-item>
+    <el-form-item label="绑定模块">
+        <el-select class="w-100" v-model="api.model" placeholder="可选">
+            <el-option v-for="model in models" :key="model.name" :label="model.name" :value="model.name"/>
+        </el-select>
+    </el-form-item>
 </el-form>
 </template>
 
@@ -84,19 +89,6 @@ import backend from "../backend"
 export default {
     data() {
         return {
-            typeMap: [{
-                title: "文本",
-                value: "string"
-            }, {
-                title: "数字",
-                value: "int32"
-            }, {
-                title: "日期",
-                value: "uint64"
-            }, {
-                title: "布尔",
-                value: "bool"
-            }],
             methodMap: [
                 "GET", "POST", "PUT", "DELETE", "PATCH"
             ],
@@ -106,7 +98,8 @@ export default {
                 returns: [],
                 enableHttp: true,
                 route: "",
-                method: ""
+                method: "",
+                model: ""
             },
             newParam: {
                 paramName: "",
@@ -114,7 +107,8 @@ export default {
             },
             newReturn: {
                 type: ""
-            }
+            },
+            models: []
         }
     },
     async created() {
@@ -122,13 +116,7 @@ export default {
         if (typeof res === "string") {
             this.$message.error(`查询模块失败：${res}`)
         } else {
-            let models = res.models || []
-            this.typeMap = models.map(model => {
-                return {
-                    title: model.name,
-                    value: model.name,
-                }
-            })
+            this.models = res.models || []
         }
     },
     methods: {

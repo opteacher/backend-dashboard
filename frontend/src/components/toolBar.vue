@@ -9,10 +9,12 @@
                 添加组件<i class="el-icon-arrow-down el-icon--right"></i>
             </el-button>
             <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item icon="el-icon-menu" command="showAddMdlDlg">模块</el-dropdown-item>
-                <el-dropdown-item icon="el-icon-share" command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
+                <el-dropdown-item command="showAddMdlDlg">模块</el-dropdown-item>
+                <el-dropdown-item command="showAddFrgDlg">碎片</el-dropdown-item>
+                <el-dropdown-item command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
+        <el-checkbox>显示碎片</el-checkbox>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
@@ -55,7 +57,8 @@ export default {
         return {
             disableAddLnkBtn: true,
             showAddMdlDlg: false,
-            showAddLnkDlg: false
+            showAddLnkDlg: false,
+            showAddFrgDlg: false
         }
     },
     watch: {

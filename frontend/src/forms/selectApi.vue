@@ -20,6 +20,9 @@
 import backend from "../backend"
 
 export default {
+    props: {
+        "showFlag": Boolean
+    },
     data() {
         return {
             searchTxt: "",
@@ -40,6 +43,13 @@ export default {
                 this.$message.error(`查询接口失败：${res}`)
             } else {
                 this.apiList = res.infos || []
+            }
+        }
+    },
+    watch: {
+        async showFlag() {
+            if (this.showFlag) {
+                await this.queryApis()
             }
         }
     }

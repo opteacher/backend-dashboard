@@ -13,8 +13,7 @@ export default {
         "istStepBtn": Object
     },
     mounted() {
-        let pnlFlows = document.getElementById("pnlFlows")
-        let pnlRect = pnlFlows.getBoundingClientRect()
+        let pnlRect = document.getElementById("pnlFlows").getBoundingClientRect()
         if (!this.istStepBtn.prev && !this.istStepBtn.next) {
             // 没有步骤，只有一个按钮供添加
             d3.select(`button[name="istStepBtn${this.istStepBtn.nsuffix}"]`)
@@ -22,9 +21,6 @@ export default {
                 .style("top", "50px")
             return
         }
-        
-        d3.select("#pnlGraphs")
-            .style("height", `${pnlFlows.scrollHeight}px`)
 
         let prev = this.istStepBtn.prev
         // 如果是结尾标识，则不继续显示下面的内容
@@ -87,6 +83,8 @@ export default {
         d3.select(`button[name="istStepBtn${this.istStepBtn.nsuffix}"]`)
             .style("left", `${x - 20}px`)
             .style("top", `${y - 20}px`)
+            // 最后的按钮添加50像素的底部距离，以配合第一个step块的顶部距离
+            .style("margin-bottom", `${!next ? 50 : 0}px`)
     }
 }
 </script>

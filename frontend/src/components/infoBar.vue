@@ -10,7 +10,7 @@
                 <el-dropdown-item v-for="api in recentApis" :key="api.api.name" :command="api.api.name">
                     {{api.api.name}}
                 </el-dropdown-item>
-                <el-dropdown-item command="*more">...</el-dropdown-item>
+                <el-dropdown-item command="*more" icon="el-icon-more"/>
             </el-dropdown-menu>
         </el-dropdown>
         <el-button size="mini" @click="hdlDelApi">删除接口</el-button>
@@ -20,7 +20,7 @@
     </el-col>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
     <el-dialog title="选择接口" :visible.sync="showSelApiDlg" :modal-append-to-body="false" width="40vw">
-        <select-api ref="sel-api-form"/>
+        <select-api ref="sel-api-form" :showFlag="showSelApiDlg"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showSelApiDlg = false">取 消</el-button>
             <el-button type="primary" @click="selectApi">确 定</el-button>
