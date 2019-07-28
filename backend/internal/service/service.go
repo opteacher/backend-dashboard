@@ -52,6 +52,42 @@ func New() (s *Service) {
 		panic(err)
 	} else if err := s.dao.CreateTx(tx, model.MODELS_TABLE, reflect.TypeOf((*pb.Model)(nil)).Elem()); err != nil {
 		panic(err)
+	} else if _, err := s.dao.DeleteTx(tx, model.MODELS_TABLE, "", []interface{}{}); err != nil {
+		panic(err)
+	} else if mp, err := utils.ToMap(pb.Model{
+		Name: "Nil",
+		Type: "struct",
+		Props: []*pb.Prop{},
+	}); err != nil {
+		panic(err)
+	} else if _, err := s.dao.InsertTx(tx, model.MODELS_TABLE, mp); err != nil {
+		panic(err)
+	} else if mp, err := utils.ToMap(pb.Model{
+		Name: "IdenReqs",
+		Type: "struct",
+		Props: []*pb.Prop{
+			&pb.Prop {
+				Name: "id",
+				Type: "int32",
+			},
+		},
+	}); err != nil {
+		panic(err)
+	} else if _, err := s.dao.InsertTx(tx, model.MODELS_TABLE, mp); err != nil {
+		panic(err)
+	} else if mp, err := utils.ToMap(pb.Model{
+		Name: "NameReqs",
+		Type: "struct",
+		Props: []*pb.Prop{
+			&pb.Prop {
+				Name: "name",
+				Type: "string",
+			},
+		},
+	}); err != nil {
+		panic(err)
+	} else if _, err := s.dao.InsertTx(tx, model.MODELS_TABLE, mp); err != nil {
+		panic(err)
 	} else if err := s.dao.CreateTx(tx, model.LINKS_TABLE, reflect.TypeOf((*pb.Link)(nil)).Elem()); err != nil {
 		panic(err)
 	} else if s.gbuilder, err = NewProjGenBuilder(s.dao, tx); err != nil {
@@ -84,6 +120,19 @@ func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, e
 		return nil, fmt.Errorf("插入数据库失败：%v", err)
 	} else if mm, err = s.dao.QueryTxByID(tx, model.MODELS_TABLE, id); err != nil {
 		return nil, fmt.Errorf("查询记录：%d失败：%v", id, err)
+	} else if aryMap, err := utils.ToMap(pb.Model{
+		Name: req.Name + "Array",
+		Type: "struct",
+		Props: []*pb.Prop{
+			&pb.Prop {
+				Name: utils.ToPlural(strings.ToLower(req.Name)),
+				Type: "repeated " + req.Name,
+			},
+		},
+	}); err != nil {
+		return nil, fmt.Errorf("生成集合结构失败：%v", err)
+	} else if _, err := s.dao.InsertTx(tx, model.MODELS_TABLE, aryMap); err != nil {
+		return nil, fmt.Errorf("插入集合结构失败：%v", err)
 	} else if _, err := GenModelApiInfo(s.dao, tx, mm, nil); err != nil {
 		return nil, fmt.Errorf("生成模块接口失败：%v", err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
@@ -132,8 +181,11 @@ func (s *Service) ModelsUpdate(ctx context.Context, req *pb.Model) (*pb.Empty, e
 	}
 }
 
-func selAllModelsByType(typ string) (*pb.ModelArray, error) {
-	if res, err := s.dao.Query(ctx, model.MODELS_TABLE, "`type`=?", []interface{}{typ}); err != nil {
+func (s *Service) ModelsSelectAll(ctx context.Context, req *pb.TypeIden) (*pb.ModelArray, error) {
+	if req.Type == "" {
+		req.Type = "model"
+	}
+	if res, err := s.dao.Query(ctx, model.MODELS_TABLE, "`type`=?", []interface{}{req.Type}); err != nil {
 		return nil, fmt.Errorf("查询数据库失败：%v", err)
 	} else {
 		resp := new(pb.ModelArray)
@@ -150,17 +202,15 @@ func selAllModelsByType(typ string) (*pb.ModelArray, error) {
 	}
 }
 
-func (s *Service) ModelsSelectAll(ctx context.Context, req *pb.Empty) (*pb.ModelArray, error) {
-	return selAllModelsByType("model")
-}
-
 func (s *Service) ModelsSelectByName(context.Context, *pb.NameID) (*pb.Model, error) {
 	// TODO:
 	return nil, nil
 }
 
-func (s *Service) StructsSelectAll(ctx context.Context, req *pb.Empty) (*pb.ModelArray, error) {
-	return selAllModelsByType("struct")
+func (s *Service) StructsSelectAllBases(context.Context, *pb.Empty) (*pb.NameArray, error) {
+	return &pb.NameArray{
+		Names: []string{"Nil", "IdenReqs", "NameReqs"},
+	}, nil
 }
 
 func (s *Service) LinksInsert(ctx context.Context, req *pb.Link) (*pb.Link, error) {

@@ -14,7 +14,7 @@
                 <el-dropdown-item command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
-        <el-button size="mini">结构列表</el-button>
+        <el-button size="mini" @click="showSttLstDlg = true">结构列表</el-button>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
@@ -45,11 +45,9 @@
         </div>
     </el-dialog>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog title="结构列表" :visible.sync="showSttLstDlg" :modal-append-to-body="false" width="50vw">
+    <el-dialog title="结构列表" :visible.sync="showSttLstDlg" :modal-append-to-body="false" width="30vw">
         <list-struct ref="list-struct-form" :showFlag="showSttLstDlg"/>
         <div slot="footer" class="dialog-footer">
-            <el-button @click="showAddSttDlg = false">取 消</el-button>
-            <el-button type="primary" @click="addStruct">确 定</el-button>
         </div>
     </el-dialog>
 </el-row>
@@ -131,11 +129,7 @@ export default {
             form.$refs["edit-model-form"].validate(async valid => {
                 if (valid) {
                     let newStruct = _.cloneDeep(form.model)
-                    newStruct = _.pick(newStruct, [
-                        "name", "props",
-                        "x", "y",
-                        "width", "height"
-                    ])
+                    newStruct = _.pick(newStruct, ["name", "props"])
                     let res = await backend.addModel(Object.assign(newStruct, {
                         type: "struct"
                     }))

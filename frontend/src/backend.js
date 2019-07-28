@@ -33,14 +33,21 @@ export default {
     },
     async qryAllModels() {
         try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`)).data.data
+            return (await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`, {type: "model"})).data.data
         } catch(e) {
             return utils.getErrorMsg(e)
         }
     },
     async qryAllStructs() {
         try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/structs.selectAll`)).data.data
+            return (await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`, {type: "struct"})).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
+    async qryAllBaseStructsName() {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/structs.selectAllBases`)).data.data
         } catch(e) {
             return utils.getErrorMsg(e)
         }

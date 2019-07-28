@@ -414,7 +414,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                            "$ref": "#/definitions/.backend.manager.service.v1.TypeIden"
                         }
                     }
                 ],
@@ -682,9 +682,9 @@
                 ]
             }
         },
-        "/backend-dashboard/backend/structs.selectAll": {
+        "/backend-dashboard/backend/structs.selectAllBases": {
             "post": {
-                "summary": "/backend-dashboard/backend/structs.selectAll",
+                "summary": "/backend-dashboard/backend/structs.selectAllBases",
                 "responses": {
                     "200": {
                         "description": "A successful response.",
@@ -698,7 +698,7 @@
                                     "type": "string"
                                 },
                                 "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.ModelArray"
+                                    "$ref": "#/definitions/.backend.manager.service.v1.NameArray"
                                 }
                             }
                         }
@@ -911,6 +911,17 @@
                 }
             }
         },
+        ".backend.manager.service.v1.NameArray": {
+            "type": "object",
+            "properties": {
+                "names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         ".backend.manager.service.v1.NameID": {
             "type": "object",
             "properties": {
@@ -1016,6 +1027,14 @@
                     "additionalProperties": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        ".backend.manager.service.v1.TypeIden": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string"
                 }
             }
         },

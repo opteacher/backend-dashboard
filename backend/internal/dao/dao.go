@@ -652,10 +652,13 @@ func combineUpdate(keys []string) string {
 	return str
 }
 
-func (d *Dao) DeleteTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) (int64, error) {
-	sql := fmt.Sprintf("DELETE FROM `%s` WHERE %s", table, condStr)
-	log.Info("database: SQL(%s); ARGS(%v)", sql, condArgs)
-	if res, err := tx.Exec(sql, condArgs...); err != nil {
+func (d *Dao) DeleteTx(tx *sql.Tx, table string, cstr string, carg []interface{}) (int64, error) {
+	sql := fmt.Sprintf("DELETE FROM `%s`", table)
+	if len(cstr) != 0 {
+		sql += fmt.Sprintf(" WHERE %s", cstr)
+	}
+	log.Info("database: SQL(%s); ARGS(%v)", sql, carg)
+	if res, err := tx.Exec(sql, carg...); err != nil {
 		d.RollbackTx(tx)
 		return 0, err
 	} else {

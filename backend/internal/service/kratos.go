@@ -196,8 +196,6 @@ func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo
 	code += "import \"google/api/annotationkpg.proto\";\n\n"
 	code += "option go_package = \"api\";\n"
 	code += "option (gogoproto.goproto_getters_all) = false;\n\n"
-	code += "message Nil {\n}\n\n"
-	code += "message IdenReqs {\n\tint64 id = 1;\n}\n\n"
 
 	// 收集接口信息
 	res, err := kpg.dao.Query(ctx, model.MODELS_TABLE, "", []interface{}{})
@@ -211,10 +209,6 @@ func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo
 			code += fmt.Sprintf("\t%s %s=%d;\n", prop["type"], prop["name"], i+1)
 		}
 		code += "}\n\n"
-		// 复数message
-		mmname := mname + "Array"
-		mmfname := utils.ToPlural(strings.ToLower(mname))
-		code += fmt.Sprintf("message %s {\n\t%s %s = 1;\n}\n\n", mmname, mname, mmfname)
 	}
 
 	// 生成proto文件

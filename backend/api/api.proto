@@ -27,7 +27,7 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc ModelsSelectAll(Empty) returns (ModelArray) {
+    rpc ModelsSelectAll(TypeIden) returns (ModelArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/models.selectAll"
             body: "*"
@@ -39,9 +39,9 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc StructsSelectAll(Empty) returns (ModelArray) {
+    rpc StructsSelectAllBases(Empty) returns (NameArray) {
         option (google.api.http) = {
-            post: "/backend-dashboard/backend/structs.selectAll"
+            post: "/backend-dashboard/backend/structs.selectAllBases"
             body: "*"
         };
     };
@@ -132,6 +132,14 @@ message NumberID {
 
 message NameID {
     string name = 1;
+}
+
+message TypeIden {
+    string type = 1;
+}
+
+message NameArray {
+    repeated string names = 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
