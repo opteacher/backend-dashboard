@@ -14,7 +14,7 @@
                 <el-dropdown-item command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
-        <el-checkbox border size="mini">显示结构</el-checkbox>
+        <el-button size="mini">结构列表</el-button>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
@@ -44,6 +44,14 @@
             <el-button type="primary" @click="addStruct">确 定</el-button>
         </div>
     </el-dialog>
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <el-dialog title="结构列表" :visible.sync="showSttLstDlg" :modal-append-to-body="false" width="50vw">
+        <list-struct ref="list-struct-form" :showFlag="showSttLstDlg"/>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="showAddSttDlg = false">取 消</el-button>
+            <el-button type="primary" @click="addStruct">确 定</el-button>
+        </div>
+    </el-dialog>
 </el-row>
 </template>
 
@@ -52,6 +60,8 @@ import _ from "lodash"
 
 import editModel from "../forms/editModel"
 import editLink from "../forms/editLink"
+import listStruct from "../forms/listStruct"
+import backend from '../backend';
 
 export default {
     props: {
@@ -59,7 +69,8 @@ export default {
     },
     components: {
         "edit-model": editModel,
-        "edit-link": editLink
+        "edit-link": editLink,
+        "list-struct": listStruct
     },
     data() {
         return {
@@ -67,7 +78,8 @@ export default {
             disableAddLnkBtn: true,
             showAddMdlDlg: false,
             showAddLnkDlg: false,
-            showAddSttDlg: false
+            showAddSttDlg: false,
+            showSttLstDlg: false
         }
     },
     watch: {
@@ -115,11 +127,23 @@ export default {
         },
         addStruct() {
             let form = this.$refs["add-struct-form"]
-            form.$refs["edit-model-form"].validate(valid => {
+            form.model.propName = "test"
+            form.$refs["edit-model-form"].validate(async valid => {
                 if (valid) {
                     let newStruct = _.cloneDeep(form.model)
-                    this.$emit("add-struct", newStruct)
-                    form.resetModel()
+                    newStruct = _.pick(newStruct, [
+                        "name", "props",
+                        "x", "y",
+                        "width", "height"
+                    ])
+                    let res = await backend.addModel(Object.assign(newStruct, {
+                        type: "struct"
+                    }))
+                    if (typeof res === "string") {
+                        this.$message.error(`添加结构时发生错误：${res}`)
+                    } else {
+                        form.resetModel()
+                    }
                     this.showAddSttDlg = false
                 } else {
                     return false

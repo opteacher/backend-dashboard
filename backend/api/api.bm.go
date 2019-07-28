@@ -27,6 +27,7 @@ var PathBackendManagerModelsDelete = "/backend-dashboard/backend/models.delete"
 var PathBackendManagerModelsUpdate = "/backend-dashboard/backend/models.update"
 var PathBackendManagerModelsSelectAll = "/backend-dashboard/backend/models.selectAll"
 var PathBackendManagerModelsSelectByName = "/backend-dashboard/backend/models.selectByName"
+var PathBackendManagerStructsSelectAll = "/backend-dashboard/backend/structs.selectAll"
 var PathBackendManagerLinksInsert = "/backend-dashboard/backend/links.insert"
 var PathBackendManagerLinksSelectAll = "/backend-dashboard/backend/links.selectAll"
 var PathBackendManagerLinksDeleteBySymbol = "/backend-dashboard/backend/links.deleteBySymbol"
@@ -52,6 +53,8 @@ type BackendManagerBMServer interface {
 	ModelsSelectAll(ctx context.Context, req *Empty) (resp *ModelArray, err error)
 
 	ModelsSelectByName(ctx context.Context, req *NameID) (resp *Model, err error)
+
+	StructsSelectAll(ctx context.Context, req *Empty) (resp *ModelArray, err error)
 
 	LinksInsert(ctx context.Context, req *Link) (resp *Link, err error)
 
@@ -124,6 +127,15 @@ func backendManagerModelsSelectByName(c *bm.Context) {
 		return
 	}
 	resp, err := BackendManagerSvc.ModelsSelectByName(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerStructsSelectAll(c *bm.Context) {
+	p := new(Empty)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.StructsSelectAll(c, p)
 	c.JSON(resp, err)
 }
 
@@ -252,6 +264,7 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/models.update", backendManagerModelsUpdate)
 	e.POST("/backend-dashboard/backend/models.selectAll", backendManagerModelsSelectAll)
 	e.POST("/backend-dashboard/backend/models.selectByName", backendManagerModelsSelectByName)
+	e.POST("/backend-dashboard/backend/structs.selectAll", backendManagerStructsSelectAll)
 	e.POST("/backend-dashboard/backend/links.insert", backendManagerLinksInsert)
 	e.POST("/backend-dashboard/backend/links.selectAll", backendManagerLinksSelectAll)
 	e.POST("/backend-dashboard/backend/links.deleteBySymbol", backendManagerLinksDeleteBySymbol)

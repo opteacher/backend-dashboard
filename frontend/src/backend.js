@@ -38,6 +38,13 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
+    async qryAllStructs() {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/structs.selectAll`)).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
     async addLink(link) {
         try {
             return (await axios.post(`${config.url}/backend-dashboard/backend/links.insert`, _.omit(link, "id"))).data.data

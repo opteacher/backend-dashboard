@@ -39,6 +39,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc StructsSelectAll(Empty) returns (ModelArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/structs.selectAll"
+            body: "*"
+        };
+    };
     rpc LinksInsert(Link) returns (Link) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/links.insert"
