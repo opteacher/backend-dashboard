@@ -164,7 +164,7 @@ export default {
                     } else {
                         this.$message({
                             type: "info",
-                            message: `模块（${this.selApi.name}）删除成功！`
+                            message: `接口（${this.selApi.name}）删除成功！`
                         })
                         await this.refresh()
                     }

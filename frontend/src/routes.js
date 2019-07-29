@@ -1,5 +1,6 @@
 import models from "./pages/models.vue"
 import services from "./pages/services.vue"
+import dao from "./pages/dao"
 import axports from "./pages/exports"
 
 export default [{
@@ -11,6 +12,9 @@ export default [{
 }, {
     path: "/backend-dashboard/frontend/services",
     component: services
+}, {
+    path: "/backend-dashboard/frontend/dao",
+    component: dao
 }, {
     path: "/backend-dashboard/frontend/exports",
     component: axports

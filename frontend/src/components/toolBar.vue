@@ -14,7 +14,9 @@
                 <el-dropdown-item command="showAddLnkDlg" v-show="!disableAddLnkBtn">关联</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
-        <el-button size="mini" @click="showSttLstDlg = true">结构列表</el-button>
+        <el-badge :value="newStructsNum" class="item" :hidden="newStructsNum === 0" :max="5">
+            <el-button size="mini" @click="hdlOpenSttLstDlg">结构列表</el-button>
+        </el-badge>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
@@ -59,7 +61,7 @@ import _ from "lodash"
 import editModel from "../forms/editModel"
 import editLink from "../forms/editLink"
 import listStruct from "../forms/listStruct"
-import backend from '../backend';
+import backend from "../backend"
 
 export default {
     props: {
@@ -77,7 +79,8 @@ export default {
             showAddMdlDlg: false,
             showAddLnkDlg: false,
             showAddSttDlg: false,
-            showSttLstDlg: false
+            showSttLstDlg: false,
+            newStructsNum: 0
         }
     },
     watch: {
@@ -136,13 +139,22 @@ export default {
                     if (typeof res === "string") {
                         this.$message.error(`添加结构时发生错误：${res}`)
                     } else {
+                        this.$message({
+                            type: "success",
+                            message: "新增结构成功！"
+                        })
                         form.resetModel()
+                        this.newStructsNum++
                     }
                     this.showAddSttDlg = false
                 } else {
                     return false
                 }
             })
+        },
+        hdlOpenSttLstDlg() {
+            this.newStructsNum = 0
+            this.showSttLstDlg = true
         }
     }
 }

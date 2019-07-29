@@ -19,6 +19,10 @@
     padding: 10px !important;
 }
 
+.p-20 {
+    padding: 20px;
+}
+
 .br-0 {
     border-right: 0 !important;
 }

@@ -155,10 +155,11 @@ message Model {
     repeated Prop props = 3;
     repeated string methods = 4;
     string type = 5[(gogoproto.moretags)='orm:",DEFAULT(\'model\')"'];
-    int32 x = 6[(gogoproto.jsontag) = 'x'];
-    int32 y = 7[(gogoproto.jsontag) = 'y'];
-    int32 width = 8;
-    int32 height = 9;
+    string model = 6[(gogoproto.moretags)='orm:",FOREIGN_KEY(models.name)|COMMENT(关联模块)"'];
+    int32 x = 7[(gogoproto.jsontag) = 'x'];
+    int32 y = 8[(gogoproto.jsontag) = 'y'];
+    int32 width = 9;
+    int32 height = 10;
 }
 
 message ModelArray {
