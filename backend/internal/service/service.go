@@ -187,10 +187,13 @@ func (s *Service) ModelsUpdate(ctx context.Context, req *pb.Model) (*pb.Empty, e
 }
 
 func (s *Service) ModelsSelectAll(ctx context.Context, req *pb.TypeIden) (*pb.ModelArray, error) {
-	if req.Type == "" {
-		req.Type = "model"
+	cstr := ""
+	carg := make([]interface{}, 0)
+	if req.Type != "" {
+		cstr = "`type`=?"
+		carg = append(carg, req.Type)
 	}
-	if res, err := s.dao.Query(ctx, model.MODELS_TABLE, "`type`=?", []interface{}{req.Type}); err != nil {
+	if res, err := s.dao.Query(ctx, model.MODELS_TABLE, cstr, carg); err != nil {
 		return nil, fmt.Errorf("查询数据库失败：%v", err)
 	} else {
 		resp := new(pb.ModelArray)

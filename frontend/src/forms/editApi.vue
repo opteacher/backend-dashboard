@@ -18,7 +18,7 @@
         ]" prop="paramType">
             <el-col :span="18">
                 <el-select class="w-100" v-model="newParam.paramType" placeholder="请选择">
-                    <el-option v-for="model in models" :key="model.name" :label="model.name" :value="model.name"/>
+                    <el-option v-for="typ in types" :key="typ.name" :label="typ.name" :value="typ.name"/>
                 </el-select>
             </el-col>
             <el-col :span="6">
@@ -47,7 +47,7 @@
         ]" prop="type">
             <el-col :span="18">
                 <el-select class="w-100" v-model="newReturn.type" placeholder="请选择">
-                    <el-option v-for="model in models" :key="model.name" :label="model.name" :value="model.name"/>
+                    <el-option v-for="typ in types" :key="typ.name" :label="typ.name" :value="typ.name"/>
                 </el-select>
             </el-col>
             <el-col :span="6">
@@ -108,7 +108,8 @@ export default {
             newReturn: {
                 type: ""
             },
-            models: []
+            models: [],
+            types: []
         }
     },
     async created() {
@@ -117,6 +118,12 @@ export default {
             this.$message.error(`查询模块失败：${res}`)
         } else {
             this.models = res.models || []
+        }
+        res = await backend.qryAllAvaTypes()
+        if (typeof res === "string") {
+            this.$message.error(`查询可用类型失败：${res}`)
+        } else {
+            this.types = res.models || []
         }
     },
     methods: {

@@ -45,6 +45,13 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
+    async qryAllAvaTypes() {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`)).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
     async qryAllBaseStructsName() {
         try {
             return (await axios.post(`${config.url}/backend-dashboard/backend/structs.selectAllBases`)).data.data
