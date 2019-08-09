@@ -164,6 +164,43 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/dao.groups.selectAll": {
+            "post": {
+                "summary": "/backend-dashboard/backend/dao.groups.selectAll",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.DaoGroupArray"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/export": {
             "post": {
                 "summary": "/backend-dashboard/backend/export",
@@ -767,6 +804,63 @@
                     "items": {
                         "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
                     }
+                }
+            }
+        },
+        ".backend.manager.service.v1.DaoGroup": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "implement": {
+                    "type": "string"
+                },
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.DaoInterface"
+                    }
+                }
+            }
+        },
+        ".backend.manager.service.v1.DaoGroupArray": {
+            "type": "object",
+            "properties": {
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.DaoGroup"
+                    }
+                }
+            }
+        },
+        ".backend.manager.service.v1.DaoInterface": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.Prop"
+                    }
+                },
+                "returns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "group": {
+                    "type": "string"
                 }
             }
         },

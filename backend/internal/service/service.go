@@ -92,6 +92,18 @@ func New() (s *Service) {
 		panic(err)
 	} else if s.gbuilder, err = NewProjGenBuilder(s.dao, tx); err != nil {
 		panic(err)
+	} else if err := s.dao.DropTx(tx, model.DAO_GROUPS_TABLE); err != nil {
+		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.DAO_GROUPS_TABLE, reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()); err != nil {
+		panic(err)
+	} else if err := s.dao.DropTx(tx, model.DAO_INTERFACES_TABLE); err != nil {
+		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.DAO_INTERFACES_TABLE, reflect.TypeOf((*pb.DaoInterface)(nil)).Elem()); err != nil {
+		panic(err)
+	} else if err := s.dao.DropTx(tx, model.DAO_CONFIGS_TABLE); err != nil {
+		panic(err)
+	} else if err := s.dao.CreateTx(tx, model.DAO_CONFIGS_TABLE, reflect.TypeOf((*pb.DaoConfig)(nil)).Elem()); err != nil {
+		panic(err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
 		panic(err)
 	}
@@ -406,6 +418,10 @@ func (s *Service) OperStepsSelectTemp(ctx context.Context, req *pb.Empty) (*pb.O
 			return resp, nil
 		}
 	}
+	return nil, nil
+}
+
+func (s *Service) DaoGroupsSelectAll(context.Context, *pb.Empty) (*pb.DaoGroupArray, error) {
 	return nil, nil
 }
 

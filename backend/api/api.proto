@@ -108,6 +108,11 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc DaoGroupsSelectAll(Empty) returns (DaoGroupArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.groups.selectAll"
+        };
+    };
     rpc Export(ExpOptions) returns (UrlResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/export"
@@ -154,7 +159,7 @@ message Model {
     string name = 2[(gogoproto.moretags)='orm:",UNIQUE_KEY|NOT_NULL|PRIMARY_KEY|COMMENT(模块名)"'];
     repeated Prop props = 3;
     repeated string methods = 4;
-    string type = 5[(gogoproto.moretags)='orm:",DEFAULT(\'model\')"'];
+    string type = 5[(gogoproto.moretags)='orm:",DEFAULT(\'model\')|COMMENT(种类：模块、结构)"'];
     string model = 6[(gogoproto.moretags)='orm:",FOREIGN_KEY(models.name)|COMMENT(关联模块)"'];
     int32 x = 7[(gogoproto.jsontag) = 'x'];
     int32 y = 8[(gogoproto.jsontag) = 'y'];
@@ -164,6 +169,34 @@ message Model {
 
 message ModelArray {
     repeated Model models = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+message DaoGroup {
+    string name = 1[(gogoproto.moretags)='orm:",PRIMARY_KEY|UNIQUE_KEY"'];
+    string category = 2[(gogoproto.moretags)='orm:",COMMENT(类别)"'];
+    string implement = 3[(gogoproto.moretags)='orm:",COMMENT(实现方案)"'];
+    repeated DaoInterface interfaces = 4[(gogoproto.moretags)='orm:"*"'];
+}
+
+message DaoGroupArray {
+    repeated DaoGroup groups = 1;
+}
+
+message DaoConfig {
+    string name = 1[(gogoproto.moretags)='orm:",PRIMARY_KEY|COMMENT(键名)"'];
+    string value = 2[(gogoproto.moretags)='orm:",COMMENT(键值（按JSON字符串存储）)"'];
+    string implement = 3[(gogoproto.moretags)='orm:",PRIMARY_KEY|COMMENT(所属实现方案)"'];
+    string desc = 4[(gogoproto.moretags)='orm:",COMMENT(备注)"'];
+}
+
+message DaoInterface {
+    string name = 1[(gogoproto.moretags)='orm:",|COMMENT(接口名、函数名)"'];
+    string category = 2;
+    repeated Prop params = 3[(gogoproto.moretags)='orm:",|COMMENT(输入数据)"'];
+    repeated string returns = 4[(gogoproto.moretags)='orm:",|COMMENT(输出数据)"'];
+    string group = 5[(gogoproto.moretags)='orm:",FOREIGN_KEY(dao_groups.name)|COMMENT(所属DAO组)"'];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

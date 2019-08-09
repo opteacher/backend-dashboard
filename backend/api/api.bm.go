@@ -39,6 +39,7 @@ var PathBackendManagerStepsInsert = "/backend-dashboard/backend/steps.insert"
 var PathBackendManagerStepsDelete = "/backend-dashboard/backend/steps.delete"
 var PathBackendManagerOperStepsSelectTemp = "/backend-dashboard/backend/steps.selectTemp"
 var PathBackendManagerOperStepsInsert = "/backend-dashboard/backend/steps.insertTemp"
+var PathBackendManagerDaoGroupsSelectAll = "/backend-dashboard/backend/dao.groups.selectAll"
 var PathBackendManagerExport = "/backend-dashboard/backend/export"
 var PathBackendManagerSpecialSymbols = "/backend-dashboard/backend/specialSymbols"
 
@@ -77,6 +78,8 @@ type BackendManagerBMServer interface {
 	OperStepsSelectTemp(ctx context.Context, req *Empty) (resp *OperStepArray, err error)
 
 	OperStepsInsert(ctx context.Context, req *OperStep) (resp *OperStep, err error)
+
+	DaoGroupsSelectAll(ctx context.Context, req *Empty) (resp *DaoGroupArray, err error)
 
 	Export(ctx context.Context, req *ExpOptions) (resp *UrlResp, err error)
 
@@ -238,6 +241,15 @@ func backendManagerOperStepsInsert(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerDaoGroupsSelectAll(c *bm.Context) {
+	p := new(Empty)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.DaoGroupsSelectAll(c, p)
+	c.JSON(resp, err)
+}
+
 func backendManagerExport(c *bm.Context) {
 	p := new(ExpOptions)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
@@ -276,6 +288,7 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/steps.delete", backendManagerStepsDelete)
 	e.POST("/backend-dashboard/backend/steps.selectTemp", backendManagerOperStepsSelectTemp)
 	e.POST("/backend-dashboard/backend/steps.insertTemp", backendManagerOperStepsInsert)
+	e.POST("/backend-dashboard/backend/dao.groups.selectAll", backendManagerDaoGroupsSelectAll)
 	e.POST("/backend-dashboard/backend/export", backendManagerExport)
 	e.POST("/backend-dashboard/backend/specialSymbols", backendManagerSpecialSymbols)
 }

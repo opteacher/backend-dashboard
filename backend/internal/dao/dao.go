@@ -120,6 +120,9 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 			strs := strings.Split(field.Tag.Get("orm"), ",")
 			switch len(strs) {
 			case 1:
+				if strs[0] == "*" {
+					continue
+				}
 				fname = strs[0]
 			case 2:
 				if len(strs[0]) != 0 {
@@ -137,10 +140,10 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 						indexes = append(indexes, fname)
 					case str == "NOT_NULL":
 						fattr += "NOT NULL "
-					case str[:7] == "DEFAULT":
+					case len(str) > 7 && str[:7] == "DEFAULT":
 						pattern := regexp.MustCompile(`\((.|\'|\")+\)`)
 						fattr += fmt.Sprintf("DEFAULT %s ", strings.Trim(pattern.FindString(str[7:]), "()"))
-					case str[:11] == "FOREIGN_KEY":
+					case len(str) > 11 && str[:11] == "FOREIGN_KEY":
 						pattern := regexp.MustCompile(`(\w+):`)
 						cname := pattern.FindStringSubmatch(str[11:])
 						pattern = regexp.MustCompile(`(\w+)\.(\w+)`)
@@ -150,7 +153,7 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 							fkey += ":" + cname[1]
 						}
 						fkeys[fkey] = fmt.Sprintf("`%s`(`%s`)", fkpair[1], fkpair[2])
-					case str[:7] == "COMMENT":
+					case len(str) > 7 && str[:7] == "COMMENT":
 						pattern := regexp.MustCompile(`\(.+\)`)
 						fattr += fmt.Sprintf("COMMENT '%s' ", strings.Trim(pattern.FindString(str[7:]), "()"))
 					}
@@ -254,7 +257,6 @@ func genCreateSQL(table string, typ reflect.Type) (sqls []string, err error) {
 			// 关联父表的删除操作，无视更新操作
 			cname := strings.TrimRight(table, "_mapper")
 			splitIdx := strings.Index(pn, ":")
-			fmt.Println(pn)
 			if splitIdx != -1 {
 				cname = pn[splitIdx + 1:]
 				pn = pn[0:splitIdx]
