@@ -20,3 +20,11 @@ func ToMap(entry interface{}) (map[string]interface{}, error) {
 		return *(mp.(*map[string]interface{})), nil
 	}
 }
+
+func ToObj(mp map[string]interface{}, typ reflect.Type) (interface{}, error) {
+	if bytes, err := json.Marshal(mp); err != nil {
+		return nil, err
+	} else {
+		return UnmarshalJSON(bytes, typ)
+	}
+}

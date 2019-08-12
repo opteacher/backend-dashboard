@@ -164,6 +164,43 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/dao.groups.insert": {
+            "post": {
+                "summary": "/backend-dashboard/backend/dao.groups.insert",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.DaoGroup"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.DaoGroup"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/dao.groups.selectAll": {
             "post": {
                 "summary": "/backend-dashboard/backend/dao.groups.selectAll",

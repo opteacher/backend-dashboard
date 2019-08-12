@@ -1,7 +1,7 @@
 <template>
 <dashboard>
     <div class="dao-container">
-        <el-button type="primary">添加DAO组</el-button>
+        <el-button type="primary" @click="showAddDaoGroup = true">添加DAO组</el-button>
         <el-table class="mt-10" :data="daoGroups" style="width: 100%">
             <el-table-column type="expand">
                 <template slot-scope="scope">
@@ -20,7 +20,7 @@
             </el-table-column>
             <el-table-column label="实现" prop="implement">
                 <template slot-scope="scope">
-                    <el-select v-model="value" placeholder="请选择">
+                    <el-select v-model="scope.row.implement" size="mini" placeholder="请选择">
                         <el-option v-for="item in categories[scope.row.category]" :key="item.name" :label="item.name" :value="item.name"/>
                     </el-select>
                 </template>
@@ -31,23 +31,34 @@
                 </template>
             </el-table-column>
         </el-table>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="添加DAO组" :visible.sync="showAddDaoGroup" :modal-append-to-body="false" width="40vw">
+            <edit-dao-group ref="add-dao-group-form"/>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="showAddDaoGroup = false">取 消</el-button>
+                <el-button type="primary">确 定</el-button>
+            </div>
+        </el-dialog>
     </div>
 </dashboard>
 </template>
 
 <script>
 import dashboard from "../layouts/dashboard"
+import editDaoGroup from "../forms/editDaoGroup"
 
 export default {
     components: {
-        "dashboard": dashboard
+        "dashboard": dashboard,
+        "edit-dao-group": editDaoGroup
     },
     data() {
         return {
+            showAddDaoGroup: false,
             daoGroups: [{
                 name: "abcd",
                 category: "databases",
-                implement: "无",
+                implement: "",
                 interfaces: [{
                     name: "SaveTx"
                 }],

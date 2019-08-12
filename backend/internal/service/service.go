@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -11,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"errors"
 
 	pb "backend/api"
 	"backend/internal/dao"
@@ -20,6 +20,7 @@ import (
 	"backend/internal/utils"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
+	"github.com/bilibili/kratos/pkg/database/sql"
 )
 
 // Service service.
@@ -55,8 +56,8 @@ func New() (s *Service) {
 	} else if _, err := s.dao.DeleteTx(tx, model.MODELS_TABLE, "", []interface{}{}); err != nil {
 		panic(err)
 	} else if mp, err := utils.ToMap(pb.Model{
-		Name: "Nil",
-		Type: "struct",
+		Name:  "Nil",
+		Type:  "struct",
 		Props: []*pb.Prop{},
 	}); err != nil {
 		panic(err)
@@ -66,7 +67,7 @@ func New() (s *Service) {
 		Name: "IdenReqs",
 		Type: "struct",
 		Props: []*pb.Prop{
-			&pb.Prop {
+			&pb.Prop{
 				Name: "id",
 				Type: "int32",
 			},
@@ -79,7 +80,7 @@ func New() (s *Service) {
 		Name: "NameReqs",
 		Type: "struct",
 		Props: []*pb.Prop{
-			&pb.Prop {
+			&pb.Prop{
 				Name: "name",
 				Type: "string",
 			},
@@ -92,22 +93,33 @@ func New() (s *Service) {
 		panic(err)
 	} else if s.gbuilder, err = NewProjGenBuilder(s.dao, tx); err != nil {
 		panic(err)
-	} else if err := s.dao.DropTx(tx, model.DAO_GROUPS_TABLE); err != nil {
-		panic(err)
-	} else if err := s.dao.CreateTx(tx, model.DAO_GROUPS_TABLE, reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()); err != nil {
-		panic(err)
-	} else if err := s.dao.DropTx(tx, model.DAO_INTERFACES_TABLE); err != nil {
-		panic(err)
-	} else if err := s.dao.CreateTx(tx, model.DAO_INTERFACES_TABLE, reflect.TypeOf((*pb.DaoInterface)(nil)).Elem()); err != nil {
-		panic(err)
-	} else if err := s.dao.DropTx(tx, model.DAO_CONFIGS_TABLE); err != nil {
-		panic(err)
-	} else if err := s.dao.CreateTx(tx, model.DAO_CONFIGS_TABLE, reflect.TypeOf((*pb.DaoConfig)(nil)).Elem()); err != nil {
+	} else if err := s.setupDAO(tx); err != nil {
 		panic(err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
 		panic(err)
 	}
 	return s
+}
+
+func (s *Service) setupDAO(tx *sql.Tx) error {
+	DaoInterfaceType := reflect.TypeOf((*pb.DaoInterface)(nil)).Elem()
+	DaoGroupType := reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()
+	DaoConfigType := reflect.TypeOf((*pb.DaoConfig)(nil)).Elem()
+
+	if err := s.dao.DropTxByType(tx, model.DAO_INTERFACES_TABLE, DaoInterfaceType); err != nil {
+		return err
+	} else if err := s.dao.DropTxByType(tx, model.DAO_CONFIGS_TABLE, DaoConfigType); err != nil {
+		return err
+	} else if err := s.dao.DropTxByType(tx, model.DAO_GROUPS_TABLE, DaoGroupType); err != nil {
+		return err
+	} else if err := s.dao.CreateTx(tx, model.DAO_GROUPS_TABLE, DaoGroupType); err != nil {
+		return err
+	} else if err := s.dao.CreateTx(tx, model.DAO_INTERFACES_TABLE, DaoInterfaceType); err != nil {
+		return err
+	} else if err := s.dao.CreateTx(tx, model.DAO_CONFIGS_TABLE, DaoConfigType); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Service) AppID() string {
@@ -137,11 +149,11 @@ func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, e
 	} else {
 		if len(req.Type) == 0 || req.Type == "model" {
 			if aryMap, err := utils.ToMap(pb.Model{
-				Name: req.Name + "Array",
-				Type: "struct",
+				Name:  req.Name + "Array",
+				Type:  "struct",
 				Model: req.Name,
 				Props: []*pb.Prop{
-					&pb.Prop {
+					&pb.Prop{
 						Name: utils.ToPlural(strings.ToLower(req.Name)),
 						Type: "repeated " + req.Name,
 					},
@@ -421,8 +433,41 @@ func (s *Service) OperStepsSelectTemp(ctx context.Context, req *pb.Empty) (*pb.O
 	return nil, nil
 }
 
-func (s *Service) DaoGroupsSelectAll(context.Context, *pb.Empty) (*pb.DaoGroupArray, error) {
+func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {
+	if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if res, err := s.dao.QueryTx(tx, model.DAO_GROUPS_TABLE, "", nil); err != nil {
+		return nil, fmt.Errorf("查询数据库失败：%v", err)
+	} else {
+		resp := new(pb.DaoGroupArray)
+		for _, entry := range res {
+			if grp, err := utils.ToObj(entry, reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()); err != nil {
+				return nil, fmt.Errorf("JSON转成DAO组失败：%v", err)
+			} else {
+				resp.Groups = append(resp.Groups, grp.(*pb.DaoGroup))
+			}
+		}
+		if err := s.dao.CommitTx(tx); err != nil {
+			return nil, fmt.Errorf("提交事务失败：%v", err)
+		} else {
+			return resp, nil
+		}
+	}
 	return nil, nil
+}
+
+func (s *Service) DaoGroupsInsert(ctx context.Context, req *pb.DaoGroup) (*pb.DaoGroup, error) {
+	if mp, err := utils.ToMap(req); err != nil {
+		return nil, fmt.Errorf("转成JSON失败：%v", err)
+	} else if tx, err := s.dao.BeginTx(ctx); err != nil {
+		return nil, fmt.Errorf("开启事务失败：%v", err)
+	} else if _, err := s.dao.InsertTx(tx, model.DAO_GROUPS_TABLE, mp); err != nil {
+		return nil, fmt.Errorf("DAO组插入数据库失败：%v", err)
+	} else if err := s.dao.CommitTx(tx); err != nil {
+		return nil, fmt.Errorf("提交事务失败：%v", err)
+	} else {
+		return req, nil
+	}
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {

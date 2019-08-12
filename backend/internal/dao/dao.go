@@ -307,6 +307,19 @@ func (d *Dao) DropTx(tx *sql.Tx, table string) error {
 	}
 }
 
+func (d *Dao) DropTxByType(tx *sql.Tx, table string, typ reflect.Type) error {
+	stable := utils.ToSingular(table)
+	for i := 0; i < typ.NumField(); i++ {
+		fname := utils.CamelToPascal(typ.Field(i).Name)
+		subTable := fmt.Sprintf("%s_%s_mapper", stable, fname)
+		if _, err := tx.Exec("DROP TABLE IF EXISTS " + subTable, []interface{}{}...); err != nil {
+			d.RollbackTx(tx)
+			return err
+		}
+	}
+	return nil
+}
+
 func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, error) {
 	if res, err := tx.Exec(sql, args...); err != nil {
 		d.RollbackTx(tx)

@@ -113,6 +113,12 @@ service BackendManager {
             post: "/backend-dashboard/backend/dao.groups.selectAll"
         };
     };
+    rpc DaoGroupsInsert(DaoGroup) returns (DaoGroup) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.groups.insert"
+            body: "*"
+        };
+    };
     rpc Export(ExpOptions) returns (UrlResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/export"
