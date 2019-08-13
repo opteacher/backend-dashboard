@@ -4,11 +4,25 @@
         <el-input placeholder="输入组名" v-model="daoGroup.name"/>
     </el-form-item>
     <el-form-item label="类别">
-        <el-select class="w-100" v-model="daoGroup.category">
-            <el-option v-for="category in categories" :key="category.value" :label="category.title" :value="category.value"/>
-        </el-select>
+        <el-col :span="20">
+            <el-select class="w-100" v-model="daoGroup.category">
+                <el-option v-for="category in categories" :key="category.value" :label="category.title" :value="category.value"/>
+            </el-select>
+        </el-col>
+        <el-col :span="4">
+            <el-button class="float-right" icon="el-icon-refresh" circle/>
+        </el-col>
     </el-form-item>
-    <el-form-item label="实现"></el-form-item>
+    <el-form-item label="实现">
+        <el-col :span="20">
+            <el-select class="w-100" v-model="daoGroup.implement">
+                <el-option v-for="impl in implements" :key="impl.value" :label="impl.title" :value="impl.value"/>
+            </el-select>
+        </el-col>
+        <el-col :span="4">
+            <el-button class="float-right" icon="el-icon-refresh" circle/>
+        </el-col>
+    </el-form-item>
 </el-form>
 </template>
 
@@ -18,7 +32,8 @@ export default {
         return {
             daoGroup: {
                 name: "",
-                category: ""
+                category: "",
+                implement: ""
             },
             categories: [{
                 title: "数据库",
@@ -26,6 +41,10 @@ export default {
             }, {
                 title: "缓存",
                 value: "cache"
+            }],
+            implements: [{
+                title: "MySQL",
+                value: "mysql"
             }]
         }
     }

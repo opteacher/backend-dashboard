@@ -20,9 +20,7 @@
             </el-table-column>
             <el-table-column label="实现" prop="implement">
                 <template slot-scope="scope">
-                    <el-select v-model="scope.row.implement" size="mini" placeholder="请选择">
-                        <el-option v-for="item in categories[scope.row.category]" :key="item.name" :label="item.name" :value="item.name"/>
-                    </el-select>
+                    <el-button type="text">{{scope.row.implement}}</el-button>
                 </template>
             </el-table-column>
             <el-table-column label="配置" prop="setting">
@@ -58,7 +56,7 @@ export default {
             daoGroups: [{
                 name: "abcd",
                 category: "databases",
-                implement: "",
+                implement: "MySQL",
                 interfaces: [{
                     name: "SaveTx"
                 }],

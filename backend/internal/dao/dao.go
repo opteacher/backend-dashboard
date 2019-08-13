@@ -329,6 +329,10 @@ func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, e
 	}
 }
 
+func (d *Dao) SourceTx(tx *sql.Tx, file string) (gsql.Result, error) {
+	
+}
+
 func (d *Dao) QueryOneTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) (map[string]interface{}, error) {
 	if ary, err := d.QueryTx(tx, table, condStr, condArgs); err != nil {
 		d.RollbackTx(tx)
