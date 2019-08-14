@@ -1,4 +1,6 @@
 
 # This is a TOML document. Boom~
 appID = "demo.service"
-swaggerFile = "{修改为项目所在目录}/template/api/api.swagger.json"
+projPath = "{修改为项目所在目录}"
+workspace = "backend/workspace"
+swaggerFile = "backend/api/api.swagger.json"

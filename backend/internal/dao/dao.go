@@ -8,7 +8,9 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"os"
 	"os/exec"
+	"bytes"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/database/sql"
@@ -332,27 +334,37 @@ func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, e
 	}
 }
 
-func (d *Dao) SourceTx(tx *sql.Tx, file string) error {
+func (d *Dao) Source(ctx context.Context, file string) error {
 	pattern := regexp.MustCompile(`(\w+):(\w+)@tcp\(([\w|\.]+):(\d+)\)/([\w|-]+)?`)
 	strs := pattern.FindStringSubmatch(d.dc.DSN)
 	if len(strs) != 6 {
 		return fmt.Errorf("数据库DSN格式有变：%s", d.dc.DSN)
 	}
-
-	command := "mysql -P {port} -h {host} -u{username} -p{password} {database} < {source}"
-	command = strings.Replace(command, "{username}", strs[1], 1)
-	command = strings.Replace(command, "{password}", strs[2], 1)
-	command = strings.Replace(command, "{host}", strs[3], 1)
-	command = strings.Replace(command, "{port}", strs[4], 1)
-	command = strings.Replace(command, "{database}", strs[5], 1)
-	command = strings.Replace(command, "{source}", file, 1)
-	log.Info("database: Exec SQL file(%s)", command)
 	
-	cmd := exec.Command("/bin/sh", "-C", command)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("执行SQL文件（%s）失败：%v", file, err)
+	// NOTE: 这里需要保证已经安装了mysql，并添加到系统PATH中
+	cmd := exec.CommandContext(ctx, "/usr/local/mysql-5.7.21-macos10.13-x86_64/bin/mysql", []string{
+		"-P", strs[4], "-h", strs[3], "-u" + strs[1], "-p" + strs[2], "-D", strs[5],
+	}...)
+	fl, err := os.Open(file)
+	if err != nil {
+		return fmt.Errorf("读取SQL文件失败：%v", err)
+	}
+	defer fl.Close()
+	
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdin = fl
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	log.Info("database: Exec SQL file(START)")
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("开始SQL文件（%s）执行失败：%v", file, err)
+	} else if err := cmd.Run(); err != nil {
+		return fmt.Errorf("执行SQL文件（%s）失败：%v:%s", file, err, stderr.String())
+	} else if err := cmd.Wait(); err != nil {
+		return fmt.Errorf("等待SQL文件（%s）执行失败：%v:%s", file, err, stderr.String())
 	} else {
-		log.Info("database: Exec SQL file(%s)", string(out))
+		log.Info("database: Exec SQL file(%s)", out.String())
 	}
 	return nil
 }

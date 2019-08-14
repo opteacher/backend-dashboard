@@ -38,8 +38,9 @@ func (s *Service) AppID() string {
 }
 
 func (s *Service) SwaggerFile() string {
+	pjPath, _ := s.ac.Get("projPath").String()
 	swagger, _ := s.ac.Get("swaggerFile").String()
-	return swagger
+	return path.Join(pjPath, swagger)
 }
 
 // [APIS]

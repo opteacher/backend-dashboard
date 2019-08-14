@@ -93,7 +93,7 @@ func New() (s *Service) {
 		panic(err)
 	} else if s.gbuilder, err = NewProjGenBuilder(s.dao, tx); err != nil {
 		panic(err)
-	} else if err := s.setupDAO(tx); err != nil {
+	} else if err := s.setupDAO(ctx, tx); err != nil {
 		panic(err)
 	} else if err := s.dao.CommitTx(tx); err != nil {
 		panic(err)
@@ -101,13 +101,15 @@ func New() (s *Service) {
 	return s
 }
 
-func (s *Service) setupDAO(tx *sql.Tx) error {
+func (s *Service) setupDAO(ctx context.Context, tx *sql.Tx) error {
 	DaoCategoryType := reflect.TypeOf((*pb.DaoCategory)(nil)).Elem()
 	DaoInterfaceType := reflect.TypeOf((*pb.DaoInterface)(nil)).Elem()
 	DaoGroupType := reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()
 	DaoConfigType := reflect.TypeOf((*pb.DaoConfig)(nil)).Elem()
 
-	if err := s.dao.DropTxByType(tx, model.DAO_INTERFACES_TABLE, DaoInterfaceType); err != nil {
+	if pjPath, err := s.ac.Get("projPath").String(); err != nil {
+		return err
+	} else if err := s.dao.DropTxByType(tx, model.DAO_INTERFACES_TABLE, DaoInterfaceType); err != nil {
 		return err
 	} else if err := s.dao.DropTxByType(tx, model.DAO_GROUPS_TABLE, DaoGroupType); err != nil {
 		return err
@@ -123,7 +125,7 @@ func (s *Service) setupDAO(tx *sql.Tx) error {
 		return err
 	} else if err := s.dao.CreateTx(tx, model.DAO_CONFIGS_TABLE, DaoConfigType); err != nil {
 		return err
-	} else if err := s.dao.SourceTx(tx, "/Users/zhaojiachen/Projects/backend-dashboard/backend/datas/dao_categories.sql"); err != nil {
+	} else if err := s.dao.Source(ctx, path.Join(pjPath, "backend/datas/dao_categories.sql")); err != nil {
 		return err
 	}
 	// } else if _, err := s.dao.InsertTx(tx, model.DAO_CATEGORIES_TABLE, map[string]interface{}{
@@ -320,8 +322,9 @@ func (s *Service) AppID() string {
 }
 
 func (s *Service) SwaggerFile() string {
+	pjPath, _ := s.ac.Get("projPath").String()
 	swagger, _ := s.ac.Get("swaggerFile").String()
-	return swagger
+	return path.Join(pjPath, swagger)
 }
 
 func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, error) {
@@ -663,13 +666,15 @@ func (s *Service) DaoGroupsInsert(ctx context.Context, req *pb.DaoGroup) (*pb.Da
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {
-	if wsPath, err := s.ac.Get("workspace").String(); err != nil {
+	if pjPath, err := s.ac.Get("projPath").String(); err != nil {
+		return nil, fmt.Errorf("配置文件中未定义项目目录：%v", err)
+	} else if wsPath, err := s.ac.Get("workspace").String(); err != nil {
 		return nil, fmt.Errorf("配置文件中未定义工作区目录：%v", err)
 	} else if bin, err := time.Now().MarshalBinary(); err != nil {
 		return nil, fmt.Errorf("生成临时文件夹名失败：%v", err)
 	} else if cchName := fmt.Sprintf("%x", md5.Sum(bin)); false {
 		return nil, nil
-	} else if cchPath := path.Join(wsPath, "cache", cchName); false {
+	} else if cchPath := path.Join(pjPath, wsPath, "cache", cchName); false {
 		return nil, nil
 	} else if err := os.MkdirAll(cchPath, 0755); err != nil {
 		return nil, fmt.Errorf("创建临时文件夹：%s失败：%v", cchPath, err)
