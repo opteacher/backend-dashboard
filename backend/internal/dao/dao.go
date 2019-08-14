@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"os/exec"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/database/sql"
@@ -18,6 +19,7 @@ import (
 
 // Dao dao.
 type Dao struct {
+	dc *sql.Config
 	db *sql.DB
 	tx *sql.Tx
 }
@@ -38,6 +40,7 @@ func New() (dao *Dao) {
 	checkErr(paladin.Get("mysql.toml").UnmarshalTOML(&dc))
 	dao = &Dao{
 		// mysql
+		dc: dc.Demo,
 		db: sql.NewMySQL(dc.Demo),
 	}
 	return
@@ -317,7 +320,7 @@ func (d *Dao) DropTxByType(tx *sql.Tx, table string, typ reflect.Type) error {
 			return err
 		}
 	}
-	return nil
+	return d.DropTx(tx, table)
 }
 
 func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, error) {
@@ -329,8 +332,29 @@ func (d *Dao) ExecTx(tx *sql.Tx, sql string, args []interface{}) (gsql.Result, e
 	}
 }
 
-func (d *Dao) SourceTx(tx *sql.Tx, file string) (gsql.Result, error) {
+func (d *Dao) SourceTx(tx *sql.Tx, file string) error {
+	pattern := regexp.MustCompile(`(\w+):(\w+)@tcp\(([\w|\.]+):(\d+)\)/([\w|-]+)?`)
+	strs := pattern.FindStringSubmatch(d.dc.DSN)
+	if len(strs) != 6 {
+		return fmt.Errorf("数据库DSN格式有变：%s", d.dc.DSN)
+	}
+
+	command := "mysql -P {port} -h {host} -u{username} -p{password} {database} < {source}"
+	command = strings.Replace(command, "{username}", strs[1], 1)
+	command = strings.Replace(command, "{password}", strs[2], 1)
+	command = strings.Replace(command, "{host}", strs[3], 1)
+	command = strings.Replace(command, "{port}", strs[4], 1)
+	command = strings.Replace(command, "{database}", strs[5], 1)
+	command = strings.Replace(command, "{source}", file, 1)
+	log.Info("database: Exec SQL file(%s)", command)
 	
+	cmd := exec.Command("/bin/sh", "-C", command)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("执行SQL文件（%s）失败：%v", file, err)
+	} else {
+		log.Info("database: Exec SQL file(%s)", string(out))
+	}
+	return nil
 }
 
 func (d *Dao) QueryOneTx(tx *sql.Tx, table string, condStr string, condArgs []interface{}) (map[string]interface{}, error) {

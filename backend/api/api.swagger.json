@@ -853,9 +853,6 @@
                 "category": {
                     "type": "string"
                 },
-                "implement": {
-                    "type": "string"
-                },
                 "interfaces": {
                     "type": "array",
                     "items": {
@@ -896,7 +893,13 @@
                         "type": "string"
                     }
                 },
-                "group": {
+                "requires": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "desc": {
                     "type": "string"
                 }
             }

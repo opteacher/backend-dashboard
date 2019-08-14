@@ -102,23 +102,215 @@ func New() (s *Service) {
 }
 
 func (s *Service) setupDAO(tx *sql.Tx) error {
+	DaoCategoryType := reflect.TypeOf((*pb.DaoCategory)(nil)).Elem()
 	DaoInterfaceType := reflect.TypeOf((*pb.DaoInterface)(nil)).Elem()
 	DaoGroupType := reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()
 	DaoConfigType := reflect.TypeOf((*pb.DaoConfig)(nil)).Elem()
 
 	if err := s.dao.DropTxByType(tx, model.DAO_INTERFACES_TABLE, DaoInterfaceType); err != nil {
 		return err
-	} else if err := s.dao.DropTxByType(tx, model.DAO_CONFIGS_TABLE, DaoConfigType); err != nil {
-		return err
 	} else if err := s.dao.DropTxByType(tx, model.DAO_GROUPS_TABLE, DaoGroupType); err != nil {
 		return err
-	} else if err := s.dao.CreateTx(tx, model.DAO_GROUPS_TABLE, DaoGroupType); err != nil {
+	} else if err := s.dao.DropTxByType(tx, model.DAO_CATEGORIES_TABLE, DaoCategoryType); err != nil {
+		return err
+	} else if err := s.dao.DropTxByType(tx, model.DAO_CONFIGS_TABLE, DaoConfigType); err != nil {
+		return err
+	} else if err := s.dao.CreateTx(tx, model.DAO_CATEGORIES_TABLE, DaoCategoryType); err != nil {
 		return err
 	} else if err := s.dao.CreateTx(tx, model.DAO_INTERFACES_TABLE, DaoInterfaceType); err != nil {
 		return err
+	} else if err := s.dao.CreateTx(tx, model.DAO_GROUPS_TABLE, DaoGroupType); err != nil {
+		return err
 	} else if err := s.dao.CreateTx(tx, model.DAO_CONFIGS_TABLE, DaoConfigType); err != nil {
 		return err
+	} else if err := s.dao.SourceTx(tx, "/Users/zhaojiachen/Projects/backend-dashboard/backend/datas/dao_categories.sql"); err != nil {
+		return err
 	}
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_CATEGORIES_TABLE, map[string]interface{}{
+	// 	"name": "database_notx", "desc": "数据库（无事务）", "lang": "golang",
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_CATEGORIES_TABLE, map[string]interface{}{
+	// 	"name": "database_tx", "desc": "数据库（带事务）", "lang": "golang",
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "Close", "category": "database_tx", "desc": "关闭数据库",
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "Ping", "category": "database_tx", "desc": "测试数据库通讯状态",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "ctx", Type: "context.Context"},
+	// 	},
+	// 	"returns": []interface{}{"error"},
+	// 	"requires": []interface{}{"context"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "BeginTx", "category": "database_tx", "desc": "开启事务",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "ctx", Type: "context.Context"},
+	// 	},
+	// 	"returns": []interface{}{"*sql.Tx", "error"},
+	// 	"requires": []interface{}{"context", "github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "CommitTx", "category": "database_tx", "desc": "提交事务",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 	},
+	// 	"returns": []interface{}{"error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "RollbackTx", "category": "database_tx", "desc": "回滚事务",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 	},
+	// 	"returns": []interface{}{"error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "CreateTx", "category": "database_tx", "desc": "创建表",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "typ", Type: "reflect.Type"},
+	// 	},
+	// 	"returns": []interface{}{"error"},
+	// 	"requires": []interface{}{"reflect", "github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "DropTx", "category": "database_tx", "desc": "删除表",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "typ", Type: "reflect.Type"},
+	// 	},
+	// 	"returns": []interface{}{"error"},
+	// 	"requires": []interface{}{"reflect", "github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "ExecTx", "category": "database_tx", "desc": "执行SQL",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "sql", Type: "string"},
+	// 		&pb.Prop{Name: "args", Type: "[]interface{}"},
+	// 	},
+	// 	"returns": []interface{}{"error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "QueryTx", "category": "database_tx", "desc": "查询",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "cstr", Type: "string"},
+	// 		&pb.Prop{Name: "carg", Type: "[]interface{}"},
+	// 	},
+	// 	"returns": []interface{}{"[]map[string]interface{}", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "QueryOneTx", "category": "database_tx", "desc": "查询（单个）",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "cstr", Type: "string"},
+	// 		&pb.Prop{Name: "carg", Type: "[]interface{}"},
+	// 	},
+	// 	"returns": []interface{}{"map[string]interface{}", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "QueryTxBySQL", "category": "database_tx", "desc": "查询（用SQL语句）",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "ssql", Type: "string"},
+	// 		&pb.Prop{Name: "carg", Type: "[]interface{}"},
+	// 	},
+	// 	"returns": []interface{}{"[]map[string]interface{}", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "QueryTxOfOption", "category": "database_tx", "desc": "查询（带选项：GROUP BY、LIMIT、ORDER BY等）",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "cstr", Type: "string"},
+	// 		&pb.Prop{Name: "carg", Type: "[]interface{}"},
+	// 		&pb.Prop{Name: "options", Type: "[]string"},
+	// 	},
+	// 	"returns": []interface{}{"[]map[string]interface{}", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "QueryTxIdenCol", "category": "database_tx", "desc": "查询（指定列）",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "cols", Type: "[]string"},
+	// 		&pb.Prop{Name: "cstr", Type: "string"},
+	// 		&pb.Prop{Name: "carg", Type: "[]interface{}"},
+	// 	},
+	// 	"returns": []interface{}{"[]map[string]interface{}", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "InsertTx", "category": "database_tx", "desc": "插入（不检测存在与否）",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "entry", Type: "map[string]interface{}"},
+	// 	},
+	// 	"returns": []interface{}{"int64", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "SaveTx", "category": "database_tx", "desc": "插入/保存（检测存在与否）",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "cstr", Type: "string"},
+	// 		&pb.Prop{Name: "carg", Type: "[]interface{}"},
+	// 		&pb.Prop{Name: "entry", Type: "map[string]interface{}"},
+	// 		&pb.Prop{Name: "commit", Type: "bool"},
+	// 	},
+	// 	"returns": []interface{}{"int64", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_INTERFACES_TABLE, map[string]interface{}{
+	// 	"name": "DeleteTx", "category": "database_tx", "desc": "删除",
+	// 	"params": []interface{}{
+	// 		&pb.Prop{Name: "tx", Type: "*sql.Tx"},
+	// 		&pb.Prop{Name: "table", Type: "string"},
+	// 		&pb.Prop{Name: "cstr", Type: "string"},
+	// 		&pb.Prop{Name: "carg", Type: "[]interface{}"},
+	// 	},
+	// 	"returns": []interface{}{"int64", "error"},
+	// 	"requires": []interface{}{"github.com/bilibili/kratos/pkg/database/sql"},
+	// }); err != nil {
+	// 	return err
+	// } else if _, err := s.dao.InsertTx(tx, model.DAO_CATEGORIES_TABLE, map[string]interface{}{
+	// 	"name": "cache", "desc": "缓存", "lang": "golang",
+	// }); err != nil {
+	// 	return err
+	// }
 	return nil
 }
 

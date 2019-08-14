@@ -13,7 +13,7 @@
                 <el-dropdown-item command="*more" icon="el-icon-more"/>
             </el-dropdown-menu>
         </el-dropdown>
-        <el-button size="mini" @click="hdlDelApi">删除接口</el-button>
+        <el-button size="mini" @click="hdlDelApi" :disabled="selApi.name.length === 0">删除接口</el-button>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>

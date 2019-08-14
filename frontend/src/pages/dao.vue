@@ -34,7 +34,7 @@
             <edit-dao-group ref="add-dao-group-form"/>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="showAddDaoGroup = false">取 消</el-button>
-                <el-button type="primary">确 定</el-button>
+                <el-button type="primary" @click="addDaoGroup">确 定</el-button>
             </div>
         </el-dialog>
     </div>
@@ -42,6 +42,7 @@
 </template>
 
 <script>
+import backend from "../backend"
 import dashboard from "../layouts/dashboard"
 import editDaoGroup from "../forms/editDaoGroup"
 
@@ -71,6 +72,11 @@ export default {
     },
     created() {
 
+    },
+    methods: {
+        async addDaoGroup() {
+            
+        }
     }
 }
 </script>

@@ -128,5 +128,12 @@ export default {
         } catch(e) {
             return utils.getErrorMsg(e)
         }
+    },
+    async addDaoGroup(group) {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.groups.insert`, group)).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
     }
 }
