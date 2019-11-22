@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"io"
 	"os"
 	"path"
@@ -198,7 +199,7 @@ func (kpg *KratosProjGen) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo
 	code += "option (gogoproto.goproto_getters_all) = false;\n\n"
 
 	// 收集接口信息
-	res, err := kpg.dao.Query(ctx, model.MODELS_TABLE, "", []interface{}{})
+	res, err := kpg.dao.Query(ctx, model.MODELS_TABLE, bson.D{})
 	if err != nil {
 		return nil, err
 	}

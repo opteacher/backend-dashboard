@@ -93,7 +93,7 @@ export default {
             }
         },
         async addModel(model) {
-            let res = await backend.addModel(model)
+            let res = await backend.addModel(_.assign(model, {"type": "model"}))
             if (typeof res === "string") {
                 this.$message.error(`创建模块失败：${res}`)
             } else {

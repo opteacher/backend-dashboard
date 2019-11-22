@@ -1,0 +1,173 @@
+[{
+  "_id" : ObjectId("5dd651ae1877a5acebb208d9"),
+  "operkey" : "json_marshal",
+  "requires" : [
+    "encoding/json"
+  ],
+  "desc" : "将收到的请求参数编码成JSON字节数组",
+  "inputs" : {
+    "OBJECT" : ""
+  },
+  "outputs" : [
+    "bytes"
+  ],
+  "code" : "bytes, err := json.Marshal(%OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"转JSON失败：%v\", err)\n}\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd651ae1877a5acebb208dd"),
+  "operkey" : "assignment_create",
+  "requires" : null,
+  "desc" : "创建%TARGET%并用%SOURCE%初始化",
+  "inputs" : {
+    "SOURCE" : "",
+    "TARGET" : ""
+  },
+  "outputs" : [
+    "%TARGET%"
+  ],
+  "code" : "%TARGET% := %SOURCE%\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd651ae1877a5acebb208db"),
+  "operkey" : "assignment",
+  "requires" : null,
+  "desc" : "将%SOURCE%赋值给%TARGET%",
+  "inputs" : {
+    "SOURCE" : "",
+    "TARGET" : ""
+  },
+  "outputs" : null,
+  "code" : "%TARGET% = %SOURCE%\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd651ae1877a5acebb208de"),
+  "operkey" : "return_succeed",
+  "requires" : null,
+  "desc" : "成功返回%RETURN%",
+  "inputs" : {
+    "RETURN" : ""
+  },
+  "outputs" : null,
+  "code" : "return %RETURN%, nil\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd651ae1877a5acebb208da"),
+  "operkey" : "json_unmarshal",
+  "requires" : [
+    "%PACKAGE%/internal/utils"
+  ],
+  "desc" : "将JSON字节数组转成Map键值对",
+  "inputs" : {
+    "OBJ_TYPE" : ""
+  },
+  "outputs" : [
+    "omap"
+  ],
+  "code" : "omap, err := utils.UnmarshalJSON(bytes, reflect.TypeOf((*%OBJ_TYPE%)(nil)).Elem())\nif err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd651ae1877a5acebb208dc"),
+  "operkey" : "assignment_append",
+  "requires" : null,
+  "desc" : "将%NEW_ADD%添加进%ARRAY%",
+  "inputs" : {
+    "ARRAY" : "",
+    "NEW_ADD" : ""
+  },
+  "outputs" : null,
+  "code" : "%ARRAY% = append(%ARRAY%, %NEW_ADD%)\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd6566bc638de41769e9a15"),
+  "operkey" : "database_insert",
+  "requires" : null,
+  "desc" : "做数据库插入操作",
+  "inputs" : {
+    "TABLE_NAME" : "",
+    "OBJECT" : ""
+  },
+  "outputs" : [
+    "id"
+  ],
+  "code" : "id, err := s.dao.Insert(ctx, \"%TABLE_NAME%\", %OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd6566bc638de41769e9a16"),
+  "operkey" : "database_query",
+  "requires" : null,
+  "desc" : "做数据库查询操作",
+  "inputs" : {
+    "TABLE_NAME" : "",
+    "CONDITIONS" : ""
+  },
+  "outputs" : [
+    "res"
+  ],
+  "code" : "res, err := s.dao.Query(ctx, \"%TABLE_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd6566bc638de41769e9a17"),
+  "operkey" : "database_delete",
+  "requires" : null,
+  "desc" : "做数据库删除操作",
+  "inputs" : {
+    "TABLE_NAME" : "",
+    "CONDITIONS" : ""
+  },
+  "outputs" : null,
+  "code" : "_, err := s.dao.Delete(ctx, \"%TABLE_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd6566bc638de41769e9a18"),
+  "operkey" : "database_update",
+  "requires" : null,
+  "desc" : "做数据库更新操作",
+  "inputs" : {
+    "TABLE_NAME" : "",
+    "CONDITIONS" : "",
+    "OBJECT" : ""
+  },
+  "outputs" : null,
+  "code" : "_, err := s.dao.Update(ctx, \"%TABLE_NAME%\", %CONDITIONS%, %OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n",
+  "apiname" : "",
+  "symbol" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}]

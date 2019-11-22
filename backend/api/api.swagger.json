@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "backend/api/api.proto",
+        "title": "api/api.proto",
         "version": "1"
     },
     "schemes": [
@@ -497,43 +497,6 @@
                 ]
             }
         },
-        "/backend-dashboard/backend/models.selectByName": {
-            "post": {
-                "summary": "/backend-dashboard/backend/models.selectByName",
-                "responses": {
-                    "200": {
-                        "description": "A successful response.",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "code": {
-                                    "type": "integer"
-                                },
-                                "message": {
-                                    "type": "string"
-                                },
-                                "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.Model"
-                                }
-                            }
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/.backend.manager.service.v1.NameID"
-                        }
-                    }
-                ],
-                "tags": [
-                    "backend.manager.service.v1.BackendManager"
-                ]
-            }
-        },
         "/backend-dashboard/backend/models.update": {
             "post": {
                 "summary": "/backend-dashboard/backend/models.update",
@@ -966,7 +929,7 @@
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "symbol": {
                     "type": "string"
@@ -1000,7 +963,7 @@
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -1030,10 +993,12 @@
                     "type": "integer"
                 },
                 "width": {
-                    "type": "integer"
+                    "type": "number",
+                    "format": "float"
                 },
                 "height": {
-                    "type": "integer"
+                    "type": "number",
+                    "format": "float"
                 }
             }
         },
@@ -1070,9 +1035,6 @@
         ".backend.manager.service.v1.OperStep": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "integer"
-                },
                 "operKey": {
                     "type": "string"
                 },

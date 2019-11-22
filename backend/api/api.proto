@@ -33,12 +33,6 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc ModelsSelectByName(NameID) returns (Model) {
-        option (google.api.http) = {
-            post: "/backend-dashboard/backend/models.selectByName"
-            body: "*"
-        };
-    };
     rpc StructsSelectAllBases(Empty) returns (NameArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/structs.selectAllBases"
@@ -161,7 +155,7 @@ message Prop {
 }
 
 message Model {
-    int64 id = 1;
+    string id = 1;
     string name = 2[(gogoproto.moretags)='orm:",UNIQUE_KEY|NOT_NULL|PRIMARY_KEY|COMMENT(模块名)"'];
     repeated Prop props = 3;
     repeated string methods = 4;
@@ -169,8 +163,8 @@ message Model {
     string model = 6[(gogoproto.moretags)='orm:",FOREIGN_KEY(models.name)|COMMENT(关联模块)"'];
     int32 x = 7[(gogoproto.jsontag) = 'x'];
     int32 y = 8[(gogoproto.jsontag) = 'y'];
-    int32 width = 9;
-    int32 height = 10;
+    float width = 9[(gogoproto.jsontag) = 'width'];
+    float height = 10[(gogoproto.jsontag) = 'height'];
 }
 
 message ModelArray {
@@ -243,15 +237,14 @@ enum SpcSymbol {
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 message OperStep {
-    int64 id = 1;
-    string operKey = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
-    repeated string requires = 3;
-    string desc = 4;
-    map<string,string> inputs = 5;
-    repeated string outputs = 6;
-    string code = 9;
-    string apiName = 10[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
-    SpcSymbol symbol = 11;
+    string operKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    repeated string requires = 2;
+    string desc = 3;
+    map<string,string> inputs = 4;
+    repeated string outputs = 5;
+    string code = 6;
+    string apiName = 7[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
+    SpcSymbol symbol = 8;
 }
 
 message ApiInfo {
@@ -295,7 +288,7 @@ message SymbolID {
 }
 
 message Link {
-    int64 id = 1;
+    string id = 1;
     string symbol = 2[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY|UNIQUE_KEY"'];
     string mname1 = 3[(gogoproto.moretags)='orm:",FOREIGN_KEY(model1:models.name)"'];
     int32 mnumber1 = 4[(gogoproto.jsontag) = 'mnumber1'];

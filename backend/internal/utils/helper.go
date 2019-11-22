@@ -28,3 +28,9 @@ func ToObj(mp map[string]interface{}, typ reflect.Type) (interface{}, error) {
 		return UnmarshalJSON(bytes, typ)
 	}
 }
+
+func CheckErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}

@@ -1,0 +1,62 @@
+[{
+  "_id" : ObjectId("5dd6566bc638de41769e9a12"),
+  "id" : "",
+  "name" : "Nil",
+  "props" : [],
+  "methods" : null,
+  "type" : "struct",
+  "model" : "",
+  "x" : 0,
+  "y" : 0,
+  "width" : 0,
+  "height" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd6566bc638de41769e9a13"),
+  "id" : "",
+  "name" : "NumIden",
+  "props" : [
+    {
+      "name" : "id",
+      "type" : "int64",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    }
+  ],
+  "methods" : null,
+  "type" : "struct",
+  "model" : "",
+  "x" : 0,
+  "y" : 0,
+  "width" : 0,
+  "height" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}, {
+  "_id" : ObjectId("5dd6566bc638de41769e9a14"),
+  "id" : "",
+  "name" : "StrIden",
+  "props" : [
+    {
+      "name" : "id",
+      "type" : "string",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    }
+  ],
+  "methods" : null,
+  "type" : "struct",
+  "model" : "",
+  "x" : 0,
+  "y" : 0,
+  "width" : 0,
+  "height" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}]
