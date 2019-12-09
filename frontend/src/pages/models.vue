@@ -2,11 +2,9 @@
 <dashboard>
     <tool-bar @add-model="addModel" @add-link="addLink" :models="models"/>
     <div id="pnlModels" class="w-100 h-100" style="position: absolute">
-        <div style="position: absolute; width: 0; height: 0">
-            <model-card v-for="model in models" :key="model.name" :model="model"
-                @delete-model="deleteModel"
-                @update="updateLinksByModel"/>
-        </div>
+        <model-card v-for="model in models" :key="model.name" :model="model"
+            @delete-model="deleteModel"
+            @update="updateLinksByModel"/>
     </div>
     <svg id="pnlGraphs" class="w-100 h-100" style="position: absolute; z-index: -100"/>
 </dashboard>

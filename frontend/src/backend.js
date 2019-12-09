@@ -135,5 +135,12 @@ export default {
         } catch(e) {
             return utils.getErrorMsg(e)
         }
+    },
+    async qryAllDaoGroups() {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.groups.selectAll`)).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
     }
 }

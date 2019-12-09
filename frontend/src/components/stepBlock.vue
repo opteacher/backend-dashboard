@@ -61,14 +61,14 @@ export default {
                     }
                     let res = await backend.delStep({
                         apiName: this.step.apiName,
-                        stepId: this.step.id
+                        stepId: this.step.index
                     })
                     if (typeof res === "string") {
                         this.$message.error(`删除步骤时发生错误${res}`)
                     } else {
                         this.$message({
                             type: "info",
-                            message: `步骤#${this.step.id} ${this.step.operKey}删除成功！`
+                            message: `步骤#${this.step.index} ${this.step.operKey}删除成功！`
                         })
                         this.$emit("be-deleted")
                     }

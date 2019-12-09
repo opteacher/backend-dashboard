@@ -176,6 +176,7 @@ message ModelArray {
 message DaoGroup {
     string name = 1[(gogoproto.moretags)='orm:",PRIMARY_KEY|UNIQUE_KEY"'];
     string category = 2[(gogoproto.moretags)='orm:",FOREIGN_KEY(dao_categories.name)"'];
+    string language = 3;
     repeated DaoInterface interfaces = 4[(gogoproto.moretags)='orm:"*"'];
 }
 
@@ -245,6 +246,7 @@ message OperStep {
     string code = 6;
     string apiName = 7[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
     SpcSymbol symbol = 8;
+    int32 index = 9[(gogoproto.jsontag) = 'index'];
 }
 
 message ApiInfo {

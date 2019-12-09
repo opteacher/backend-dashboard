@@ -124,31 +124,30 @@ export default {
                 form.api.method = "GET"
             }
             form.$refs["form"].validate(async valid => {
-                if (valid) {
-                    // 根据需要消除http相关信息
-                    let api = _.cloneDeep(form.api)
-                    if (!api.enableHttp) {
-                        delete(api.route)
-                        delete(api.method)
-                    }
-                    delete(api.enableHttp)
-                    // 将params转化成一个对象
-                    let params = {}
-                    api.params.map(param => {
-                        params[param.name] = param.type
-                    })
-                    api.params = params
-                    // 将API信息发送给后台
-                    let res = await backend.addApi(api)
-                    if (typeof res === "string") {
-                        this.$message.error(`添加接口失败：${res}`)
-                    } else {
-                        this.selApiLocal(res)
-                    }
-                    this.showAddApiDlg = false
-                } else {
+                if (!valid) {
                     return false
                 }
+                // 根据需要消除http相关信息
+                let api = _.cloneDeep(form.api)
+                if (!api.enableHttp) {
+                    delete(api.route)
+                    delete(api.method)
+                }
+                delete(api.enableHttp)
+                // 将params转化成一个对象
+                let params = {}
+                api.params.map(param => {
+                    params[param.name] = param.type
+                })
+                api.params = params
+                // 将API信息发送给后台
+                let res = await backend.addApi(api)
+                if (typeof res === "string") {
+                    this.$message.error(`添加接口失败：${res}`)
+                } else {
+                    this.selApiLocal(res)
+                }
+                this.showAddApiDlg = false
             })
         },
         hdlDelApi() {

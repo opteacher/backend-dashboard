@@ -1,5 +1,5 @@
 <template>
-<div style="position:absolate;left:0;top:0">
+<div style="position:absolate;left:0;top:0;width:0;height:0">
     <div class="card" :name="`model_${model.name}`" :style="`
         cursor:pointer;left:${model.x}px;top:${model.y}px;width:${model.width}px;height:${model.height}px
     `">

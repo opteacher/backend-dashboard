@@ -48,16 +48,10 @@ func New() (s *Service) {
 	if err := s.setupApiInfo(ctx); err != nil {
 		panic(err)
 	}
-	return s
-}
-
-func (s *Service) setup() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	if err := s.setupModel(ctx); err != nil {
+	if err := s.setupDaoGroup(ctx); err != nil {
 		panic(err)
 	}
-	return nil
+	return s
 }
 
 func (s *Service) setupModel(ctx context.Context) error {
@@ -104,15 +98,32 @@ func (s *Service) setupApiInfo(ctx context.Context) error {
 		},
 		Returns:[]string{"*%MODEL%"},
 		Steps: []*pb.OperStep{{
+			ApiName: "SelectOne%MODEL%",
 			OperKey: "database_query",
 			Inputs: map[string]string{
 				"TABLE_NAME": "%TABLE_NAME%",
 				"CONDITIONS": "bson.D{\"_id\": req.Id}",
 			},
 		}, {
+			ApiName: "SelectOne%MODEL%",
 			OperKey: "return_succeed",
 			Inputs: map[string]string{"RETURN": "res.(*%MODEL%)"},
 		}},
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) setupDaoGroup(ctx context.Context) error {
+	if err := s.mongo.Create(ctx, model.DAO_GROUPS_TABLE); err != nil {
+		return err
+	}
+	if _, err := s.mongo.Insert(ctx, model.DAO_GROUPS_TABLE, pb.DaoGroup{
+		Name:                 "MySQL数据库",
+		Category:             "databases",
+		Language:             "golang",
+		Interfaces:           []*pb.DaoInterface{},
 	}); err != nil {
 		return err
 	}
@@ -256,33 +267,102 @@ func (s *Service) LinksDeleteBySymbol(ctx context.Context, req *pb.SymbolID) (*p
 }
 
 func (s *Service) ApisSelectByName(ctx context.Context, req *pb.NameID) (*pb.ApiInfo, error) {
-	// TODO:
-	return nil, nil
+	res, err := s.mongo.QueryOne(ctx, model.API_INFO_TABLE, bson.D{{"name", req.Name}})
+	if err != nil {
+		return nil, fmt.Errorf("查询接口信息失败：%v", err)
+	}
+
+	resp, err := utils.ToObj(res, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
+	if err != nil {
+		return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
+	}
+
+	// 调整步骤的序列号
+	apiInfo := resp.(*pb.ApiInfo)
+	for idx := range apiInfo.Steps {
+		apiInfo.Steps[idx].Index = int32(idx)
+	}
+	return apiInfo, nil
 }
 
 func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfoArray, error) {
-	// TODO:
-	return nil, nil
+	ress, err := s.mongo.Query(ctx, model.API_INFO_TABLE, bson.D{})
+	if err != nil {
+		return nil, fmt.Errorf("查询接口信息失败：%v", err)
+	}
+
+	resp := new(pb.ApiInfoArray)
+	for _, res := range ress {
+		api, err := utils.ToObj(res, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
+		if err != nil {
+			return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
+		}
+
+		// 调整步骤的序列号
+		apiInfo :=  api.(*pb.ApiInfo)
+		for idx := range apiInfo.Steps {
+			apiInfo.Steps[idx].Index = int32(idx)
+		}
+
+		resp.Infos = append(resp.Infos, apiInfo)
+	}
+	return resp, nil
 }
 
 func (s *Service) ApisInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo, error) {
-	// TODO:
-	return nil, nil
+	_, err := s.mongo.Insert(ctx, model.API_INFO_TABLE, req)
+	if err != nil {
+		return nil, fmt.Errorf("插入接口信息失败：%v", err)
+	}
+	return req, nil
 }
 
 func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.ApiInfo, error) {
-	// TODO:
-	return nil, nil
+	res, err := s.ApisSelectByName(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.mongo.Delete(ctx, model.API_INFO_TABLE, bson.D{{"name", req.Name}})
+	if err != nil {
+		return nil, fmt.Errorf("删除接口信息失败：%v", err)
+	}
+	return res, nil
 }
 
 func (s *Service) StepsInsert(ctx context.Context, req *pb.StepReqs) (*pb.Empty, error) {
-	// TODO:
-	return nil, nil
+	apiName := req.OperStep.ApiName
+	apiInfo, err := s.ApisSelectByName(ctx, &pb.NameID{Name: apiName})
+	if err != nil {
+		return nil, err
+	}
+
+	rear := append([]*pb.OperStep{}, apiInfo.Steps[req.Index:]...)
+	apiInfo.Steps = append(append(apiInfo.Steps[:req.Index], req.OperStep), rear...)
+	_, err = s.mongo.Update(ctx, model.API_INFO_TABLE, bson.D{{"name", apiName}}, bson.D{{
+		"$set", bson.D{{"steps", apiInfo.Steps}},
+	}})
+	if err != nil {
+		return nil, fmt.Errorf("插入步骤失败：%v", err)
+	}
+	return &pb.Empty{}, nil
 }
 
 func (s *Service) StepsDelete(ctx context.Context, req *pb.DelStepReqs) (*pb.Empty, error) {
-	// TODO:
-	return nil, nil
+	apiName := req.ApiName
+	apiInfo, err := s.ApisSelectByName(ctx, &pb.NameID{Name: apiName})
+	if err != nil {
+		return nil, err
+	}
+
+	apiInfo.Steps = append(apiInfo.Steps[:req.StepId], apiInfo.Steps[req.StepId + 1:]...)
+	_, err = s.mongo.Update(ctx, model.API_INFO_TABLE, bson.D{{"name", apiName}}, bson.D{{
+		"$set", bson.D{{"steps", apiInfo.Steps}},
+	}})
+	if err != nil {
+		return nil, fmt.Errorf("删除步骤失败：%v", err)
+	}
+	return &pb.Empty{}, nil
 }
 
 // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
@@ -298,13 +378,28 @@ func (s *Service) OperStepsSelectTemp(ctx context.Context, req *pb.Empty) (*pb.O
 }
 
 func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {
-	// TODO:
-	return nil, nil
+	ress, err := s.mongo.Query(ctx, model.DAO_GROUPS_TABLE, bson.D{})
+	if err != nil {
+		return nil, fmt.Errorf("查询DAO组失败：%v", err)
+	}
+
+	resp := new(pb.DaoGroupArray)
+	for _, res := range ress {
+		daoGroup, err := utils.ToObj(res, reflect.TypeOf((*pb.DaoGroup)(nil)).Elem())
+		if err != nil {
+			return nil, fmt.Errorf("转DaoGroup对象失败：%v", err)
+		}
+		resp.Groups = append(resp.Groups, daoGroup.(*pb.DaoGroup))
+	}
+	return resp, nil
 }
 
 func (s *Service) DaoGroupsInsert(ctx context.Context, req *pb.DaoGroup) (*pb.DaoGroup, error) {
-	// TODO:
-	return nil, nil
+	_, err := s.mongo.Insert(ctx, model.DAO_GROUPS_TABLE, req)
+	if err != nil {
+		return nil, fmt.Errorf("插入DAO组失败：%v", err)
+	}
+	return req, nil
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {

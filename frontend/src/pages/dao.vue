@@ -5,17 +5,24 @@
         <el-table class="mt-10" :data="daoGroups" style="width: 100%">
             <el-table-column type="expand">
                 <template slot-scope="scope">
-                    <el-form label-position="left" inline class="demo-table-expand">
-                        <el-form-item label="接口名">
-                            <span>{{scope.row.name}}</span>
-                        </el-form-item>
-                    </el-form>
+                    <el-table class="demo-table-expand" border :data="scope.row.interfaces">
+                        <el-table-column label="接口名" prop="name"/>
+                        <el-table-column label="参数" prop="name"/>
+                        <el-table-column label="返回值" prop="name"/>
+                        <el-table-column label="需包含的模块" prop="name"/>
+                        <el-table-column label="描述" prop="name"/>
+                    </el-table>
                 </template>
             </el-table-column>
             <el-table-column label="组名" prop="name"/>
             <el-table-column label="类别" prop="category">
                 <template slot-scope="scope">
-                    <el-tag>{{scope.row.category}}</el-tag>
+                    <el-tag type="info">{{scope.row.category}}</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column label="语言" prop="language">
+                <template slot-scope="scope">
+                    <el-tag>{{scope.row.language}}</el-tag>
                 </template>
             </el-table-column>
             <el-table-column label="实现" prop="implement">
@@ -25,7 +32,7 @@
             </el-table-column>
             <el-table-column label="配置" prop="setting">
                 <template>
-                    <el-button size="mini">详细</el-button>
+                    <el-button size="mini">添加接口</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -54,15 +61,7 @@ export default {
     data() {
         return {
             showAddDaoGroup: false,
-            daoGroups: [{
-                name: "abcd",
-                category: "databases",
-                implement: "MySQL",
-                interfaces: [{
-                    name: "SaveTx"
-                }],
-                setting: {}
-            }],
+            daoGroups: [],
             categories: {
                 databases: [{
                     name: "cctv"
@@ -70,12 +69,33 @@ export default {
             }
         }
     },
-    created() {
-
+    async created() {
+        await this.refresh()
     },
     methods: {
-        async addDaoGroup() {
-            
+        async refresh() {
+            let res = await backend.qryAllDaoGroups()
+            if (typeof res === "string") {
+                this.$message.error(`查询所有DAO组时发生错误：${res}`)
+            } else {
+                this.daoGroups = res.groups
+            }
+        },
+        addDaoGroup() {
+            let addForm = this.$refs["add-dao-group-form"]
+            addForm.$refs["edit-dao-group-form"].validate(async valid => {
+                if (!valid) {
+                    return false
+                }
+                let form = addForm.$refs["edit-dao-group-form"]
+                let res = await backend.addDaoGroup(form.model)
+                if (typeof res === "string") {
+                    this.$message.error(`添加DAO组发生错误：${res}`)
+                } else {
+                    this.showAddDaoGroup = false
+                    await this.refresh()
+                }
+            })
         }
     }
 }

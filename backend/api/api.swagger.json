@@ -816,6 +816,9 @@
                 "category": {
                     "type": "string"
                 },
+                "language": {
+                    "type": "string"
+                },
                 "interfaces": {
                     "type": "array",
                     "items": {
@@ -1066,6 +1069,9 @@
                     "type": "string"
                 },
                 "symbol": {
+                    "type": "integer"
+                },
+                "index": {
                     "type": "integer"
                 }
             },
