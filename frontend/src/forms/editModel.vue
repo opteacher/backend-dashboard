@@ -28,7 +28,7 @@
                     { required: true, message: '请选择属性类型', trigger: 'change' }
                 ]" :prop="`props.${index}.type`">
                     <el-select v-model="prop.type" style="width: 100%">
-                        <el-option v-for="option in propOptions" :key="option.title" :label="option.title" :value="option.value"/>
+                        <el-option v-for="option in supportTypes" :key="option.title" :label="option.title" :value="option.value"/>
                     </el-select>
                 </el-form-item>
             </el-col>
@@ -50,6 +50,8 @@
 </template>
 
 <script>
+import utils from "../utils"
+
 export default {
     props: {
         "input-model": Object,
@@ -57,6 +59,7 @@ export default {
     },
     data() {
         return {
+            supportTypes: utils.supportTypes,
             model: {
                 id: "",
                 name: "",
@@ -67,20 +70,7 @@ export default {
                 y: 0,
                 width: 400,
                 height: 300
-            },
-            propOptions: [{
-                title: "文本",
-                value: "string"
-            }, {
-                title: "数字",
-                value: "int32"
-            }, {
-                title: "日期",
-                value: "uint64"
-            }, {
-                title: "布尔",
-                value: "bool"
-            }]
+            }
         }
     },
     created() {

@@ -2,15 +2,21 @@
 <dashboard>
     <div class="dao-container">
         <el-button type="primary" @click="showAddDaoGroup = true">添加DAO组</el-button>
+        <el-button type="primary" @click="showLoadDaoGroup = true">导入DAO组</el-button>
         <el-table class="mt-10" :data="daoGroups" style="width: 100%">
             <el-table-column type="expand">
                 <template slot-scope="scope">
-                    <el-table class="demo-table-expand" border :data="scope.row.interfaces">
+                    <el-table class="demo-table-expand" :data="scope.row.interfaces">
                         <el-table-column label="接口名" prop="name"/>
-                        <el-table-column label="参数" prop="name"/>
-                        <el-table-column label="返回值" prop="name"/>
-                        <el-table-column label="需包含的模块" prop="name"/>
-                        <el-table-column label="描述" prop="name"/>
+                        <el-table-column label="参数" prop="params"/>
+                        <el-table-column label="返回值" prop="returns"/>
+                        <el-table-column label="依赖模块" prop="requires"/>
+                        <el-table-column label="描述" prop="desc"/>
+                        <el-table-column label="配置" prop="setting">
+                            <template slot-scope="subScope">
+                                <el-button size="mini" type="danger" @click="delDaoInterface(scope.row.name, subScope.row.name)">删除</el-button>
+                            </template>
+                        </el-table-column>
                     </el-table>
                 </template>
             </el-table-column>
@@ -31,8 +37,9 @@
                 </template>
             </el-table-column>
             <el-table-column label="配置" prop="setting">
-                <template>
-                    <el-button size="mini">添加接口</el-button>
+                <template slot-scope="scope">
+                    <el-button size="mini" @click="editingGroup = scope.row">添加接口</el-button>
+                    <el-button size="mini" type="danger" @click="delDaoGroup(scope.row.name)">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -44,6 +51,14 @@
                 <el-button type="primary" @click="addDaoGroup">确 定</el-button>
             </div>
         </el-dialog>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="添加DAO接口" :visible="editingGroup !== null" :modal-append-to-body="false" width="40vw" @close="editingGroup = null">
+            <edit-dao-interface ref="add-dao-interface-form"/>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="editingGroup = null">取 消</el-button>
+                <el-button type="primary" @click="addDaoInterface">确 定</el-button>
+            </div>
+        </el-dialog>
     </div>
 </dashboard>
 </template>
@@ -52,15 +67,19 @@
 import backend from "../backend"
 import dashboard from "../layouts/dashboard"
 import editDaoGroup from "../forms/editDaoGroup"
+import editDaoInterface from "../forms/editDaoInterface"
 
 export default {
     components: {
         "dashboard": dashboard,
-        "edit-dao-group": editDaoGroup
+        "edit-dao-group": editDaoGroup,
+        "edit-dao-interface": editDaoInterface
     },
     data() {
         return {
             showAddDaoGroup: false,
+            showLoadDaoGroup: false,
+            editingGroup: null,
             daoGroups: [],
             categories: {
                 databases: [{
@@ -94,6 +113,65 @@ export default {
                 } else {
                     this.showAddDaoGroup = false
                     await this.refresh()
+                }
+            })
+        },
+        addDaoInterface() {
+            let addForm = this.$refs["add-dao-interface-form"]
+            addForm.$refs["edit-dao-interface-form"].validate(async valid => {
+                if (!valid) {
+                    return false
+                }
+                let form = addForm.$refs["edit-dao-interface-form"]
+                let res = await backend.addDaoInterface({
+                    gpname: this.editingGroup.name,
+                    interface: form.model
+                })
+                if (typeof res === "string") {
+                    this.$message.error(`添加DAO接口发生错误：${res}`)
+                } else {
+                    this.editingGroup = null
+                    await this.refresh()
+                }
+            })
+        },
+        delDaoInterface(gpname, ifname) {
+            this.$alert("确定删除接口？", "提示", {
+                confirmButtonText: "确定",
+                callback: async action => {
+                    if (action !== "confirm") {
+                        return
+                    }
+                    let res = await backend.delDaoInterface({gpname, ifname})
+                    if (typeof res === "string") {
+                        this.$message.error(`删除接口时发生错误：${res}`)
+                    } else {
+                        this.$message({
+                            type: "info",
+                            message: `接口（${ifname}）删除成功！`
+                        })
+                        await this.refresh()
+                    }
+                }
+            })
+        },
+        delDaoGroup(gpname) {
+            this.$alert("确定删除组？", "提示", {
+                confirmButtonText: "确定",
+                callback: async action => {
+                    if (action !== "confirm") {
+                        return
+                    }
+                    let res = await backend.delDaoGroup(gpname)
+                    if (typeof res === "string") {
+                        this.$message.error(`删除DAO组时发生错误：${res}`)
+                    } else {
+                        this.$message({
+                            type: "info",
+                            message: `DAO组（${gpname}）删除成功！`
+                        })
+                        await this.refresh()
+                    }
                 }
             })
         }

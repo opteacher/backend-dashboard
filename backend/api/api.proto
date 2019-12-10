@@ -107,9 +107,32 @@ service BackendManager {
             post: "/backend-dashboard/backend/dao.groups.selectAll"
         };
     };
+    rpc DaoGroupSelectByName(NameID) returns (DaoGroup) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.groups.selectByName"
+        };
+    };
     rpc DaoGroupsInsert(DaoGroup) returns (DaoGroup) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/dao.groups.insert"
+            body: "*"
+        };
+    };
+    rpc DaoGroupDeleteByName(NameID) returns (DaoGroup) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.groups.deleteByName"
+            body: "*"
+        };
+    };
+    rpc DaoInterfaceInsert(DaoItfcIst) returns (DaoInterface) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.interface.insert"
+            body: "*"
+        };
+    };
+    rpc DaoInterfaceDelete(DaoItfcIden) returns (DaoInterface) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.interface.delete"
             body: "*"
         };
     };
@@ -204,6 +227,16 @@ message DaoInterface {
     repeated string returns = 4[(gogoproto.moretags)='orm:",COMMENT(输出数据)"'];
     repeated string requires = 5[(gogoproto.moretags)='orm:",COMMENT(需求的模块)"'];
     string desc = 6[(gogoproto.moretags)='orm:",COMMENT(接口描述)"'];
+}
+
+message DaoItfcIden {
+    string gpname = 1;
+    string ifname = 2;
+}
+
+message DaoItfcIst {
+    string gpname = 1[(gogoproto.jsontag) = 'gpname'];
+    DaoInterface interface = 2[(gogoproto.jsontag) = 'interface'];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -8,6 +8,10 @@
         <i class="el-icon-s-help"></i>
         <span slot="title">Services</span>
     </el-menu-item>
+    <el-menu-item index="steps">
+        <i class="el-icon-s-shop"></i>
+        <span slot="title">OperSteps</span>
+    </el-menu-item>
     <el-menu-item index="dao">
         <i class="el-icon-share"></i>
         <span slot="title">DAO</span>

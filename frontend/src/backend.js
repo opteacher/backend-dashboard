@@ -136,6 +136,27 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
+    async delDaoGroup(gpname) {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.groups.deleteByName`, {name: gpname})).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
+    async addDaoInterface(istDaoItfcInf) {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.interface.insert`, istDaoItfcInf)).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
+    async delDaoInterface(delDaoItfcInf) {
+        try {
+            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.interface.delete`, delDaoItfcInf)).data.data
+        } catch(e) {
+            return utils.getErrorMsg(e)
+        }
+    },
     async qryAllDaoGroups() {
         try {
             return (await axios.post(`${config.url}/backend-dashboard/backend/dao.groups.selectAll`)).data.data

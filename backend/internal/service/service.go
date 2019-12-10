@@ -394,12 +394,78 @@ func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.Da
 	return resp, nil
 }
 
+func (s *Service) DaoGroupSelectByName(ctx context.Context, req *pb.NameID) (*pb.DaoGroup, error) {
+	res, err := s.mongo.QueryOne(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Name}})
+	if err != nil {
+		return nil, fmt.Errorf("查询DAO组失败：%v", err)
+	}
+
+	obj, err := utils.ToObj(res, reflect.TypeOf((*pb.DaoGroup)(nil)).Elem())
+	if err != nil {
+		return nil, fmt.Errorf("转成DAO组失败：%v", err)
+	}
+	return obj.(*pb.DaoGroup), nil
+}
+
 func (s *Service) DaoGroupsInsert(ctx context.Context, req *pb.DaoGroup) (*pb.DaoGroup, error) {
 	_, err := s.mongo.Insert(ctx, model.DAO_GROUPS_TABLE, req)
 	if err != nil {
 		return nil, fmt.Errorf("插入DAO组失败：%v", err)
 	}
 	return req, nil
+}
+
+func (s *Service) DaoGroupDeleteByName(ctx context.Context, req *pb.NameID) (*pb.DaoGroup, error) {
+	resp, err := s.DaoGroupSelectByName(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("查询DAO组失败：%v", err)
+	}
+
+	_, err = s.mongo.Delete(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Name}})
+	if err != nil {
+		return nil, fmt.Errorf("删除DAO组失败：%v", err)
+	}
+	return resp, nil
+}
+
+func (s *Service) DaoInterfaceInsert(ctx context.Context, req *pb.DaoItfcIst) (*pb.DaoInterface, error) {
+	daoGroup, err := s.DaoGroupSelectByName(ctx, &pb.NameID{Name: req.Gpname})
+	if err != nil {
+		return nil, err
+	}
+
+	daoGroup.Interfaces = append(daoGroup.Interfaces, req.Interface)
+	_, err = s.mongo.Update(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Gpname}}, bson.D{{
+		"$set", bson.D{{"interfaces", daoGroup.Interfaces}},
+	}})
+	if err != nil {
+		return nil, fmt.Errorf("插入DAO接口失败：%v", err)
+	}
+	return req.Interface, nil
+}
+
+func (s *Service) DaoInterfaceDelete(ctx context.Context, req *pb.DaoItfcIden) (*pb.DaoInterface, error) {
+	daoGroup, err := s.DaoGroupSelectByName(ctx, &pb.NameID{Name: req.Gpname})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp *pb.DaoInterface
+	for i, itfc := range daoGroup.Interfaces {
+		if itfc.Name != req.Ifname {
+			continue
+		}
+		resp = itfc
+		interfaces := append(daoGroup.Interfaces[:i], daoGroup.Interfaces[i + 1:]...)
+		_, err := s.mongo.Update(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Gpname}}, bson.D{{
+			"$set", bson.D{{"interfaces", interfaces}},
+		}})
+		if err != nil {
+			return nil, fmt.Errorf("删除DAO接口失败：%v", err)
+		}
+		break
+	}
+	return resp, nil
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {
