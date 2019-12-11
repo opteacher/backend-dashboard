@@ -101,9 +101,9 @@ export default {
             return utils.getErrorMsg(e)
         }
     },
-    async qryStepTmp() {
+    async qryAllTempStep() {
         try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/steps.selectTemp`)).data.data
+            return (await axios.post(`${config.url}/backend-dashboard/backend/temp.steps.selectAll`)).data.data
         } catch(e) {
             return utils.getErrorMsg(e)
         }

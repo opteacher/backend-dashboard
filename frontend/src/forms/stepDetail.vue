@@ -1,9 +1,31 @@
 <template>
 <el-form ref="form" label-width="80px">
-    <el-form-item label="操作标识">
-        {{selStep.operKey}}
+    <el-form-item label="操作标识" v-if="mode === 'add-temp-step'">
+        <el-input v-model="selStep.idenKey" placeholder="请输入操作标识"/>
     </el-form-item>
-    <el-form-item label="依赖" v-show="selStep.requires && selStep.requires.length !== 0">
+    <el-form-item label="操作标识" v-else>
+        {{selStep.idenKey}}
+    </el-form-item>
+    <el-form ref="new-require-form" v-model="newRequire" v-show="mode === 'add-temp-step'" label-width="80px">
+        <el-form-item label="添加依赖" :rules="[
+            { required: true, message: '请输入依赖路径', trigger: 'blur' }
+        ]">
+            <el-row class="m-0" :gutter="5">
+                <el-col class="p-0" :span="18">
+                    <el-input v-model="newRequire.input" placeholder="请输入依赖路径"/>
+                </el-col>
+                <el-col class="p-0" :span="6">
+                    <el-button class="float-right" @click="addRequire">添加</el-button>
+                </el-col>
+            </el-row>
+        </el-form-item>
+    </el-form>
+    <el-form-item label="依赖" v-if="mode === 'add-temp-step'">
+        <el-tag v-for="require in selStep.requires" :key="require" :closable="mode !== 'display'">
+            {{require}}
+        </el-tag>
+    </el-form-item>
+    <el-form-item label="依赖" v-else v-show="selStep.requires && selStep.requires.length !== 0">
         <el-tag v-for="require in selStep.requires" :key="require" :closable="mode !== 'display'">
             {{require}}
         </el-tag>
@@ -38,7 +60,7 @@
     <el-form-item label="输出" v-show="mode === 'editing-step' && selStep.outputs && selStep.outputs.length !== 0">
         <el-tag v-for="output in selStep.outputs" :key="output" type="success">{{output}}</el-tag>
     </el-form-item>
-    <el-form :inline="true" label-width="80px" v-show="mode === 'editing-step'">
+    <el-form :inline="true" label-width="80px" v-show="mode === 'editing-step' && false">
         <el-form-item label="标识">
             <el-select v-model="selStep.symbol" placeholder="请选择">
                 <el-option v-for="(value, name) in spcSymbols" :key="name" :label="name" :value="value"/>
@@ -68,7 +90,10 @@ export default {
             mode: "display",
             spcSymbols: {},
             enableBlk: false,
-            blkInOut: true
+            blkInOut: true,
+            newRequire: {
+                input: ""
+            }
         }
     },
     async created() {
@@ -100,6 +125,13 @@ export default {
                     this.selStep.blockOut = !this.blkInOut
                 }
             }
+        },
+        addRequire() {
+            this.$refs["new-require-form"].validate(valid => {
+                if (!valid) {
+                    return false
+                }
+            })
         }
     }
 }

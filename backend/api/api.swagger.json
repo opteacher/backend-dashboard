@@ -793,9 +793,9 @@
                 ]
             }
         },
-        "/backend-dashboard/backend/steps.insertTemp": {
+        "/backend-dashboard/backend/structs.selectAllBases": {
             "post": {
-                "summary": "/backend-dashboard/backend/steps.insertTemp",
+                "summary": "/backend-dashboard/backend/structs.selectAllBases",
                 "responses": {
                     "200": {
                         "description": "A successful response.",
@@ -809,44 +809,7 @@
                                     "type": "string"
                                 },
                                 "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
-                                }
-                            }
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
-                        }
-                    }
-                ],
-                "tags": [
-                    "backend.manager.service.v1.BackendManager"
-                ]
-            }
-        },
-        "/backend-dashboard/backend/steps.selectTemp": {
-            "post": {
-                "summary": "/backend-dashboard/backend/steps.selectTemp",
-                "responses": {
-                    "200": {
-                        "description": "A successful response.",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "code": {
-                                    "type": "integer"
-                                },
-                                "message": {
-                                    "type": "string"
-                                },
-                                "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.OperStepArray"
+                                    "$ref": "#/definitions/.backend.manager.service.v1.NameArray"
                                 }
                             }
                         }
@@ -867,9 +830,9 @@
                 ]
             }
         },
-        "/backend-dashboard/backend/structs.selectAllBases": {
+        "/backend-dashboard/backend/temp.steps.insert": {
             "post": {
-                "summary": "/backend-dashboard/backend/structs.selectAllBases",
+                "summary": "/backend-dashboard/backend/temp.steps.insert",
                 "responses": {
                     "200": {
                         "description": "A successful response.",
@@ -883,7 +846,44 @@
                                     "type": "string"
                                 },
                                 "data": {
-                                    "$ref": "#/definitions/.backend.manager.service.v1.NameArray"
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Step"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Step"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/temp.steps.selectAll": {
+            "post": {
+                "summary": "/backend-dashboard/backend/temp.steps.selectAll",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.StepArray"
                                 }
                             }
                         }
@@ -939,7 +939,7 @@
                 "steps": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
+                        "$ref": "#/definitions/.backend.manager.service.v1.Step"
                     }
                 }
             }
@@ -990,9 +990,6 @@
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
-                },
-                "category": {
                     "type": "string"
                 },
                 "params": {
@@ -1205,10 +1202,21 @@
                 }
             }
         },
-        ".backend.manager.service.v1.OperStep": {
+        ".backend.manager.service.v1.Prop": {
             "type": "object",
             "properties": {
-                "operKey": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.Step": {
+            "type": "object",
+            "properties": {
+                "idenKey": {
                     "type": "string"
                 },
                 "requires": {
@@ -1243,29 +1251,21 @@
                 },
                 "index": {
                     "type": "integer"
+                },
+                "group": {
+                    "type": "string"
                 }
             },
             "description": "所有事务流都是函数调用，而且所有的函数返回值都是err结尾"
         },
-        ".backend.manager.service.v1.OperStepArray": {
+        ".backend.manager.service.v1.StepArray": {
             "type": "object",
             "properties": {
                 "steps": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
+                        "$ref": "#/definitions/.backend.manager.service.v1.Step"
                     }
-                }
-            }
-        },
-        ".backend.manager.service.v1.Prop": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
                 }
             }
         },
@@ -1275,8 +1275,8 @@
                 "index": {
                     "type": "integer"
                 },
-                "operStep": {
-                    "$ref": "#/definitions/.backend.manager.service.v1.OperStep"
+                "Step": {
+                    "$ref": "#/definitions/.backend.manager.service.v1.Step"
                 }
             }
         },

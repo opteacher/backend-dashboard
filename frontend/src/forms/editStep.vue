@@ -2,15 +2,15 @@
 <el-form ref="form" :model="step" label-width="80px">
     <el-form-item label="操作KEY">
         <el-col :span="18">
-            <el-select class="w-100" v-model="step.operKey" placeholder="选择既存操作" @change="hdlSelOper">
-                <el-option v-for="oper in opers" :key="oper.operKey" :label="oper.operKey" :value="oper.operKey"/>
+            <el-select class="w-100" v-model="step.idenKey" placeholder="选择既存操作" @change="hdlSelStep">
+                <el-option v-for="step in steps" :key="step.idenKey" :label="step.idenKey" :value="step.idenKey"/>
             </el-select>
         </el-col>
         <el-col :span="6">
-            <el-button class="float-right" @click="hdlAddOper">添加操作模板</el-button>
+            <el-button class="float-right" @click="hdlAddStep">添加操作模板</el-button>
         </el-col>
     </el-form-item>
-    <step-detail v-if="Object.keys(operMap).includes(step.operKey)" :selStep="step" preMode="editing-step" :locVars="stepInfo.locVars"/>
+    <step-detail v-if="Object.keys(stepMap).includes(step.idenKey)" :selStep="step" preMode="editing-step" :locVars="stepInfo.locVars"/>
 </el-form>
 </template>
 
@@ -29,30 +29,30 @@ export default {
     },
     data() {
         return {
-            opers: [],
-            operMap: {},
+            steps: [],
+            stepMap: {},
             step: {
-                operKey: ""
+                idenKey: ""
             }
         }
     },
     async created() {
-        let res = await backend.qryStepTmp()
+        let res = await backend.qryAllTempStep()
         if (typeof res === "string") {
             this.$message.error(`查询模板步骤失败：${res}`)
         } else {
-            this.opers = res.steps || []
-            for (let oper of this.opers) {
-                this.operMap[oper.operKey] = oper
+            this.steps = res.steps || []
+            for (let step of this.steps) {
+                this.stepMap[step.idenKey] = step
             }
         }
     },
     methods: {
-        hdlAddOper() {
+        hdlAddStep() {
 
         },
-        hdlSelOper() {
-            this.step = _.cloneDeep(this.operMap[this.step.operKey])
+        hdlSelStep() {
+            this.step = _.cloneDeep(this.stepMap[this.step.idenKey])
         }
     }
 }

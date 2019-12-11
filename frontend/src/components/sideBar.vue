@@ -2,15 +2,15 @@
 <el-menu :default-active="activeIdx" class="el-menu-vertical-demo h-100 br-0" @select="handleSelect" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
     <el-menu-item index="models">
         <i class="el-icon-menu"></i>
-        <span slot="title">Models</span>
+        <span slot="title">模块</span>
     </el-menu-item>
     <el-menu-item index="services">
         <i class="el-icon-s-help"></i>
-        <span slot="title">Services</span>
+        <span slot="title">服务</span>
     </el-menu-item>
     <el-menu-item index="steps">
         <i class="el-icon-s-shop"></i>
-        <span slot="title">OperSteps</span>
+        <span slot="title">步骤（库）</span>
     </el-menu-item>
     <el-menu-item index="dao">
         <i class="el-icon-share"></i>
@@ -18,7 +18,7 @@
     </el-menu-item>
     <el-menu-item index="exports">
         <i class="el-icon-s-promotion"></i>
-        <span slot="title">Exports</span>
+        <span slot="title">导出</span>
     </el-menu-item>
 </el-menu>
 </template>

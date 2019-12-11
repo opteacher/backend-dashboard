@@ -1,6 +1,6 @@
 import models from "./pages/models.vue"
 import services from "./pages/services.vue"
-import operSteps from "./pages/operSteps"
+import tempSteps from "./pages/tempSteps"
 import dao from "./pages/dao"
 import axports from "./pages/exports"
 
@@ -15,7 +15,7 @@ export default [{
     component: services
 }, {
     path: "/backend-dashboard/frontend/steps",
-    component: operSteps
+    component: tempSteps
 }, {
     path: "/backend-dashboard/frontend/dao",
     component: dao

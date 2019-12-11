@@ -36,6 +36,7 @@ func New() (dao *Dao) {
 				Url string
 				Db string
 				Mod string
+				InitData string
 			}
 		}
 	)
@@ -44,6 +45,26 @@ func New() (dao *Dao) {
 		cliOpns: options.Client().ApplyURI(dc.Demo.Url),
 		dbName: dc.Demo.Db,
 		mod: dc.Demo.Mod,
+	}
+	if len(dc.Demo.InitData) != 0 {
+		var ac struct {
+			ProjPath string
+		}
+		err := paladin.Get("application.toml").UnmarshalTOML(&ac)
+		if err != nil {
+			panic(err)
+		}
+		initDataPath := filepath.Join(ac.ProjPath, dc.Demo.InitData)
+		jfnames, err := utils.ScanAllFilesByFolder(initDataPath, "json")
+		if err != nil {
+			panic(err)
+		}
+		ctx := context.TODO()
+		for _, jfname := range jfnames {
+			if err = dao.Source(ctx, jfname, true); err != nil {
+				panic(err)
+			}
+		}
 	}
 	return dao
 }
@@ -88,7 +109,7 @@ func (d *Dao) Drop(ctx context.Context, colcName string) error {
 	return colc.Drop(ctx)
 }
 
-func (d *Dao) Source(ctx context.Context, file string) error {
+func (d *Dao) Source(ctx context.Context, file string, create bool) error {
 	fname := filepath.Base(file)
 	cname := strings.SplitN(fname, ".", 2)[0]
 	cmd := exec.CommandContext(ctx, "mongoimport", []string{
@@ -98,6 +119,11 @@ func (d *Dao) Source(ctx context.Context, file string) error {
 		"--collection", cname,
 		"--file", file,
 	}...)
+	if create {
+		if err := d.Create(ctx, cname); err != nil {
+			return err
+		}
+	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

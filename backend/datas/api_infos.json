@@ -1,0 +1,52 @@
+[{
+  "_id" : ObjectId("5df07d6c14f783b5505b1113"),
+  "name" : "SelectOne%MODEL%",
+  "model" : "%MODEL%",
+  "table" : "%TABLE_NAME%",
+  "params" : {
+    "req" : "StrIdenReqs"
+  },
+  "route" : "/api/v1/%MODEL%.SelectOne",
+  "method" : "GET",
+  "returns" : [
+    "*%MODEL%"
+  ],
+  "steps" : [
+    {
+      "idenKey" : "database_query",
+      "requires" : null,
+      "desc" : "",
+      "inputs" : {
+        "TABLE_NAME" : "%TABLE_NAME%",
+        "CONDITIONS" : "bson.D{\"_id\": req.Id}"
+      },
+      "outputs" : null,
+      "code" : "",
+      "apiname" : "SelectOne%MODEL%",
+      "symbol" : 0,
+      "index" : 0,
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    },
+    {
+      "idenKey" : "return_succeed",
+      "requires" : null,
+      "desc" : "",
+      "inputs" : {
+        "RETURN" : "res.(*%MODEL%)"
+      },
+      "outputs" : null,
+      "code" : "",
+      "apiname" : "SelectOne%MODEL%",
+      "symbol" : 0,
+      "index" : 0,
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    }
+  ],
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}]

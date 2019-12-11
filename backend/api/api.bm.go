@@ -36,8 +36,8 @@ var PathBackendManagerApisInsert = "/backend-dashboard/backend/apis.insert"
 var PathBackendManagerApisDeleteByName = "/backend-dashboard/backend/apis.deleteByName"
 var PathBackendManagerStepsInsert = "/backend-dashboard/backend/steps.insert"
 var PathBackendManagerStepsDelete = "/backend-dashboard/backend/steps.delete"
-var PathBackendManagerOperStepsSelectTemp = "/backend-dashboard/backend/steps.selectTemp"
-var PathBackendManagerOperStepsInsert = "/backend-dashboard/backend/steps.insertTemp"
+var PathBackendManagerTempStepsSelectAll = "/backend-dashboard/backend/temp.steps.selectAll"
+var PathBackendManagerTempStepsInsert = "/backend-dashboard/backend/temp.steps.insert"
 var PathBackendManagerDaoGroupsSelectAll = "/backend-dashboard/backend/dao.groups.selectAll"
 var PathBackendManagerDaoGroupSelectByName = "/backend-dashboard/backend/dao.groups.selectByName"
 var PathBackendManagerDaoGroupsInsert = "/backend-dashboard/backend/dao.groups.insert"
@@ -77,9 +77,9 @@ type BackendManagerBMServer interface {
 
 	StepsDelete(ctx context.Context, req *DelStepReqs) (resp *Empty, err error)
 
-	OperStepsSelectTemp(ctx context.Context, req *Empty) (resp *OperStepArray, err error)
+	TempStepsSelectAll(ctx context.Context, req *Empty) (resp *StepArray, err error)
 
-	OperStepsInsert(ctx context.Context, req *OperStep) (resp *OperStep, err error)
+	TempStepsInsert(ctx context.Context, req *Step) (resp *Step, err error)
 
 	DaoGroupsSelectAll(ctx context.Context, req *Empty) (resp *DaoGroupArray, err error)
 
@@ -226,21 +226,21 @@ func backendManagerStepsDelete(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
-func backendManagerOperStepsSelectTemp(c *bm.Context) {
+func backendManagerTempStepsSelectAll(c *bm.Context) {
 	p := new(Empty)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
 		return
 	}
-	resp, err := BackendManagerSvc.OperStepsSelectTemp(c, p)
+	resp, err := BackendManagerSvc.TempStepsSelectAll(c, p)
 	c.JSON(resp, err)
 }
 
-func backendManagerOperStepsInsert(c *bm.Context) {
-	p := new(OperStep)
+func backendManagerTempStepsInsert(c *bm.Context) {
+	p := new(Step)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
 		return
 	}
-	resp, err := BackendManagerSvc.OperStepsInsert(c, p)
+	resp, err := BackendManagerSvc.TempStepsInsert(c, p)
 	c.JSON(resp, err)
 }
 
@@ -333,8 +333,8 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/apis.deleteByName", backendManagerApisDeleteByName)
 	e.POST("/backend-dashboard/backend/steps.insert", backendManagerStepsInsert)
 	e.POST("/backend-dashboard/backend/steps.delete", backendManagerStepsDelete)
-	e.POST("/backend-dashboard/backend/steps.selectTemp", backendManagerOperStepsSelectTemp)
-	e.POST("/backend-dashboard/backend/steps.insertTemp", backendManagerOperStepsInsert)
+	e.POST("/backend-dashboard/backend/temp.steps.selectAll", backendManagerTempStepsSelectAll)
+	e.POST("/backend-dashboard/backend/temp.steps.insert", backendManagerTempStepsInsert)
 	e.POST("/backend-dashboard/backend/dao.groups.selectAll", backendManagerDaoGroupsSelectAll)
 	e.POST("/backend-dashboard/backend/dao.groups.selectByName", backendManagerDaoGroupSelectByName)
 	e.POST("/backend-dashboard/backend/dao.groups.insert", backendManagerDaoGroupsInsert)

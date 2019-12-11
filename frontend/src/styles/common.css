@@ -59,3 +59,11 @@
 .mt-10 {
     margin-top: 10px;
 }
+
+.interval-container .interval-item+.interval-item {
+    margin-left: 10px;
+}
+
+.table-container {
+    padding: 5vh 5vw;
+}

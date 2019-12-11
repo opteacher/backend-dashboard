@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"path"
-	"path/filepath"
 	"reflect"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
@@ -39,95 +38,7 @@ func New() (s *Service) {
 	if err := paladin.Get("cdn.toml").UnmarshalTOML(&s.cc); err != nil {
 		panic(err)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	if err := s.setupModel(ctx); err != nil {
-		panic(err)
-	}
-	if err := s.setupApiInfo(ctx); err != nil {
-		panic(err)
-	}
-	if err := s.setupDaoGroup(ctx); err != nil {
-		panic(err)
-	}
 	return s
-}
-
-func (s *Service) setupModel(ctx context.Context) error {
-	// 创建模型集合
-	if err := s.mongo.Create(ctx, model.MODELS_TABLE); err != nil {
-		return err
-	}
-	projPath, err := s.ac.Get("projPath").String()
-	if err != nil {
-		return err
-	}
-	if err := s.mongo.Source(ctx, filepath.Join(projPath, "backend", "datas", model.MODELS_TABLE + ".json")); err != nil {
-		return err
-	}
-	// 创建链接集合
-	if err := s.mongo.Create(ctx, model.LINKS_TABLE); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Service) setupApiInfo(ctx context.Context) error {
-	if err := s.mongo.Create(ctx, model.OPER_STEP_TABLE); err != nil {
-		return err
-	}
-	if err := s.mongo.Create(ctx, model.API_INFO_TABLE); err != nil {
-		return err
-	}
-	projPath, err := s.ac.Get("projPath").String()
-	if err != nil {
-		return err
-	}
-	if err := s.mongo.Source(ctx, filepath.Join(projPath, "backend", "datas", model.OPER_STEP_TABLE + ".json")); err != nil {
-		return err
-	}
-	if _, err := s.mongo.Insert(ctx, model.API_INFO_TABLE, pb.ApiInfo{
-		Name: "SelectOne%MODEL%",
-		Model: "%MODEL%",
-		Table: "%TABLE_NAME%",
-		Route: "/api/v1/%MODEL%.SelectOne",
-		Method: "GET",
-		Params: map[string]string{
-			"req": "StrIdenReqs",
-		},
-		Returns:[]string{"*%MODEL%"},
-		Steps: []*pb.OperStep{{
-			ApiName: "SelectOne%MODEL%",
-			OperKey: "database_query",
-			Inputs: map[string]string{
-				"TABLE_NAME": "%TABLE_NAME%",
-				"CONDITIONS": "bson.D{\"_id\": req.Id}",
-			},
-		}, {
-			ApiName: "SelectOne%MODEL%",
-			OperKey: "return_succeed",
-			Inputs: map[string]string{"RETURN": "res.(*%MODEL%)"},
-		}},
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Service) setupDaoGroup(ctx context.Context) error {
-	if err := s.mongo.Create(ctx, model.DAO_GROUPS_TABLE); err != nil {
-		return err
-	}
-	if _, err := s.mongo.Insert(ctx, model.DAO_GROUPS_TABLE, pb.DaoGroup{
-		Name:                 "MySQL数据库",
-		Category:             "databases",
-		Language:             "golang",
-		Interfaces:           []*pb.DaoInterface{},
-	}); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (s *Service) AppID() string {
@@ -331,14 +242,14 @@ func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.Api
 }
 
 func (s *Service) StepsInsert(ctx context.Context, req *pb.StepReqs) (*pb.Empty, error) {
-	apiName := req.OperStep.ApiName
+	apiName := req.Step.ApiName
 	apiInfo, err := s.ApisSelectByName(ctx, &pb.NameID{Name: apiName})
 	if err != nil {
 		return nil, err
 	}
 
-	rear := append([]*pb.OperStep{}, apiInfo.Steps[req.Index:]...)
-	apiInfo.Steps = append(append(apiInfo.Steps[:req.Index], req.OperStep), rear...)
+	rear := append([]*pb.Step{}, apiInfo.Steps[req.Index:]...)
+	apiInfo.Steps = append(append(apiInfo.Steps[:req.Index], req.Step), rear...)
 	_, err = s.mongo.Update(ctx, model.API_INFO_TABLE, bson.D{{"name", apiName}}, bson.D{{
 		"$set", bson.D{{"steps", apiInfo.Steps}},
 	}})
@@ -367,14 +278,30 @@ func (s *Service) StepsDelete(ctx context.Context, req *pb.DelStepReqs) (*pb.Emp
 
 // 这是添加步骤模板，可以通过设置apiName来指定要插入的接口，但只能追加到api流程的最后
 // 如果需要插入到流程中间，则需要使用StepsInsert
-func (s *Service) OperStepsInsert(context.Context, *pb.OperStep) (*pb.OperStep, error) {
-	// TODO:
-	return nil, nil
+func (s *Service) TempStepsInsert(ctx context.Context, req *pb.Step) (*pb.Step, error) {
+	_, err := s.mongo.Insert(ctx, model.TEMP_STEP_TABLE, req)
+	if err != nil {
+		return nil, fmt.Errorf("插入模板步骤失败：%v", err)
+	} else {
+		return req, nil
+	}
 }
 
-func (s *Service) OperStepsSelectTemp(ctx context.Context, req *pb.Empty) (*pb.OperStepArray, error) {
-	// TODO:
-	return nil, nil
+func (s *Service) TempStepsSelectAll(ctx context.Context, req *pb.Empty) (*pb.StepArray, error) {
+	ress, err := s.mongo.Query(ctx, model.TEMP_STEP_TABLE, bson.D{})
+	if err != nil {
+		return nil, fmt.Errorf("查询所有模板步骤失败：%v", err)
+	}
+
+	resp := new(pb.StepArray)
+	for _, res := range ress {
+		obj, err := utils.ToObj(res, reflect.TypeOf((*pb.Step)(nil)).Elem())
+		if err != nil {
+			return nil, fmt.Errorf("转成步骤对象失败：%v", err)
+		}
+		resp.Steps = append(resp.Steps, obj.(*pb.Step))
+	}
+	return resp, nil
 }
 
 func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {

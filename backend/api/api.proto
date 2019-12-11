@@ -91,14 +91,14 @@ service BackendManager {
             body: "*"
         };
     };
-    rpc OperStepsSelectTemp(Empty) returns (OperStepArray) {
+    rpc TempStepsSelectAll(Empty) returns (StepArray) {
         option (google.api.http) = {
-            post: "/backend-dashboard/backend/steps.selectTemp"
+            post: "/backend-dashboard/backend/temp.steps.selectAll"
         };
     };
-    rpc OperStepsInsert(OperStep) returns (OperStep) {
+    rpc TempStepsInsert(Step) returns (Step) {
         option (google.api.http) = {
-            post: "/backend-dashboard/backend/steps.insertTemp"
+            post: "/backend-dashboard/backend/temp.steps.insert"
             body: "*"
         };
     };
@@ -222,7 +222,6 @@ message DaoConfig {
 
 message DaoInterface {
     string name = 1[(gogoproto.moretags)='orm:",PRIMARY_KEY|COMMENT(接口名、函数名)"'];
-    string category = 2[(gogoproto.moretags)='orm:",FOREIGN_KEY(dao_categories.name)"'];
     repeated Prop params = 3[(gogoproto.moretags)='orm:",COMMENT(输入数据)"'];
     repeated string returns = 4[(gogoproto.moretags)='orm:",COMMENT(输出数据)"'];
     repeated string requires = 5[(gogoproto.moretags)='orm:",COMMENT(需求的模块)"'];
@@ -270,8 +269,8 @@ enum SpcSymbol {
 }
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
-message OperStep {
-    string operKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+message Step {
+    string idenKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
     repeated string requires = 2;
     string desc = 3;
     map<string,string> inputs = 4;
@@ -280,6 +279,7 @@ message OperStep {
     string apiName = 7[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
     SpcSymbol symbol = 8;
     int32 index = 9[(gogoproto.jsontag) = 'index'];
+    string group = 10;
 }
 
 message ApiInfo {
@@ -290,15 +290,15 @@ message ApiInfo {
     string route = 5;
     string method = 6;
     repeated string returns = 7;
-    repeated OperStep steps = 8;
+    repeated Step steps = 8;
 }
 
 message ApiInfoArray {
     repeated ApiInfo infos = 1;
 }
 
-message OperStepArray {
-    repeated OperStep steps = 1;
+message StepArray {
+    repeated Step steps = 1;
 }
 
 message SymbolsResp {
@@ -308,7 +308,7 @@ message SymbolsResp {
 
 message StepReqs {
     int32 index = 1;
-    OperStep operStep = 2;
+    Step Step = 2;
 }
 
 message DelStepReqs {

@@ -28,7 +28,11 @@
         </el-form-item>
     </el-form>
     <el-form-item label="参数" prop="params" v-show="daoInterface.params.length !== 0">
-        <el-tag v-for="param in daoInterface.params" :key="param.name" closable @close="delParam(param.name)">{{param.name}}</el-tag>
+        <div class="tags-interval">
+            <el-tag v-for="param in daoInterface.params" :key="param.name" closable @close="delParam(param.name)">
+                {{param.name}}
+            </el-tag>
+        </div>
     </el-form-item>
     <el-form :model="newReturn" label-width="80px" ref="add-return-form">
         <el-form-item label="添加返回" :rule="[
@@ -47,7 +51,11 @@
         </el-form-item>
     </el-form>
     <el-form-item label="返回值" prop="returns" v-show="daoInterface.returns.length !== 0">
-        <el-tag v-for="(ret, idx) in daoInterface.returns" :key="idx" closable @close="delReturn(idx)">{{ret}}</el-tag>
+        <div class="tags-interval">
+            <el-tag v-for="(ret, idx) in daoInterface.returns" :key="idx" closable @close="delReturn(idx)">
+                {{ret}}
+            </el-tag>
+        </div>
     </el-form-item>
     <el-form :model="newRequire" label-width="80px" ref="add-require-form">
         <el-form-item label="添加依赖" :rule="[

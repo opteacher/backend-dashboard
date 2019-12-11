@@ -48,6 +48,36 @@ func PickPathsFromSwaggerJSON(fname string) ([]byte, error) {
 	}
 }
 
+// 扫描文件夹下文件
+// folderPath 指定文件夹
+// suffix 指定后缀，如不需要指定为"*"
+func ScanAllFilesByFolder(folderPath string, suffix string) ([]string, error) {
+	if suffix != "*" {
+		suffix = strings.ToLower(suffix)
+	}
+	files, err := ioutil.ReadDir(folderPath)
+	if err != nil {
+		return nil, err
+	}
+	var retFiles []string
+	for _, file := range files {
+		fname := file.Name()
+		if file.IsDir() {
+			flAry, err := ScanAllFilesByFolder(filepath.Join(folderPath, fname), suffix)
+			if err != nil {
+				return nil, err
+			}
+			retFiles = append(retFiles, flAry...)
+		} else {
+			poiIdx := strings.LastIndex(fname, ".")
+			if (poiIdx != -1 && strings.ToLower(fname[poiIdx + 1:]) == suffix) || suffix == "*" {
+				retFiles = append(retFiles, filepath.Join(folderPath, fname))
+			}
+		}
+	}
+	return retFiles, nil
+}
+
 // 压缩文件
 // files 文件数组，可以是不同dir下的文件或者文件夹
 // dest 压缩文件存放地址

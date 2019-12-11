@@ -1,6 +1,6 @@
 <template>
 <dashboard>
-    <div class="dao-container">
+    <div class="table-container">
         <el-button type="primary" @click="showAddDaoGroup = true">添加DAO组</el-button>
         <el-button type="primary" @click="showLoadDaoGroup = true">导入DAO组</el-button>
         <el-table class="mt-10" :data="daoGroups" style="width: 100%">
@@ -8,7 +8,21 @@
                 <template slot-scope="scope">
                     <el-table class="demo-table-expand" :data="scope.row.interfaces">
                         <el-table-column label="接口名" prop="name"/>
-                        <el-table-column label="参数" prop="params"/>
+                        <el-table-column label="参数" prop="params">
+                            <template slot-scope="subScope">
+                                <div class="interval-container">
+                                    <el-popover
+                                        class="interval-item"
+                                        v-for="param in subScope.row.params" :key="param.name"
+                                        placement="top-start"
+                                        trigger="hover"
+                                        :content="param.type"
+                                    >
+                                        <el-tag size="small" slot="reference">{{param.name}}</el-tag>
+                                    </el-popover>
+                                </div>
+                            </template>
+                        </el-table-column>
                         <el-table-column label="返回值" prop="returns"/>
                         <el-table-column label="依赖模块" prop="requires"/>
                         <el-table-column label="描述" prop="desc"/>
@@ -178,10 +192,4 @@ export default {
     }
 }
 </script>
-
-<style lang="scss">
-.dao-container {
-    padding: 5vh 5vw;
-}
-</style>
 

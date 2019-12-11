@@ -2,7 +2,7 @@
 <div class="card" :name="`step_${step.index}`" :style="`width:${stepWidth}px;margin-bottom:${step.isLast ? marginTB : 0}px`">
     <div class="card-header text-center">
         <h5 class="mb-0 float-left">#{{step.index}}</h5>
-        <span>{{step.operKey}}</span>
+        <span>{{step.idenKey}}</span>
         <button class="close" type="button" data-dismiss="alert" aria-label="Close" @click="hdlDelete">
             <span aria-hidden="true">&times;</span>
         </button>
@@ -68,7 +68,7 @@ export default {
                     } else {
                         this.$message({
                             type: "info",
-                            message: `步骤#${this.step.index} ${this.step.operKey}删除成功！`
+                            message: `步骤#${this.step.index} ${this.step.idenKey}删除成功！`
                         })
                         this.$emit("be-deleted")
                     }
