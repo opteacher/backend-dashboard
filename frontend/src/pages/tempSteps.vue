@@ -7,20 +7,18 @@
             <el-table-column prop="group" label="组"/>
             <el-table-column prop="requires" label="依赖"/>
             <el-table-column prop="desc" label="描述"/>
-            <el-table-column prop="inputs" label="输入（槽）" align="center">
+            <el-table-column prop="inputs" label="输入（槽）">
                 <template slot-scope="scope">
-                    <ul class="mb-0 list-unstyled">
-                        <li class="text-center" v-for="(input, slot) in scope.row.inputs" :key="slot">
-                            <el-tag class="interval-item" size="small">{{slot}}</el-tag>
-                        </li>
+                    <ul class="list-unstyled">
+                        <li v-for="(input, slot) in scope.row.inputs" :key="slot">{{slot}}</li>
                     </ul>
                 </template>
             </el-table-column>
             <el-table-column prop="outputs" label="输出（变量）">
                 <template slot-scope="scope">
-                    <div class="interval-container">
-                        <el-tag class="interval-item" v-for="output in scope.row.outputs" :key="output" size="small" type="success">{{output}}</el-tag>
-                    </div>
+                    <ul class="list-unstyled">
+                        <li v-for="output in scope.row.outputs" :key="output">{{output}}</li>
+                    </ul>
                 </template>
             </el-table-column>
             <el-table-column prop="code" label="代码">

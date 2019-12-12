@@ -1,4 +1,15 @@
 export default {
+    async reqBackend(req) {
+        try {
+            const resp = (await req).data
+            if (resp.code !== 0 && !resp.data) {
+                return this.getErrorMsg(resp)
+            }
+            return resp.data
+        } catch(e) {
+            return this.getErrorMsg(e)
+        }
+    },
     getErrorMsg(res) {
         if (typeof res === "string") {
             return res

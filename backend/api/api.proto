@@ -148,6 +148,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc ModuleSignSelectAll(TypeIden) returns (ModuleSignArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/mod.sign.selectAll"
+            body: "*"
+        };
+    };
 }
 
 message Empty {
@@ -333,4 +339,20 @@ message Link {
 
 message LinkArray {
     repeated Link links = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+message ModuleSign {
+    string id = 1;
+    string name = 2;
+    string icon = 3;
+    string type = 4;
+    string desc = 5;
+    string href = 6;
+    string homeUrl = 7;
+}
+
+message ModuleSignArray {
+    repeated ModuleSign modSigns = 1;
 }

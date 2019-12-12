@@ -407,6 +407,23 @@ func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SymbolsResp, e
 	}, nil
 }
 
+func (s *Service) ModuleSignSelectAll(ctx context.Context, req *pb.TypeIden) (*pb.ModuleSignArray, error) {
+	ress, err := s.mongo.Query(ctx, model.MOD_SIGN_TABLE, bson.D{{"type", req.Type}})
+	if err != nil {
+		return nil, fmt.Errorf("查询模块标牌失败：%v", err)
+	}
+
+	resp := new(pb.ModuleSignArray)
+	for _, res := range ress {
+		ms, err := utils.ToObj(res, reflect.TypeOf((*pb.ModuleSign)(nil)).Elem())
+		if err != nil {
+			return nil, fmt.Errorf("转成ModuleSign对象失败：%v", err)
+		}
+		resp.ModSigns = append(resp.ModSigns, ms.(*pb.ModuleSign))
+	}
+	return resp, nil
+}
+
 // Ping ping the resource.
 func (s *Service) Ping(ctx context.Context) (err error) {
 	return s.mongo.Ping(ctx)

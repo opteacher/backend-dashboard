@@ -44,6 +44,10 @@
     margin-bottom: 0;
 }
 
+.mb-20 {
+    margin-bottom: 20px !important;
+}
+
 .mr-2 {
     margin-right: 2px;
 }

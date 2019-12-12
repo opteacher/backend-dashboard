@@ -46,6 +46,7 @@ var PathBackendManagerDaoInterfaceInsert = "/backend-dashboard/backend/dao.inter
 var PathBackendManagerDaoInterfaceDelete = "/backend-dashboard/backend/dao.interface.delete"
 var PathBackendManagerExport = "/backend-dashboard/backend/export"
 var PathBackendManagerSpecialSymbols = "/backend-dashboard/backend/specialSymbols"
+var PathBackendManagerModuleSignSelectAll = "/backend-dashboard/backend/mod.sign.selectAll"
 
 // BackendManagerBMServer is the server API for BackendManager service.
 type BackendManagerBMServer interface {
@@ -96,6 +97,8 @@ type BackendManagerBMServer interface {
 	Export(ctx context.Context, req *ExpOptions) (resp *UrlResp, err error)
 
 	SpecialSymbols(ctx context.Context, req *Empty) (resp *SymbolsResp, err error)
+
+	ModuleSignSelectAll(ctx context.Context, req *TypeIden) (resp *ModuleSignArray, err error)
 }
 
 var BackendManagerSvc BackendManagerBMServer
@@ -316,6 +319,15 @@ func backendManagerSpecialSymbols(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerModuleSignSelectAll(c *bm.Context) {
+	p := new(TypeIden)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ModuleSignSelectAll(c, p)
+	c.JSON(resp, err)
+}
+
 // RegisterBackendManagerBMServer Register the blademaster route
 func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer) {
 	BackendManagerSvc = server
@@ -343,4 +355,5 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/dao.interface.delete", backendManagerDaoInterfaceDelete)
 	e.POST("/backend-dashboard/backend/export", backendManagerExport)
 	e.POST("/backend-dashboard/backend/specialSymbols", backendManagerSpecialSymbols)
+	e.POST("/backend-dashboard/backend/mod.sign.selectAll", backendManagerModuleSignSelectAll)
 }

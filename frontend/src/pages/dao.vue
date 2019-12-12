@@ -28,7 +28,7 @@
                         <el-table-column label="描述" prop="desc"/>
                         <el-table-column label="配置" prop="setting">
                             <template slot-scope="subScope">
-                                <el-button size="mini" type="danger" @click="delDaoInterface(scope.row.name, subScope.row.name)">删除</el-button>
+                                <el-button size="mini" type="danger" @click="delInterface(scope.row.name, subScope.row.name)">删除</el-button>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -47,13 +47,14 @@
             </el-table-column>
             <el-table-column label="实现" prop="implement">
                 <template slot-scope="scope">
-                    <el-button type="text">{{scope.row.implement}}</el-button>
+                    <el-button v-if="!scope.row.implement" size="mini" @click="implingGpName = scope.row.name">实例化DAO组</el-button>
+                    <el-link v-else type="primary" size="mini">{{scope.row.implement}}</el-link>
                 </template>
             </el-table-column>
             <el-table-column label="配置" prop="setting">
                 <template slot-scope="scope">
                     <el-button size="mini" @click="editingGroup = scope.row">添加接口</el-button>
-                    <el-button size="mini" type="danger" @click="delDaoGroup(scope.row.name)">删除</el-button>
+                    <el-button size="mini" type="danger" @click="delGroup(scope.row.name)">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -62,7 +63,7 @@
             <edit-dao-group ref="add-dao-group-form"/>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="showAddDaoGroup = false">取 消</el-button>
-                <el-button type="primary" @click="addDaoGroup">确 定</el-button>
+                <el-button type="primary" @click="addGroup">确 定</el-button>
             </div>
         </el-dialog>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -70,7 +71,15 @@
             <edit-dao-interface ref="add-dao-interface-form"/>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="editingGroup = null">取 消</el-button>
-                <el-button type="primary" @click="addDaoInterface">确 定</el-button>
+                <el-button type="primary" @click="addInterface">确 定</el-button>
+            </div>
+        </el-dialog>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="实例化DAO组" :visible="implingGpName.length != 0" :modal-append-to-body="false" width="50vw" @close="implingGpName = ''">
+            <impl-dao-group ref="impl-dao-group"/>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="implingGpName = ''">取 消</el-button>
+                <el-button type="primary" @click="implGroup">确 定</el-button>
             </div>
         </el-dialog>
     </div>
@@ -82,18 +91,21 @@ import backend from "../backend"
 import dashboard from "../layouts/dashboard"
 import editDaoGroup from "../forms/editDaoGroup"
 import editDaoInterface from "../forms/editDaoInterface"
+import implDaoGroup from "../forms/implDaoGroup"
 
 export default {
     components: {
         "dashboard": dashboard,
         "edit-dao-group": editDaoGroup,
-        "edit-dao-interface": editDaoInterface
+        "edit-dao-interface": editDaoInterface,
+        "impl-dao-group": implDaoGroup
     },
     data() {
         return {
             showAddDaoGroup: false,
             showLoadDaoGroup: false,
             editingGroup: null,
+            implingGpName: "",
             daoGroups: [],
             categories: {
                 databases: [{
@@ -114,7 +126,7 @@ export default {
                 this.daoGroups = res.groups
             }
         },
-        addDaoGroup() {
+        addGroup() {
             let addForm = this.$refs["add-dao-group-form"]
             addForm.$refs["edit-dao-group-form"].validate(async valid => {
                 if (!valid) {
@@ -130,7 +142,7 @@ export default {
                 }
             })
         },
-        addDaoInterface() {
+        addInterface() {
             let addForm = this.$refs["add-dao-interface-form"]
             addForm.$refs["edit-dao-interface-form"].validate(async valid => {
                 if (!valid) {
@@ -149,7 +161,7 @@ export default {
                 }
             })
         },
-        delDaoInterface(gpname, ifname) {
+        delInterface(gpname, ifname) {
             this.$alert("确定删除接口？", "提示", {
                 confirmButtonText: "确定",
                 callback: async action => {
@@ -169,7 +181,7 @@ export default {
                 }
             })
         },
-        delDaoGroup(gpname) {
+        delGroup(gpname) {
             this.$alert("确定删除组？", "提示", {
                 confirmButtonText: "确定",
                 callback: async action => {
@@ -188,6 +200,9 @@ export default {
                     }
                 }
             })
+        },
+        implGroup(gpname) {
+
         }
     }
 }

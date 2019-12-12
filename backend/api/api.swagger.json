@@ -534,6 +534,43 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/mod.sign.selectAll": {
+            "post": {
+                "summary": "/backend-dashboard/backend/mod.sign.selectAll",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.ModuleSignArray"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.TypeIden"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/models.delete": {
             "post": {
                 "summary": "/backend-dashboard/backend/models.delete",
@@ -1179,6 +1216,43 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/.backend.manager.service.v1.Model"
+                    }
+                }
+            }
+        },
+        ".backend.manager.service.v1.ModuleSign": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "href": {
+                    "type": "string"
+                },
+                "homeUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.ModuleSignArray": {
+            "type": "object",
+            "properties": {
+                "modSigns": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.ModuleSign"
                     }
                 }
             }

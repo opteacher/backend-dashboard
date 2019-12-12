@@ -4,164 +4,75 @@ import utils from "./utils"
 
 export default {
     async export(option) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/export`, option)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/export`, option))
     },
     async addModel(model) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/models.insert`, _.omit(model, "id"))).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.insert`, _.omit(model, "id")))
     },
     async delModel(name) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/models.delete`, {name})).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.delete`, {name}))
     },
     async updModel(model) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/models.update`, model)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.update`, model))
     },
     async qryAllModels() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`, {type: "model"})).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`, {type: "model"}))
     },
     async qryAllStructs() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`, {type: "struct"})).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`, {type: "struct"}))
     },
     async qryAllAvaTypes() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.selectAll`))
     },
     async qryAllBaseStructsName() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/structs.selectAllBases`)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/structs.selectAllBases`))
     },
     async addLink(link) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/links.insert`, _.omit(link, "id"))).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/links.insert`, _.omit(link, "id")))
     },
     async qryAllLinks() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/links.selectAll`)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/links.selectAll`))
     },
     async qryAllApis() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/apis.selectAll`)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.selectAll`))
     },
     async qryApiByName(name) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/apis.selectByName`, {name})).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.selectByName`, {name}))
     },
     async addApi(api) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/apis.insert`, api)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.insert`, api))
     },
     async delApiByName(name) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/apis.deleteByName`, {name})).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.deleteByName`, {name}))
     },
     async qryAllTempStep() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/temp.steps.selectAll`)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.selectAll`))
     },
     async delStep(delInfo) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/steps.delete`, delInfo)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/steps.delete`, delInfo))
     },
     async qryStepSymbols() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/specialSymbols`)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/specialSymbols`))
     },
-    async addStep(flow) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/steps.insert`, flow)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+    async addStep(step) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/steps.insert`, step))
     },
     async addDaoGroup(group) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.groups.insert`, group)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.groups.insert`, group))
     },
     async delDaoGroup(gpname) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.groups.deleteByName`, {name: gpname})).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.groups.deleteByName`, {name: gpname}))
     },
     async addDaoInterface(istDaoItfcInf) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.interface.insert`, istDaoItfcInf)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.interface.insert`, istDaoItfcInf))
     },
     async delDaoInterface(delDaoItfcInf) {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.interface.delete`, delDaoItfcInf)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.interface.delete`, delDaoItfcInf))
     },
     async qryAllDaoGroups() {
-        try {
-            return (await axios.post(`${config.url}/backend-dashboard/backend/dao.groups.selectAll`)).data.data
-        } catch(e) {
-            return utils.getErrorMsg(e)
-        }
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.groups.selectAll`))
+    },
+    async qryAllImplMods() {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/mod.sign.selectAll`, {type: "dao_implement"}))
     }
 }
