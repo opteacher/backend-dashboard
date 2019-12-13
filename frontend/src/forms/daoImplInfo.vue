@@ -1,6 +1,6 @@
 <template>
 <div v-if="implInfo">
-    <img v-holder="'img=100px200?auto=yes&theme=social'" class="card-img-top"/>
+    <img :src="implInfo.icon" class="img-fluid card-img-top"/>
     <div class="card-body">
         <h5 class="card-title">{{implInfo.name}}</h5>
         <p class="card-text">{{implInfo.desc}}</p>

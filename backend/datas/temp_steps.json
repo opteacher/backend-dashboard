@@ -1,5 +1,5 @@
 [{
-  "idenKey" : "json_marshal",
+  "key" : "json_marshal",
   "requires" : [
     "encoding/json"
   ],
@@ -18,7 +18,7 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "idenKey" : "assignment_create",
+  "key" : "assignment_create",
   "requires" : null,
   "desc" : "创建%TARGET%并用%SOURCE%初始化",
   "inputs" : {
@@ -35,7 +35,7 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "idenKey" : "assignment",
+  "key" : "assignment",
   "requires" : null,
   "desc" : "将%SOURCE%赋值给%TARGET%",
   "inputs" : {
@@ -50,7 +50,7 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "idenKey" : "return_succeed",
+  "key" : "return_succeed",
   "requires" : null,
   "desc" : "成功返回%RETURN%",
   "inputs" : {
@@ -64,7 +64,7 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "idenKey" : "json_unmarshal",
+  "key" : "json_unmarshal",
   "requires" : [
     "%PACKAGE%/internal/utils"
   ],
@@ -83,7 +83,7 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "idenKey" : "assignment_append",
+  "key" : "assignment_append",
   "requires" : null,
   "desc" : "将%NEW_ADD%添加进%ARRAY%",
   "inputs" : {

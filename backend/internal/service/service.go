@@ -242,7 +242,7 @@ func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.Api
 }
 
 func (s *Service) StepsInsert(ctx context.Context, req *pb.StepReqs) (*pb.Empty, error) {
-	apiName := req.Step.ApiName
+	apiName := req.Step.Apiname
 	apiInfo, err := s.ApisSelectByName(ctx, &pb.NameID{Name: apiName})
 	if err != nil {
 		return nil, err
@@ -260,7 +260,7 @@ func (s *Service) StepsInsert(ctx context.Context, req *pb.StepReqs) (*pb.Empty,
 }
 
 func (s *Service) StepsDelete(ctx context.Context, req *pb.DelStepReqs) (*pb.Empty, error) {
-	apiName := req.ApiName
+	apiName := req.Apiname
 	apiInfo, err := s.ApisSelectByName(ctx, &pb.NameID{Name: apiName})
 	if err != nil {
 		return nil, err
@@ -304,6 +304,19 @@ func (s *Service) TempStepsSelectAll(ctx context.Context, req *pb.Empty) (*pb.St
 	return resp, nil
 }
 
+func (s *Service) TempStepsSelectByKey(ctx context.Context, req *pb.StrKey) (*pb.Step, error) {
+	res, err := s.mongo.QueryOne(ctx, model.TEMP_STEP_TABLE, bson.D{{"key", req.Key}})
+	if err != nil {
+		return nil, fmt.Errorf("查询模板步骤失败：%v", err)
+	}
+
+	obj, err := utils.ToObj(res, reflect.TypeOf((*pb.Step)(nil)).Elem())
+	if err != nil {
+		return nil, fmt.Errorf("转成模板步骤对象失败：%v", err)
+	}
+	return obj.(*pb.Step), nil
+}
+
 func (s *Service) TempStepsInsertMany(ctx context.Context, req *pb.StepArray) (*pb.StepArray, error) {
 	var entries []interface{}
 	for _, step := range req.Steps {
@@ -313,6 +326,18 @@ func (s *Service) TempStepsInsertMany(ctx context.Context, req *pb.StepArray) (*
 		return nil, fmt.Errorf("批量插入模板步骤失败：%v", err)
 	}
 	return req, nil
+}
+
+func (s *Service) TempStepsDeleteByKey(ctx context.Context, req *pb.StrKey) (*pb.Step, error) {
+	step, err := s.TempStepsSelectByKey(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = s.mongo.Delete(ctx, model.TEMP_STEP_TABLE, bson.D{{"key", req.Key}}); err != nil {
+		return nil, fmt.Errorf("删除模板步骤失败：%v", err)
+	}
+	return step, nil
 }
 
 func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {

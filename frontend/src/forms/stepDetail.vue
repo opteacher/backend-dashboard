@@ -1,10 +1,7 @@
 <template>
 <el-form ref="form" label-width="80px">
-    <el-form-item label="操作标识" v-if="mode === 'add-temp-step'">
-        <el-input v-model="selStep.idenKey" placeholder="请输入操作标识"/>
-    </el-form-item>
-    <el-form-item label="操作标识" v-else>
-        {{selStep.idenKey}}
+    <el-form-item label="操作标识">
+        {{selStep.key}}
     </el-form-item>
     <el-form ref="new-require-form" v-model="newRequire" v-show="mode === 'add-temp-step'" label-width="80px">
         <el-form-item label="添加依赖" :rules="[
@@ -20,12 +17,7 @@
             </el-row>
         </el-form-item>
     </el-form>
-    <el-form-item label="依赖" v-if="mode === 'add-temp-step'">
-        <el-tag v-for="require in selStep.requires" :key="require" :closable="mode !== 'display'">
-            {{require}}
-        </el-tag>
-    </el-form-item>
-    <el-form-item label="依赖" v-else v-show="selStep.requires && selStep.requires.length !== 0">
+    <el-form-item label="依赖" v-show="selStep.requires && selStep.requires.length !== 0">
         <el-tag v-for="require in selStep.requires" :key="require" :closable="mode !== 'display'">
             {{require}}
         </el-tag>

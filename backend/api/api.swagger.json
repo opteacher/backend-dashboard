@@ -941,6 +941,43 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/temp.steps.deleteByKey": {
+            "post": {
+                "summary": "/backend-dashboard/backend/temp.steps.deleteByKey",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Step"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.StrKey"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/temp.steps.insert": {
             "post": {
                 "summary": "/backend-dashboard/backend/temp.steps.insert",
@@ -1044,6 +1081,43 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/temp.steps.selectByKey": {
+            "post": {
+                "summary": "/backend-dashboard/backend/temp.steps.selectByKey",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.Step"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.StrKey"
                         }
                     }
                 ],
@@ -1225,7 +1299,7 @@
         ".backend.manager.service.v1.DelStepReqs": {
             "type": "object",
             "properties": {
-                "apiName": {
+                "apiname": {
                     "type": "string"
                 },
                 "stepId": {
@@ -1424,7 +1498,7 @@
         ".backend.manager.service.v1.Step": {
             "type": "object",
             "properties": {
-                "idenKey": {
+                "key": {
                     "type": "string"
                 },
                 "requires": {
@@ -1451,7 +1525,7 @@
                 "code": {
                     "type": "string"
                 },
-                "apiName": {
+                "apiname": {
                     "type": "string"
                 },
                 "symbol": {
@@ -1492,6 +1566,14 @@
             "type": "object",
             "properties": {
                 "id": {
+                    "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.StrKey": {
+            "type": "object",
+            "properties": {
+                "key": {
                     "type": "string"
                 }
             }

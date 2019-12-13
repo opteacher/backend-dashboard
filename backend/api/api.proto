@@ -96,6 +96,12 @@ service BackendManager {
             post: "/backend-dashboard/backend/temp.steps.selectAll"
         };
     };
+    rpc TempStepsSelectByKey(StrKey) returns (Step) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.steps.selectByKey"
+            body: "*"
+        };
+    };
     rpc TempStepsInsert(Step) returns (Step) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/temp.steps.insert"
@@ -105,6 +111,12 @@ service BackendManager {
     rpc TempStepsInsertMany(StepArray) returns (StepArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/temp.steps.insertMany"
+            body: "*"
+        };
+    };
+    rpc TempStepsDeleteByKey(StrKey) returns (Step) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.steps.deleteByKey"
             body: "*"
         };
     };
@@ -188,6 +200,10 @@ message NameID {
 
 message StrID {
     string id = 1;
+}
+
+message StrKey {
+    string key = 1;
 }
 
 message TypeIden {
@@ -304,13 +320,13 @@ enum SpcSymbol {
 
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 message Step {
-    string idenKey = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
+    string key = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
     repeated string requires = 2;
     string desc = 3;
     map<string,string> inputs = 4;
     repeated string outputs = 5;
     string code = 6;
-    string apiName = 7[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
+    string apiname = 7[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
     SpcSymbol symbol = 8;
     int32 index = 9[(gogoproto.jsontag) = 'index'];
     string group = 10;
@@ -346,7 +362,7 @@ message StepReqs {
 }
 
 message DelStepReqs {
-    string apiName = 1;
+    string apiname = 1;
     int32 stepId = 2;
 }
 

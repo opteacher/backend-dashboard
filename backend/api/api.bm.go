@@ -37,8 +37,10 @@ var PathBackendManagerApisDeleteByName = "/backend-dashboard/backend/apis.delete
 var PathBackendManagerStepsInsert = "/backend-dashboard/backend/steps.insert"
 var PathBackendManagerStepsDelete = "/backend-dashboard/backend/steps.delete"
 var PathBackendManagerTempStepsSelectAll = "/backend-dashboard/backend/temp.steps.selectAll"
+var PathBackendManagerTempStepsSelectByKey = "/backend-dashboard/backend/temp.steps.selectByKey"
 var PathBackendManagerTempStepsInsert = "/backend-dashboard/backend/temp.steps.insert"
 var PathBackendManagerTempStepsInsertMany = "/backend-dashboard/backend/temp.steps.insertMany"
+var PathBackendManagerTempStepsDeleteByKey = "/backend-dashboard/backend/temp.steps.deleteByKey"
 var PathBackendManagerDaoGroupsSelectAll = "/backend-dashboard/backend/dao.groups.selectAll"
 var PathBackendManagerDaoGroupSelectByName = "/backend-dashboard/backend/dao.groups.selectByName"
 var PathBackendManagerDaoGroupsInsert = "/backend-dashboard/backend/dao.groups.insert"
@@ -83,9 +85,13 @@ type BackendManagerBMServer interface {
 
 	TempStepsSelectAll(ctx context.Context, req *Empty) (resp *StepArray, err error)
 
+	TempStepsSelectByKey(ctx context.Context, req *StrKey) (resp *Step, err error)
+
 	TempStepsInsert(ctx context.Context, req *Step) (resp *Step, err error)
 
 	TempStepsInsertMany(ctx context.Context, req *StepArray) (resp *StepArray, err error)
+
+	TempStepsDeleteByKey(ctx context.Context, req *StrKey) (resp *Step, err error)
 
 	DaoGroupsSelectAll(ctx context.Context, req *Empty) (resp *DaoGroupArray, err error)
 
@@ -247,6 +253,15 @@ func backendManagerTempStepsSelectAll(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerTempStepsSelectByKey(c *bm.Context) {
+	p := new(StrKey)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.TempStepsSelectByKey(c, p)
+	c.JSON(resp, err)
+}
+
 func backendManagerTempStepsInsert(c *bm.Context) {
 	p := new(Step)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
@@ -262,6 +277,15 @@ func backendManagerTempStepsInsertMany(c *bm.Context) {
 		return
 	}
 	resp, err := BackendManagerSvc.TempStepsInsertMany(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerTempStepsDeleteByKey(c *bm.Context) {
+	p := new(StrKey)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.TempStepsDeleteByKey(c, p)
 	c.JSON(resp, err)
 }
 
@@ -382,8 +406,10 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/steps.insert", backendManagerStepsInsert)
 	e.POST("/backend-dashboard/backend/steps.delete", backendManagerStepsDelete)
 	e.POST("/backend-dashboard/backend/temp.steps.selectAll", backendManagerTempStepsSelectAll)
+	e.POST("/backend-dashboard/backend/temp.steps.selectByKey", backendManagerTempStepsSelectByKey)
 	e.POST("/backend-dashboard/backend/temp.steps.insert", backendManagerTempStepsInsert)
 	e.POST("/backend-dashboard/backend/temp.steps.insertMany", backendManagerTempStepsInsertMany)
+	e.POST("/backend-dashboard/backend/temp.steps.deleteByKey", backendManagerTempStepsDeleteByKey)
 	e.POST("/backend-dashboard/backend/dao.groups.selectAll", backendManagerDaoGroupsSelectAll)
 	e.POST("/backend-dashboard/backend/dao.groups.selectByName", backendManagerDaoGroupSelectByName)
 	e.POST("/backend-dashboard/backend/dao.groups.insert", backendManagerDaoGroupsInsert)

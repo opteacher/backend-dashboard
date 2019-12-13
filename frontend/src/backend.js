@@ -51,6 +51,9 @@ export default {
     async addTempSteps(steps) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.insertMany`, {steps}))
     },
+    async delTempStepByKey(key) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.deleteByKey`, {key}))
+    },
     async delStep(delInfo) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/steps.delete`, delInfo))
     },

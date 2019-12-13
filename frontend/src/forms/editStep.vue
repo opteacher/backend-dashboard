@@ -2,15 +2,15 @@
 <el-form ref="form" :model="step" label-width="80px">
     <el-form-item label="操作KEY">
         <el-col :span="18">
-            <el-select class="w-100" v-model="step.idenKey" placeholder="选择既存操作" @change="hdlSelStep">
-                <el-option v-for="step in steps" :key="step.idenKey" :label="step.idenKey" :value="step.idenKey"/>
+            <el-select class="w-100" v-model="step.key" placeholder="选择既存操作" @change="hdlSelStep">
+                <el-option v-for="step in steps" :key="step.key" :label="step.key" :value="step.key"/>
             </el-select>
         </el-col>
         <el-col :span="6">
             <el-button class="float-right" @click="hdlAddStep">添加操作模板</el-button>
         </el-col>
     </el-form-item>
-    <step-detail v-if="Object.keys(stepMap).includes(step.idenKey)" :selStep="step" preMode="editing-step" :locVars="stepInfo.locVars"/>
+    <step-detail v-if="Object.keys(stepMap).includes(step.key)" :selStep="step" preMode="editing-step" :locVars="stepInfo.locVars"/>
 </el-form>
 </template>
 
@@ -32,7 +32,7 @@ export default {
             steps: [],
             stepMap: {},
             step: {
-                idenKey: ""
+                key: ""
             }
         }
     },
@@ -43,7 +43,7 @@ export default {
         } else {
             this.steps = res.steps || []
             for (let step of this.steps) {
-                this.stepMap[step.idenKey] = step
+                this.stepMap[step.key] = step
             }
         }
     },
@@ -52,7 +52,7 @@ export default {
 
         },
         hdlSelStep() {
-            this.step = _.cloneDeep(this.stepMap[this.step.idenKey])
+            this.step = _.cloneDeep(this.stepMap[this.step.key])
         }
     }
 }
