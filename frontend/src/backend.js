@@ -48,6 +48,9 @@ export default {
     async qryAllTempStep() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.selectAll`))
     },
+    async addTempSteps(steps) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.insertMany`, {steps}))
+    },
     async delStep(delInfo) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/steps.delete`, delInfo))
     },
@@ -74,5 +77,11 @@ export default {
     },
     async qryAllImplMods() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/mod.sign.selectAll`, {type: "dao_implement"}))
+    },
+    async qryModSignById(id) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/mod.info.selectBySignId`, {id}))
+    },
+    async updDaoGroupImpl(setDaoGpImplInf) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.groups.updateImplement`, setDaoGpImplInf))
     }
 }

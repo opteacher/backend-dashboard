@@ -191,22 +191,6 @@ func (d *Dao) Insert(ctx context.Context, colcName string, entry interface{}) (s
 	}
 }
 
-func (d *Dao) InsertMany(ctx context.Context, colcName string, entries []interface{}) (int64, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
-	defer cli.Disconnect(ctx)
-	if err != nil {
-		return -1, err
-	}
-	db := cli.Database(d.dbName)
-	colc := db.Collection(colcName)
-	res, err := colc.InsertMany(ctx, entries)
-	if err != nil {
-		return -1, err
-	} else {
-		return int64(len(res.InsertedIDs)), nil
-	}
-}
-
 func (d *Dao) Save(ctx context.Context, colcName string, conds bson.D, entry interface{}) (map[string]interface{}, error) {
 	cli, err := mongo.Connect(ctx, d.cliOpns)
 	defer cli.Disconnect(ctx)

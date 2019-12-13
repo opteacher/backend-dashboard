@@ -1,5 +1,4 @@
 [{
-  "_id" : ObjectId("5dd6566bc638de41769e9a12"),
   "id" : "",
   "name" : "Nil",
   "props" : [],
@@ -14,7 +13,6 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "_id" : ObjectId("5dd6566bc638de41769e9a13"),
   "id" : "",
   "name" : "NumIden",
   "props" : [
@@ -37,7 +35,6 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "_id" : ObjectId("5dd6566bc638de41769e9a14"),
   "id" : "",
   "name" : "StrIden",
   "props" : [

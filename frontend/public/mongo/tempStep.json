@@ -1,0 +1,42 @@
+{
+    "steps": [{
+        "idenKey": "mongo_insert",
+        "group": "database",
+        "desc": "做数据库插入操作",
+        "inputs": {
+            "COLC_NAME": "",
+            "ENTRY": ""
+        },
+        "outputs": ["_id"],
+        "code": "_id, err := s.dao.Mongo.Insert(ctx, \"%TABLE_NAME%\", %OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n"
+    }, {
+        "idenKey": "mongo_query",
+        "group": "database",
+        "desc": "做数据库查询操作",
+        "inputs": {
+            "COLC_NAME": "",
+            "CONDITIONS": ""
+        },
+        "outputs": ["res"],
+        "code": "res, err := s.dao.Mongo.Query(ctx, \"%TABLE_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n"
+    }, {
+        "idenKey": "mongo_update",
+        "group": "database",
+        "desc": "做数据库更新操作",
+        "inputs": {
+            "COLC_NAME": "",
+            "CONDITIONS": "",
+            "ENTRY": ""
+        },
+        "code": "_, err := s.dao.Mongo.Update(ctx, \"%TABLE_NAME%\", %CONDITIONS%, %OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n"
+    }, {
+        "idenKey": "mongo_delete",
+        "group": "database",
+        "desc": "做数据库删除操作",
+        "inputs": {
+            "COLC_NAME": "",
+            "CONDITIONS": ""
+        },
+        "code": "_, err := s.dao.Mongo.Delete(ctx, \"%TABLE_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n"
+    }]
+}

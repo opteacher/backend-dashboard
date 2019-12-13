@@ -1,7 +1,6 @@
 backend/.idea/
 backend/cmd/debug
 backend/cmd/__debug_bin
-backend/configs/
 backend/workspace/cache/
 frontend/node_modules/
 frontend/public/dist/

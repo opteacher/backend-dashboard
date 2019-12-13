@@ -304,6 +304,17 @@ func (s *Service) TempStepsSelectAll(ctx context.Context, req *pb.Empty) (*pb.St
 	return resp, nil
 }
 
+func (s *Service) TempStepsInsertMany(ctx context.Context, req *pb.StepArray) (*pb.StepArray, error) {
+	var entries []interface{}
+	for _, step := range req.Steps {
+		entries = append(entries, step)
+	}
+	if _, err := s.mongo.InsertMany(ctx, model.TEMP_STEP_TABLE, entries); err != nil {
+		return nil, fmt.Errorf("批量插入模板步骤失败：%v", err)
+	}
+	return req, nil
+}
+
 func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {
 	ress, err := s.mongo.Query(ctx, model.DAO_GROUPS_TABLE, bson.D{})
 	if err != nil {
@@ -353,6 +364,22 @@ func (s *Service) DaoGroupDeleteByName(ctx context.Context, req *pb.NameID) (*pb
 		return nil, fmt.Errorf("删除DAO组失败：%v", err)
 	}
 	return resp, nil
+}
+
+func (s *Service) DaoGroupUpdateImplement(ctx context.Context, req *pb.DaoGrpSetImpl) (*pb.DaoGroup, error) {
+	group, err := s.DaoGroupSelectByName(ctx, &pb.NameID{Name: req.Gpname})
+	if err != nil {
+		return nil, err
+	}
+
+	group.Implement = req.ImplId
+	_, err = s.mongo.Update(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Gpname}}, bson.D{
+		{"$set", bson.D{{"implement", group.Implement}}},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("配置DAO组实例化失败：%v", err)
+	}
+	return group, nil
 }
 
 func (s *Service) DaoInterfaceInsert(ctx context.Context, req *pb.DaoItfcIst) (*pb.DaoInterface, error) {
@@ -422,6 +449,19 @@ func (s *Service) ModuleSignSelectAll(ctx context.Context, req *pb.TypeIden) (*p
 		resp.ModSigns = append(resp.ModSigns, ms.(*pb.ModuleSign))
 	}
 	return resp, nil
+}
+
+func (s *Service) ModuleInfoSelectBySignId(ctx context.Context, req *pb.StrID) (*pb.ModuleSign, error) {
+	res, err := s.mongo.QueryOne(ctx, model.MOD_SIGN_TABLE, bson.D{{"id", req.Id}})
+	if err != nil {
+		return nil, fmt.Errorf("根据模块ID获取模块信息失败：%v", err)
+	}
+
+	obj, err := utils.ToObj(res, reflect.TypeOf((*pb.ModuleSign)(nil)).Elem())
+	if err != nil {
+		return nil, fmt.Errorf("转成ModuleSign对象失败：%v", err)
+	}
+	return obj.(*pb.ModuleSign), nil
 }
 
 // Ping ping the resource.

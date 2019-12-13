@@ -5,7 +5,9 @@ import axios from "axios"
 import routes from "./routes"
 import ElementUI from "element-ui"
 import "./styles/common.css"
+import VueHolder from 'vue-holderjs'
 
+Vue.use(VueHolder)
 Vue.use(VueRouter)
 Vue.use(VueAxios, axios)
 Vue.use(ElementUI)

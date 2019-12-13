@@ -1,0 +1,22 @@
+{
+    "host": {
+        "label": "主机IP",
+        "type": "text"
+    },
+    "port": {
+        "label": "端口",
+        "type": "number"
+    },
+    "database": {
+        "label": "数据库名",
+        "type": "text"
+    },
+    "username": {
+        "label": "用户名",
+        "type": "text"
+    },
+    "password": {
+        "label": "密码",
+        "type": "text"
+    }
+}

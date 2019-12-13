@@ -28,7 +28,10 @@
                         <el-table-column label="描述" prop="desc"/>
                         <el-table-column label="配置" prop="setting">
                             <template slot-scope="subScope">
-                                <el-button size="mini" type="danger" @click="delInterface(scope.row.name, subScope.row.name)">删除</el-button>
+                                <el-button-group>
+                                    <el-button size="mini" @click="showInterfaceDetail(scope.row, subScope.row)">详情</el-button>
+                                    <el-button size="mini" type="danger" @click="delInterface(scope.row.name, subScope.row.name)">删除</el-button>
+                                </el-button-group>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -48,13 +51,20 @@
             <el-table-column label="实现" prop="implement">
                 <template slot-scope="scope">
                     <el-button v-if="!scope.row.implement" size="mini" @click="implingGpName = scope.row.name">实例化DAO组</el-button>
-                    <el-link v-else type="primary" size="mini">{{scope.row.implement}}</el-link>
+                    <el-link v-else type="primary" size="mini" style="color:#409EFF" @click="showDaoImpl = {
+                        grpName: scope.row.name, implId: scope.row.implement
+                    }">
+                        {{scope.row.implement}}
+                    </el-link>
                 </template>
             </el-table-column>
-            <el-table-column label="配置" prop="setting">
+            <el-table-column label="配置" prop="setting" width="300">
                 <template slot-scope="scope">
-                    <el-button size="mini" @click="editingGroup = scope.row">添加接口</el-button>
-                    <el-button size="mini" type="danger" @click="delGroup(scope.row.name)">删除</el-button>
+                    <el-button-group>
+                        <el-button size="mini" @click="editingGroup = scope.row">添加接口</el-button>
+                        <el-button v-show="scope.row.implement" size="mini">实例配置</el-button>
+                        <el-button size="mini" type="danger" @click="delGroup(scope.row.name)">删除</el-button>
+                    </el-button-group>
                 </template>
             </el-table-column>
         </el-table>
@@ -76,10 +86,23 @@
         </el-dialog>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
         <el-dialog title="实例化DAO组" :visible="implingGpName.length != 0" :modal-append-to-body="false" width="50vw" @close="implingGpName = ''">
-            <impl-dao-group ref="impl-dao-group"/>
+            <impl-dao-group ref="impl-dao-group-form"/>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="implingGpName = ''">取 消</el-button>
                 <el-button type="primary" @click="implGroup">确 定</el-button>
+            </div>
+        </el-dialog>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="实例化信息" :visible="showDaoImpl != null" :modal-append-to-body="false" width="30vw" @close="showDaoImpl = null">
+            <dao-impl-info ref="dao-impl-info-form" :implId="showDaoImpl ? showDaoImpl.implId : ''"/>
+            <div slot="footer" class="dialog-footer">
+                <el-popover placement="top" width="160" v-model="showConfirmUistlImpl">
+                    <p style="font-size: 0.5em">确定卸载DAO实例吗？</p>
+                    <div style="text-align: right; margin: 0">
+                        <el-button type="primary" size="mini" @click="uninstallImplement">确 定</el-button>
+                    </div>
+                    <el-button type="danger" slot="reference">卸 载</el-button>
+                </el-popover>
             </div>
         </el-dialog>
     </div>
@@ -87,25 +110,31 @@
 </template>
 
 <script>
+import axios from "axios"
 import backend from "../backend"
 import dashboard from "../layouts/dashboard"
 import editDaoGroup from "../forms/editDaoGroup"
 import editDaoInterface from "../forms/editDaoInterface"
 import implDaoGroup from "../forms/implDaoGroup"
+import daoImplInfo from "../forms/daoImplInfo"
+import chkLoadRes from "../forms/chkLoadRes"
 
 export default {
     components: {
         "dashboard": dashboard,
         "edit-dao-group": editDaoGroup,
         "edit-dao-interface": editDaoInterface,
-        "impl-dao-group": implDaoGroup
+        "impl-dao-group": implDaoGroup,
+        "dao-impl-info": daoImplInfo
     },
     data() {
         return {
             showAddDaoGroup: false,
             showLoadDaoGroup: false,
+            showConfirmUistlImpl: false,
             editingGroup: null,
             implingGpName: "",
+            showDaoImpl: null,
             daoGroups: [],
             categories: {
                 databases: [{
@@ -201,8 +230,60 @@ export default {
                 }
             })
         },
-        implGroup(gpname) {
-
+        async implGroup() {
+            const implDaoGroup = this.$refs["impl-dao-group-form"]
+            const selImpl = implDaoGroup.$refs["impl-dao-group-form"].model
+            let res = await backend.updDaoGroupImpl({
+                gpname: this.implingGpName,
+                implId: selImpl.id
+            })
+            if (typeof res === "string") {
+                this.$message.error(`实例化DAO组时发生错误：${res}`)
+                return
+            }
+            const action = await this.$msgbox({
+                title: "提示",
+                message: this.$createElement(chkLoadRes, {
+                    props: {
+                        daoImpl: selImpl,
+                    },
+                    ref: "tip-load-temp-res-form"
+                })
+            })
+            if (action !== "confirm") {
+                this.implingGpName = ""
+                await this.refresh()
+                return
+            }
+            const result = this.$refs["tip-load-temp-res-form"]
+            if (result.loadTmpStep) {
+                const steps = (await axios.get(selImpl.tmpStepHref)).data.steps
+                res = await backend.addTempSteps(steps)
+                if (typeof res === "string") {
+                    this.$message.error(`导入模板步骤时发生错误：${res}`)
+                }
+            }
+            this.$message({
+                type: "info",
+                message: `DAO组（${this.implingGpName}）实例化成功`
+            })
+            this.implingGpName = ""
+            await this.refresh()
+        },
+        showInterfaceDetail(group, itfc) {
+            
+        },
+        async uninstallImplement() {
+            let res = await backend.updDaoGroupImpl({
+                gpname: this.showDaoImpl.grpName, implId: ""
+            })
+            if (typeof res === "string") {
+                this.$message.error(`卸载DAO实例时发生错误：${res}`)
+            } else {
+                this.showConfirmUistlImpl = false
+                this.showDaoImpl = null
+                await this.refresh()
+            }
         }
     }
 }

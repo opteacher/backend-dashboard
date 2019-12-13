@@ -1,0 +1,10 @@
+
+[demo]
+    url = "mongodb://127.0.0.1:27017"
+    db = "test"
+    # CREATE: 没有则创建表
+    # DROP_CREATE: 有则删表再创建
+    # UPDATE: 删除表中内容重新配置（需指定配置文件）
+    # NONE: 不做任何处理
+    mod = "DROP_CREATE"
+    initData = "backend/datas"

@@ -1,5 +1,5 @@
 <template>
-<el-form>
+<el-form ref="impl-dao-group-form" :model="selImpl">
     <el-form v-model="searchForm">
         <el-form-item :rules="[
             { required: true, message: '需要指定DAO实例名', trigger: 'blur' },
@@ -19,7 +19,7 @@
                             <div class="clearfix" slot="header">
                                 <span>{{avaImpls[i + j].name}}</span>
                             </div>
-                            <div>{{avaImpls[i + j].desc}}</div>
+                            <div style="font-size:0.2em">{{avaImpls[i + j].desc}}</div>
                         </el-card>
                     </el-link>
                 </el-col>
@@ -57,6 +57,9 @@ export default {
             for (let i = 0; i < this.avaImpls.length; i += step) {
                 i = i == 0 ? i : i + 1
                 rowIdxs.push(i)
+                if (step === 0) {
+                    break
+                }
             }
             return rowIdxs
         }

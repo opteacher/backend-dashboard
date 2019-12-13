@@ -1,5 +1,4 @@
 [{
-  "_id" : ObjectId("5df07d6c14f783b5505b1114"),
   "name" : "Mongo",
   "category" : "databases",
   "language" : "golang",

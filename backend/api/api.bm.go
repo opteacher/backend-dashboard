@@ -38,15 +38,18 @@ var PathBackendManagerStepsInsert = "/backend-dashboard/backend/steps.insert"
 var PathBackendManagerStepsDelete = "/backend-dashboard/backend/steps.delete"
 var PathBackendManagerTempStepsSelectAll = "/backend-dashboard/backend/temp.steps.selectAll"
 var PathBackendManagerTempStepsInsert = "/backend-dashboard/backend/temp.steps.insert"
+var PathBackendManagerTempStepsInsertMany = "/backend-dashboard/backend/temp.steps.insertMany"
 var PathBackendManagerDaoGroupsSelectAll = "/backend-dashboard/backend/dao.groups.selectAll"
 var PathBackendManagerDaoGroupSelectByName = "/backend-dashboard/backend/dao.groups.selectByName"
 var PathBackendManagerDaoGroupsInsert = "/backend-dashboard/backend/dao.groups.insert"
 var PathBackendManagerDaoGroupDeleteByName = "/backend-dashboard/backend/dao.groups.deleteByName"
+var PathBackendManagerDaoGroupUpdateImplement = "/backend-dashboard/backend/dao.groups.updateImplement"
 var PathBackendManagerDaoInterfaceInsert = "/backend-dashboard/backend/dao.interface.insert"
 var PathBackendManagerDaoInterfaceDelete = "/backend-dashboard/backend/dao.interface.delete"
 var PathBackendManagerExport = "/backend-dashboard/backend/export"
 var PathBackendManagerSpecialSymbols = "/backend-dashboard/backend/specialSymbols"
 var PathBackendManagerModuleSignSelectAll = "/backend-dashboard/backend/mod.sign.selectAll"
+var PathBackendManagerModuleInfoSelectBySignId = "/backend-dashboard/backend/mod.info.selectBySignId"
 
 // BackendManagerBMServer is the server API for BackendManager service.
 type BackendManagerBMServer interface {
@@ -82,6 +85,8 @@ type BackendManagerBMServer interface {
 
 	TempStepsInsert(ctx context.Context, req *Step) (resp *Step, err error)
 
+	TempStepsInsertMany(ctx context.Context, req *StepArray) (resp *StepArray, err error)
+
 	DaoGroupsSelectAll(ctx context.Context, req *Empty) (resp *DaoGroupArray, err error)
 
 	DaoGroupSelectByName(ctx context.Context, req *NameID) (resp *DaoGroup, err error)
@@ -89,6 +94,8 @@ type BackendManagerBMServer interface {
 	DaoGroupsInsert(ctx context.Context, req *DaoGroup) (resp *DaoGroup, err error)
 
 	DaoGroupDeleteByName(ctx context.Context, req *NameID) (resp *DaoGroup, err error)
+
+	DaoGroupUpdateImplement(ctx context.Context, req *DaoGrpSetImpl) (resp *DaoGroup, err error)
 
 	DaoInterfaceInsert(ctx context.Context, req *DaoItfcIst) (resp *DaoInterface, err error)
 
@@ -99,6 +106,8 @@ type BackendManagerBMServer interface {
 	SpecialSymbols(ctx context.Context, req *Empty) (resp *SymbolsResp, err error)
 
 	ModuleSignSelectAll(ctx context.Context, req *TypeIden) (resp *ModuleSignArray, err error)
+
+	ModuleInfoSelectBySignId(ctx context.Context, req *StrID) (resp *ModuleSign, err error)
 }
 
 var BackendManagerSvc BackendManagerBMServer
@@ -247,6 +256,15 @@ func backendManagerTempStepsInsert(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerTempStepsInsertMany(c *bm.Context) {
+	p := new(StepArray)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.TempStepsInsertMany(c, p)
+	c.JSON(resp, err)
+}
+
 func backendManagerDaoGroupsSelectAll(c *bm.Context) {
 	p := new(Empty)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
@@ -280,6 +298,15 @@ func backendManagerDaoGroupDeleteByName(c *bm.Context) {
 		return
 	}
 	resp, err := BackendManagerSvc.DaoGroupDeleteByName(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerDaoGroupUpdateImplement(c *bm.Context) {
+	p := new(DaoGrpSetImpl)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.DaoGroupUpdateImplement(c, p)
 	c.JSON(resp, err)
 }
 
@@ -328,6 +355,15 @@ func backendManagerModuleSignSelectAll(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerModuleInfoSelectBySignId(c *bm.Context) {
+	p := new(StrID)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ModuleInfoSelectBySignId(c, p)
+	c.JSON(resp, err)
+}
+
 // RegisterBackendManagerBMServer Register the blademaster route
 func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer) {
 	BackendManagerSvc = server
@@ -347,13 +383,16 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/steps.delete", backendManagerStepsDelete)
 	e.POST("/backend-dashboard/backend/temp.steps.selectAll", backendManagerTempStepsSelectAll)
 	e.POST("/backend-dashboard/backend/temp.steps.insert", backendManagerTempStepsInsert)
+	e.POST("/backend-dashboard/backend/temp.steps.insertMany", backendManagerTempStepsInsertMany)
 	e.POST("/backend-dashboard/backend/dao.groups.selectAll", backendManagerDaoGroupsSelectAll)
 	e.POST("/backend-dashboard/backend/dao.groups.selectByName", backendManagerDaoGroupSelectByName)
 	e.POST("/backend-dashboard/backend/dao.groups.insert", backendManagerDaoGroupsInsert)
 	e.POST("/backend-dashboard/backend/dao.groups.deleteByName", backendManagerDaoGroupDeleteByName)
+	e.POST("/backend-dashboard/backend/dao.groups.updateImplement", backendManagerDaoGroupUpdateImplement)
 	e.POST("/backend-dashboard/backend/dao.interface.insert", backendManagerDaoInterfaceInsert)
 	e.POST("/backend-dashboard/backend/dao.interface.delete", backendManagerDaoInterfaceDelete)
 	e.POST("/backend-dashboard/backend/export", backendManagerExport)
 	e.POST("/backend-dashboard/backend/specialSymbols", backendManagerSpecialSymbols)
 	e.POST("/backend-dashboard/backend/mod.sign.selectAll", backendManagerModuleSignSelectAll)
+	e.POST("/backend-dashboard/backend/mod.info.selectBySignId", backendManagerModuleInfoSelectBySignId)
 }

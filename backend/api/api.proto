@@ -102,6 +102,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc TempStepsInsertMany(StepArray) returns (StepArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.steps.insertMany"
+            body: "*"
+        };
+    };
     rpc DaoGroupsSelectAll(Empty) returns (DaoGroupArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/dao.groups.selectAll"
@@ -121,6 +127,12 @@ service BackendManager {
     rpc DaoGroupDeleteByName(NameID) returns (DaoGroup) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/dao.groups.deleteByName"
+            body: "*"
+        };
+    };
+    rpc DaoGroupUpdateImplement(DaoGrpSetImpl) returns (DaoGroup) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.groups.updateImplement"
             body: "*"
         };
     };
@@ -154,6 +166,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc ModuleInfoSelectBySignId(StrID) returns (ModuleSign) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/mod.info.selectBySignId"
+            body: "*"
+        };
+    };
 }
 
 message Empty {
@@ -166,6 +184,10 @@ message NumberID {
 
 message NameID {
     string name = 1;
+}
+
+message StrID {
+    string id = 1;
 }
 
 message TypeIden {
@@ -206,7 +228,8 @@ message DaoGroup {
     string name = 1[(gogoproto.moretags)='orm:",PRIMARY_KEY|UNIQUE_KEY"'];
     string category = 2[(gogoproto.moretags)='orm:",FOREIGN_KEY(dao_categories.name)"'];
     string language = 3;
-    repeated DaoInterface interfaces = 4[(gogoproto.moretags)='orm:"*"'];
+    string implement = 4;
+    repeated DaoInterface interfaces = 5[(gogoproto.moretags)='orm:"*"'];
 }
 
 message DaoCategory {
@@ -242,6 +265,11 @@ message DaoItfcIden {
 message DaoItfcIst {
     string gpname = 1[(gogoproto.jsontag) = 'gpname'];
     DaoInterface interface = 2[(gogoproto.jsontag) = 'interface'];
+}
+
+message DaoGrpSetImpl {
+    string gpname = 1;
+    string implId = 2;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,8 +377,11 @@ message ModuleSign {
     string icon = 3;
     string type = 4;
     string desc = 5;
-    string href = 6;
-    string homeUrl = 7;
+    string daoImplHref = 6;// 获得DAO布置表（json），罗列DAO所需文件和位置信息
+    string daoConfHref = 7;// 获得DAO配置表（json），罗列配置和组件在画面的类型
+    string tmpStepHref = 8;// 获得模板步骤信息（json）
+    string apiTempHref = 9;// 获得API模板信息（json）
+    string homeUrl = 10;
 }
 
 message ModuleSignArray {
