@@ -1,8 +1,8 @@
 package mws
 
 import (
-	"strings"
 	bm "github.com/bilibili/kratos/pkg/net/http/blademaster"
+	"strings"
 )
 
 type corsSetup struct {
