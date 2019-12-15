@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api/api.proto",
+        "title": "api.proto",
         "version": "1"
     },
     "schemes": [
@@ -156,6 +156,43 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/.backend.manager.service.v1.NameID"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/dao.config.insert": {
+            "post": {
+                "summary": "/backend-dashboard/backend/dao.config.insert",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.DaoConfig"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.DaoConfig"
                         }
                     }
                 ],
@@ -1173,6 +1210,20 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                    }
+                }
+            }
+        },
+        ".backend.manager.service.v1.DaoConfig": {
+            "type": "object",
+            "properties": {
+                "implement": {
+                    "type": "string"
+                },
+                "configs": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
                     }
                 }
             }

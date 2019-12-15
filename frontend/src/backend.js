@@ -51,6 +51,9 @@ export default {
     async addTempSteps(steps) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.insertMany`, {steps}))
     },
+    async addTempStep(step) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.insert`, step))
+    },
     async delTempStepByKey(key) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.deleteByKey`, {key}))
     },
@@ -74,6 +77,9 @@ export default {
     },
     async delDaoInterface(delDaoItfcInf) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.interface.delete`, delDaoItfcInf))
+    },
+    async addDaoConfig(implId, configs) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.config.insert`, {"implement": implId, configs}))
     },
     async qryAllDaoGroups() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.groups.selectAll`))

@@ -34,7 +34,7 @@
         </el-table>
     </div>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog title="添加模板步骤" :visible.sync="showAddTempStep" :modal-append-to-body="false" width="50vw">
+    <el-dialog title="添加模板步骤" :visible.sync="showAddTempStep" :modal-append-to-body="false" width="40vw">
         <add-temp-step ref="add-temp-step-form"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddTempStep = false">取 消</el-button>
@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import _ from "lodash"
 import dashboard from "../layouts/dashboard"
 import backend from '../backend'
 import codeView from "../forms/codeView"
@@ -74,7 +75,29 @@ export default {
             }
         },
         addTempStep() {
-            
+            const form = this.$refs["add-temp-step-form"]
+            form.$refs["add-temp-step-form"].validate(async valid => {
+                if (!valid) {
+                    return
+                }
+                const tempStep = _.cloneDeep(form.$refs["add-temp-step-form"].model)
+                let inputs = {}
+                for (let input of tempStep.inputs) {
+                    inputs[input] = ""
+                }
+                tempStep.inputs = inputs
+                let res = await backend.addTempStep(tempStep)
+                if (typeof res === "string") {
+                    this.$message.error(`插入模板步骤发生错误：${res}`)
+                } else {
+                    this.showAddTempStep = false
+                    await this.refresh()
+                    this.$message({
+                        type: "info",
+                        message: `模板步骤（${tempStep.key}）添加成功！`
+                    })
+                }
+            })
         },
         showCode(code) {
             this.$msgbox({
@@ -82,7 +105,8 @@ export default {
                 message: this.$createElement(codeView, {
                     props: {code}
                 }),
-                showConfirmButton: false
+                showConfirmButton: false,
+                customClass: "w-60"
             }).catch(err => {})
         },
         delStep(key) {

@@ -62,7 +62,7 @@
                 <template slot-scope="scope">
                     <el-button-group>
                         <el-button size="mini" @click="editingGroup = scope.row">添加接口</el-button>
-                        <el-button v-show="scope.row.implement" size="mini">实例配置</el-button>
+                        <el-button v-show="scope.row.implement" size="mini" @click="confImpl(scope.row.implement)">实例配置</el-button>
                         <el-button size="mini" type="danger" @click="delGroup(scope.row.name)">删除</el-button>
                     </el-button-group>
                 </template>
@@ -110,6 +110,7 @@
 </template>
 
 <script>
+import $ from "jquery"
 import axios from "axios"
 import backend from "../backend"
 import dashboard from "../layouts/dashboard"
@@ -282,6 +283,62 @@ export default {
             } else {
                 this.showConfirmUistlImpl = false
                 this.showDaoImpl = null
+                await this.refresh()
+            }
+        },
+        async confImpl(implId) {
+            let res = await backend.qryModSignById(implId)
+            if (typeof res === "string") {
+                this.$message.error(`查询模块标牌时发生错误：${res}`)
+                return
+            }
+            const compTemps = (await axios.get(res.daoConfHref)).data
+            let comps = []
+            const h = this.$createElement;
+            for (let compId in compTemps) {
+                const cmpTmp = compTemps[compId]
+                let content = null
+                switch (cmpTmp.type) {
+                    case "number":
+                    case "text":
+                    case "password":
+                        content = [
+                            h("input", {
+                                "attrs": {
+                                    "name": compId,
+                                    "type": cmpTmp.type
+                                },
+                                "class": "form-control"
+                            })
+                        ]
+                        break
+                }
+                comps.push(h("div", {"class": "form-group row"}, [
+                    h("label", {"class": "col-sm-2 col-form-label"}, cmpTmp.label),
+                    h("div", {"class": "col-sm-10"}, content)
+                ]))
+            }
+            const action = await this.$msgbox({
+                title: "接口信息",
+                message: h("form", null, [comps]),
+                showConfirmButton: true,
+                customClass: "w-50"
+            })
+            if (action !== "confirm") {
+                return
+            }
+            let configs = {}
+            for (let compId in compTemps) {
+                configs[compId] = $(`[name='${compId}']`)[0].value
+            }
+            res = await backend.addDaoConfig(implId, configs)
+            if (typeof res === "string") {
+                this.$message.error(`DAO实例配置时发生错误：${res}`)
+            } else {
+                this.$message({
+                    type: "info",
+                    message: `实例配置成功`
+                })
                 await this.refresh()
             }
         }

@@ -160,6 +160,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc DaoConfigInsert(DaoConfig) returns (DaoConfig) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.config.insert"
+            body: "*"
+        };
+    };
     rpc Export(ExpOptions) returns (UrlResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/export"
@@ -259,10 +265,8 @@ message DaoGroupArray {
 }
 
 message DaoConfig {
-    string name = 1[(gogoproto.moretags)='orm:",PRIMARY_KEY|COMMENT(键名)"'];
-    string value = 2[(gogoproto.moretags)='orm:",COMMENT(键值（按JSON字符串存储）)"'];
-    string implement = 3[(gogoproto.moretags)='orm:",PRIMARY_KEY|COMMENT(所属实现方案)"'];
-    string desc = 4[(gogoproto.moretags)='orm:",COMMENT(备注)"'];
+    string implement = 1;
+    map<string, string> configs = 2;
 }
 
 message DaoInterface {

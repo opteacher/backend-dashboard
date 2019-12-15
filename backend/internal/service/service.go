@@ -8,6 +8,7 @@ import (
 	"backend/internal/utils"
 	"context"
 	"fmt"
+	f
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"path"
 	"reflect"
@@ -445,6 +446,14 @@ func (s *Service) DaoInterfaceDelete(ctx context.Context, req *pb.DaoItfcIden) (
 		break
 	}
 	return resp, nil
+}
+
+func (s *Service) DaoConfigInsert(ctx context.Context, req *pb.DaoConfig) (*pb.DaoConfig, error) {
+	_, err := s.mongo.Insert(ctx, model.DAO_CONFIGS_TABLE, req)
+	if err != nil {
+		return nil, fmt.Errorf("插入DAO配置失败：%v", err)
+	}
+	return req, nil
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {

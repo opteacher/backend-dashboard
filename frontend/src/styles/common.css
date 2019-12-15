@@ -68,6 +68,14 @@
     margin-top: 10px;
 }
 
+.w-50 {
+    width: 60vw;
+}
+
+.w-60 {
+    width: 60vw;
+}
+
 .interval-container .interval-item+.interval-item {
     margin-left: 10px;
 }
