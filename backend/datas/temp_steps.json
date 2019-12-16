@@ -64,18 +64,18 @@
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
 }, {
-  "key" : "json_unmarshal",
+  "key" : "json_unmarshalToMap",
   "requires" : [
-    "%PACKAGE%/internal/utils"
+    "encoding/json"
   ],
   "desc" : "将JSON字节数组转成Map键值对",
   "inputs" : {
-    "OBJ_TYPE" : ""
+    "BYTES": ""
   },
   "outputs" : [
     "omap"
   ],
-  "code" : "omap, err := utils.UnmarshalJSON(bytes, reflect.TypeOf((*%OBJ_TYPE%)(nil)).Elem())\nif err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
+  "code" : "omap := make(map[string]interface{})\nif err := json.Unmarshal(%BYTES%, &omap); err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
   "apiname" : "",
   "symbol" : 0,
   "group": "json",

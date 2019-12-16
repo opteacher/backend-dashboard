@@ -1,5 +1,13 @@
 {
     "steps": [{
+        "key": "mongo_buildUpdateSet",
+        "desc": "构建数据库更新bson.D",
+        "inputs": {
+            "OMAP": ""
+        },
+        "outputs": ["updSet"],
+        "code": "temp := bson.D{}\nfor key, val := range %OMAP% {\n\ttemp = append(temp, bson.E{key, val})\n}\nupdSet := bson.D{{'$set', temp}}"
+    }, {
         "key": "mongo_insert",
         "group": "database",
         "desc": "做数据库插入操作",

@@ -4,8 +4,21 @@
         <el-button class="p-7" plain icon="el-icon-arrow-left" size="mini"/>
     </el-col>
     <el-col class="p-10" :span="22">
-        <el-dropdown split-button trigger="click" size="mini" type="primary" @click="showAddApiDlg = true" @command="hdlSelApi">
-            添加接口
+        <div v-show="qryApiFun === 'qryAllApis'">
+            <el-dropdown split-button trigger="click" size="mini" type="primary" @click="showAddApiDlg = true" @command="hdlSelApi">
+                添加接口
+                <el-dropdown-menu slot="dropdown" >
+                    <el-dropdown-item v-for="api in recentApis" :key="api.api.name" :command="api.api.name">
+                        {{api.api.name}}
+                    </el-dropdown-item>
+                    <el-dropdown-item command="*more" icon="el-icon-more"/>
+                </el-dropdown-menu>
+            </el-dropdown>
+            <el-button size="mini" @click="hdlDelApi" :disabled="selApi.name.length === 0">删除接口</el-button>
+            <el-button size="mini" @click="showTempApis(true)">显示模板接口</el-button>
+        </div>
+        <el-dropdown v-show="qryApiFun === 'qryAllTempApis'" split-button trigger="click" size="mini" @click="showTempApis(false)" @command="hdlSelApi">
+            隐藏模板接口
             <el-dropdown-menu slot="dropdown" >
                 <el-dropdown-item v-for="api in recentApis" :key="api.api.name" :command="api.api.name">
                     {{api.api.name}}
@@ -13,14 +26,13 @@
                 <el-dropdown-item command="*more" icon="el-icon-more"/>
             </el-dropdown-menu>
         </el-dropdown>
-        <el-button size="mini" @click="hdlDelApi" :disabled="selApi.name.length === 0">删除接口</el-button>
     </el-col>
     <el-col class="p-10" :span="1">
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
     </el-col>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog title="选择接口" :visible.sync="showSelApiDlg" :modal-append-to-body="false" width="40vw">
-        <select-api ref="sel-api-form" :showFlag="showSelApiDlg"/>
+    <el-dialog title="选择接口" :visible.sync="showSelApiDlg" :modal-append-to-body="false" width="70vw">
+        <select-api ref="sel-api-form" :showFlag="showSelApiDlg" :qryApiFun="qryApiFun"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showSelApiDlg = false">取 消</el-button>
             <el-button type="primary" @click="selectApi">确 定</el-button>
@@ -50,6 +62,7 @@ export default {
     },
     data() {
         return {
+            qryApiFun: "qryAllApis",
             showSelApiDlg: false,
             showAddApiDlg: false,
             selApi: {
@@ -65,15 +78,16 @@ export default {
     methods: {
         async refresh() {
             this.recentApis = []
-            let res = await backend.qryAllApis()
+            let res = await backend[this.qryApiFun]()
             if (typeof res === "string") {
                 this.$message.error(`查询接口失败：${res}`)
             } else {
                 let apis = res.infos || []
                 if (apis.length === 0) {
-                    return
+                    this.selApiLocal({name: ""})
+                } else {
+                    this.selApiLocal(apis[0])
                 }
-                this.selApiLocal(apis[0])
             }
         },
         selApiLocal(api) {
@@ -166,9 +180,14 @@ export default {
                             message: `接口（${this.selApi.name}）删除成功！`
                         })
                         await this.refresh()
+                        this.$emit("del-api")
                     }
                 }
             })
+        },
+        async showTempApis(show) {
+            this.qryApiFun = show ? "qryAllTempApis" : "qryAllApis"
+            await this.refresh()
         }
     }
 }

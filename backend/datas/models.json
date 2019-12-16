@@ -56,4 +56,26 @@
   "xxx_nounkeyedliteral" : {},
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0
+}, {
+  "id" : "",
+  "name" : "JsonData",
+  "props" : [
+    {
+      "name" : "data",
+      "type" : "string",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    }
+  ],
+  "methods" : null,
+  "type" : "struct",
+  "model" : "",
+  "x" : 0,
+  "y" : 0,
+  "width" : 0,
+  "height" : 0,
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
 }]

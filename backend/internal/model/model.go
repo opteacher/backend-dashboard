@@ -3,6 +3,7 @@ package model
 const MODELS_TABLE = "models"
 const LINKS_TABLE = "links"
 const API_INFO_TABLE = "api_infos"
+const TEMP_API_TABLE = "temp_apis"
 const TEMP_STEP_TABLE = "temp_steps"
 const DAO_GROUPS_TABLE = "dao_groups"
 const DAO_CATEGORIES_TABLE = "dao_categories"

@@ -241,6 +241,41 @@ func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.Api
 	return res, nil
 }
 
+func (s *Service) TempApiSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfoArray, error) {
+	ress, err := s.mongo.Query(ctx, model.TEMP_API_TABLE, bson.D{})
+	if err != nil {
+		return nil, fmt.Errorf("查询所有模板接口失败：%v", err)
+	}
+
+	resp := new(pb.ApiInfoArray)
+	for _, res := range ress {
+		obj, err := utils.ToObj(res, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
+		if err != nil {
+			return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
+		}
+		resp.Infos = append(resp.Infos, obj.(*pb.ApiInfo))
+	}
+	return resp, nil
+}
+
+func (s *Service) TempApiInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo, error) {
+	if _, err := s.mongo.Insert(ctx, model.TEMP_API_TABLE, req); err != nil {
+		return nil, fmt.Errorf("插入模板接口失败：%v", err)
+	}
+	return req, nil
+}
+
+func (s *Service) TempApiInsertMany(ctx context.Context, req *pb.ApiInfoArray) (*pb.ApiInfoArray, error) {
+	var entries []interface{}
+	for _, api := range req.Infos {
+		entries = append(entries, api)
+	}
+	if _, err := s.mongo.InsertMany(ctx, model.TEMP_API_TABLE, entries); err != nil {
+		return nil, fmt.Errorf("批量插入模板接口失败：%v", err)
+	}
+	return req, nil
+}
+
 func (s *Service) StepsInsert(ctx context.Context, req *pb.StepReqs) (*pb.Empty, error) {
 	apiName := req.Step.Apiname
 	apiInfo, err := s.ApisSelectByName(ctx, &pb.NameID{Name: apiName})

@@ -21,7 +21,8 @@ import backend from "../backend"
 
 export default {
     props: {
-        "showFlag": Boolean
+        "showFlag": Boolean,
+        "qryApiFun": String
     },
     data() {
         return {
@@ -38,7 +39,7 @@ export default {
             this.selApi = selApi
         },
         async queryApis() {
-            let res = await backend.qryAllApis()
+            let res = await backend[this.qryApiFun]()
             if (typeof res === "string") {
                 this.$message.error(`查询接口失败：${res}`)
             } else {

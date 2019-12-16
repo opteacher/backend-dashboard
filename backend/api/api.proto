@@ -79,6 +79,23 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc TempApiSelectAll(Empty) returns (ApiInfoArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.apis.selectAll"
+        };
+    };
+    rpc TempApiInsert(ApiInfo) returns (ApiInfo) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.apis.insert"
+            body: "*"
+        };
+    };
+    rpc TempApiInsertMany(ApiInfoArray) returns (ApiInfoArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.apis.insertMany"
+            body: "*"
+        };
+    };
     rpc StepsInsert(StepReqs) returns (Empty) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/steps.insert"

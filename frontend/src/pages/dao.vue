@@ -240,6 +240,8 @@ export default {
             })
             if (typeof res === "string") {
                 this.$message.error(`实例化DAO组时发生错误：${res}`)
+                this.implingGpName = ""
+                await this.refresh()
                 return
             }
             const action = await this.$msgbox({
@@ -262,6 +264,13 @@ export default {
                 res = await backend.addTempSteps(steps)
                 if (typeof res === "string") {
                     this.$message.error(`导入模板步骤时发生错误：${res}`)
+                }
+            }
+            if (result.loadApiTemp) {
+                const apis = (await axios.get(selImpl.apiTempHref)).data
+                res = await backend.addTempApis(apis)
+                if (typeof res === "string") {
+                    this.$message.error(`导入模板接口时发生错误：${res}`)
                 }
             }
             this.$message({

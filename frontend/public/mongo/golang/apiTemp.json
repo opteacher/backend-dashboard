@@ -1,0 +1,109 @@
+[{
+    "name": "insert%MODEL%ToMongo",
+    "model": "%MODEL%",
+    "params": {"entry": "%MODEL%"},
+    "returns": ["%MODEL%"],
+    "route": "/%PROJ_NAME%/models/%MODEL%.insert",
+    "method": "post",
+    "steps": [{
+        "key": "mongo_insert",
+        "desc": "将%MODEL%插入mongo数据库",
+        "inputs": {
+            "COLC_NAME": "%MODEL%",
+            "ENTRY": "entry"
+        }
+    }, {
+        "key": "return_succeed",
+        "inputs": {"RETURN": "entry"}
+    }]
+}, {
+    "name": "delete%MODEL%FromMongoByRowId",
+    "model": "%MODEL%",
+    "params": {"iden": "StrIden"},
+    "returns": ["%MODEL%"],
+    "route": "/%PROJ_NAME%/models/%MODEL%.deleteByRowId",
+    "method": "post",
+    "steps": [{
+        "key": "assignment_create",
+        "inputs": {
+            "SOURCE": "bson.D{{'_id', iden.Id}}",
+            "TARGET": "conds"
+        }
+    }, {
+        "key": "mongo_query",
+        "desc": "查询_id为（%iden.Id%）的%MODEL%",
+        "inputs": {
+            "COLC_NAME": "%MODEL%",
+            "CONDITIONS": "conds"
+        }
+    }, {
+        "key": "mongo_delete",
+        "desc": "删除_id为（%iden.Id%）的%MODEL%",
+        "inputs": {
+            "COLC_NAME": "%MODEL%",
+            "CONDITIONS": "conds"
+        }
+    }, {
+        "key": "return_succeed",
+        "inputs": {"RETURN": "res"}
+    }]
+}, {
+    "name": "update%MODEL%InMongoByRowId",
+    "model": "%MODEL%",
+    "params": {
+        "iden": "StrIden",
+        "entry": "JsonData"
+    },
+    "returns": ["%MODEL%"],
+    "route": "/%PROJ_NAME%/models/%MODEL%.updateByRowId",
+    "method": "post",
+    "steps": [{
+        "key": "json_unmarshalToMap",
+        "desc": "将更新的实体转成map",
+        "inputs": {"BYTES": "entry.Data"}
+    }, {
+        "key": "mongo_buildUpdateSet",
+        "inputs": {"OMAP": "omap"}
+    }, {
+        "key": "assignment_create",
+        "inputs": {
+            "SOURCE": "bson.D{{'_id', iden.Id}}",
+            "TARGET": "conds"
+        }
+    }, {
+        "key": "mongo_update",
+        "inputs": {
+            "COLC_NAME": "%MODEL%",
+            "CONDITIONS": "conds",
+            "ENTRY": "updSet"
+        }
+    }, {
+        "key": "mongo_query",
+        "desc": "查询_id为（%iden.Id%）的%MODEL%",
+        "inputs": {
+            "COLC_NAME": "%MODEL%",
+            "CONDITIONS": "conds"
+        }
+    }, {
+        "key": "return_succeed",
+        "inputs": {"RETURN": "res"}
+    }]
+}, {
+    "name": "select%MODEL%FromMongoByRowId",
+    "model": "%MODEL%",
+    "params": {"iden": "StrIden"},
+    "returns": ["%MODEL%"],
+    "route": "/%PROJ_NAME%/models/%MODEL%.selectByRowId",
+    "method": "post",
+    "steps": [{
+        "key": "mongo_query",
+        "desc": "查询_id为（%iden.Id%）的%MODEL%",
+        "inputs": {
+            "COLC_NAME": "%MODEL%",
+            "CONDITIONS": "conds"
+        }
+    }, {
+        "key": "return_succeed",
+        "inputs": {"RETURN": "res"} 
+    }]
+}]

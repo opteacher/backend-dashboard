@@ -1,6 +1,6 @@
 <template>
 <dashboard>
-    <info-bar @select-api="selectApi" @add-api="addApi"/>
+    <info-bar @select-api="selectApi" @add-api="addApi" @del-api="delApi"/>
     <div v-if="forceUpdateFlg">
         <div id="pnlFlows" class="w-100 h-100" style="position: absolute">
             <div style="position:absolute;width:0;height:0" v-for="step in selApi.steps" :key="step.index">
@@ -91,6 +91,7 @@ export default {
             this.istStepBtns = []
             let locVars = this.selApi.params ? _.keys(this.selApi.params) : []
             this.selApi.steps = this.selApi.steps ? this.selApi.steps.map((step, idx) => {
+                console.log(step.key)
                 // 做一些处理：只包含一个元素的输出数组全部设为空
                 if (!step.outputs || (step.outputs.length === 1 && step.outputs[0] === "")) {
                     step.outputs = []
@@ -158,11 +159,15 @@ export default {
                     },
                     key: this.index
                 }),
-                showConfirmButton: false
+                showConfirmButton: false,
+                customClass: "w-50"
             }).catch(err => {})
         },
         addApi(newApi) {
             console.log(newApi)
+        },
+        delApi() {
+            this.selectApi({steps: []})
         },
         async addStep() {
             let form = this.$refs["add-step-form"]

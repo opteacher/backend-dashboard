@@ -97,20 +97,6 @@ export default {
             } else {
                 this.models.push(model)
             }
-            // 根据选择的Method，生成API
-            await backend.addApi({
-                name: `insert${model.name}`,
-                model: model.name,
-                params: {
-                    [model.name]: "req"
-                },
-                route: `/%PROJ_NAME%/${model.name}.insert`,
-                method: "POST",
-                returns: [model.name],
-                steps: [{
-                    key: ""
-                }]
-            })
         },
         async deleteModel(mname) {
             let res = await backend.delModel(mname)

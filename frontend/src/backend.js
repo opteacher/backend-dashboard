@@ -36,14 +36,23 @@ export default {
     async qryAllApis() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.selectAll`))
     },
+    async qryAllTempApis() {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.apis.selectAll`))
+    },
     async qryApiByName(name) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.selectByName`, {name}))
     },
     async addApi(api) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.insert`, api))
     },
+    async addTempApis(apis) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.apis.insertMany`, {infos: apis}))
+    },
     async delApiByName(name) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.deleteByName`, {name}))
+    },
+    async qryTempStepByKey(key) {
+        // TODO: 
     },
     async qryAllTempStep() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.selectAll`))
