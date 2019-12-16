@@ -65,9 +65,7 @@ export default {
             qryApiFun: "qryAllApis",
             showSelApiDlg: false,
             showAddApiDlg: false,
-            selApi: {
-                name: ""
-            },
+            selApi: {name: ""},
             recentApis: [],
             index: 1
         }

@@ -52,7 +52,7 @@ export default {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.deleteByName`, {name}))
     },
     async qryTempStepByKey(key) {
-        // TODO: 
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.selectByKey`, {key}))
     },
     async qryAllTempStep() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.steps.selectAll`))

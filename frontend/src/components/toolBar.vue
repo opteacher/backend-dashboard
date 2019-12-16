@@ -22,7 +22,7 @@
         <el-button class="p-7" plain icon="el-icon-arrow-right" size="mini"/>
     </el-col>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog title="新建模块" :visible.sync="showAddMdlDlg" :modal-append-to-body="false" width="50vw">
+    <el-dialog title="新建模块" :visible.sync="showAddMdlDlg" :modal-append-to-body="false" width="40vw">
         <edit-model ref="add-model-form"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddMdlDlg = false">取 消</el-button>
@@ -39,7 +39,7 @@
         </div>
     </el-dialog>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog title="新建结构" :visible.sync="showAddSttDlg" :modal-append-to-body="false" width="50vw">
+    <el-dialog title="新建结构" :visible.sync="showAddSttDlg" :modal-append-to-body="false" width="40vw">
         <edit-model ref="add-struct-form" :structFlag="true"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddSttDlg = false">取 消</el-button>

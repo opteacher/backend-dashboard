@@ -1,28 +1,31 @@
 <template>
-<div class="card" :name="`step_${step.index}`" :style="`width:${stepWidth}px;margin-bottom:${step.isLast ? marginTB : 0}px`">
-    <div class="card-header text-center">
-        <h5 class="mb-0 float-left">#{{step.index}}</h5>
-        <span>{{step.key}}</span>
-        <button class="close" type="button" data-dismiss="alert" aria-label="Close" @click="hdlDelete">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <div class="row">
-        <div class="col pr-0">
-            <ul class="list-group list-group-flush h-100">
-                <a class="list-group-item list-group-item-primary list-group-item-action api-params" href="#" v-for="(content, pholder) in step.inputs" :key="pholder">
-                    {{pholder}}
-                    <i class="el-icon-arrow-right"/>
-                </a>
-            </ul>
+<div style="position:absolute;width:0;height:0">
+    <div class="card" :name="`step_${step.index}`" :style="`width:${stepWidth}px;margin-bottom:${step.isLast ? marginTB : 0}px`">
+        <div class="card-header text-center">
+            <h5 class="mb-0 float-left">#{{step.index}}</h5>
+            <span>{{step.key}}</span>
+            <button class="close" type="button" data-dismiss="alert" aria-label="Close" @click="hdlDelete">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
-        <div class="col-6 card-body text-center desc-panel" @click="showOperDetail">{{step.desc}}</div>
-        <div class="col pl-0">
-            <div class="list-group list-group-flush h-100">
-                <a class="list-group-item list-group-item-success list-group-item-action api-params text-right" href="#" v-for="output in step.outputs" :key="output">
-                    {{output}}
-                    <i class="el-icon-arrow-right"/>
-                </a>
+        <div class="row">
+            <div class="col pr-0">
+                <ul class="list-group list-group-flush h-100">
+                    <a class="list-group-item list-group-item-primary list-group-item-action api-params" href="#" v-for="(content, pholder) in step.inputs" :key="pholder">
+                        {{content}}
+                        <i class="el-icon-arrow-right"/>
+                        {{pholder}}
+                    </a>
+                </ul>
+            </div>
+            <div class="col-6 card-body text-center desc-panel" @click="showOperDetail">{{step.desc}}</div>
+            <div class="col pl-0">
+                <div class="list-group list-group-flush h-100">
+                    <a class="list-group-item list-group-item-success list-group-item-action api-params text-right" href="#" v-for="output in step.outputs" :key="output">
+                        {{output}}
+                        <i class="el-icon-arrow-right"/>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -38,7 +41,7 @@ export default {
     data() {
         return {
             marginTB: 50,
-            stepWidth: 600,
+            stepWidth: 800,
             stepSpan: 300,
         }
     },
