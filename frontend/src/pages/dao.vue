@@ -284,7 +284,7 @@ export default {
                 }
             }
             this.$message({
-                type: "info",
+                type: "success",
                 message: `DAO组（${this.implingGpName}）实例化成功`
             })
             this.implingGpName = ""
@@ -355,8 +355,22 @@ export default {
                 this.$message.error(`DAO实例配置时发生错误：${res}`)
             } else {
                 this.$message({
-                    type: "info",
+                    type: "success",
                     message: `实例配置成功`
+                })
+                await this.refresh()
+            }
+        },
+        async loadGroup() {
+            const form = this.$refs["load-dao-group-form"].$refs["load-dao-group"]
+            let res = await backend.addDaoGroup(form.model)
+            if (typeof res === "string") {
+                this.$message.error(`添加DAO组时发生错误：${res}`)
+            } else {
+                this.showLoadDaoGroup = false
+                this.$message({
+                    type: "success",
+                    message: `模板组${form.model.name}导入成功`
                 })
                 await this.refresh()
             }

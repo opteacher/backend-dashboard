@@ -96,6 +96,9 @@ export default {
     async qryAllDaoGroups() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.groups.selectAll`))
     },
+    async qryAllTempDaoGroups() {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.dao.groups.selectAll`))
+    },
     async qryTempApisByCategory(category) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.apis.selectByCategory`, {category}))
     },

@@ -93,7 +93,7 @@ export default {
                     this.showAddTempStep = false
                     await this.refresh()
                     this.$message({
-                        type: "info",
+                        type: "success",
                         message: `模板步骤（${tempStep.key}）添加成功！`
                     })
                 }
