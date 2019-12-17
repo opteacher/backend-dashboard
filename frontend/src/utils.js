@@ -34,5 +34,15 @@ export default {
     }, {
         title: "布尔",
         value: "bool"
+    }],
+    supportLangs: [{
+        title: "Golang",
+        value: "golang"
+    }, {
+        title: "JavaScript",
+        value: "javascript"
+    }, {
+        title: "Java",
+        value: "java"
     }]
 }

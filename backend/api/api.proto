@@ -73,6 +73,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc ApisInsertByTemp(AddTmpApiToMdlReq) returns (ApiInfo) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/apis.insertByTemp"
+            body: "*"
+        };
+    };
     rpc ApisDeleteByName(NameID) returns (ApiInfo) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/apis.deleteByName"
@@ -82,6 +88,12 @@ service BackendManager {
     rpc TempApiSelectAll(Empty) returns (ApiInfoArray) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/temp.apis.selectAll"
+        };
+    };
+    rpc TempApiSelectByCategory(CategoryIden) returns (ApiInfoArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.apis.selectByCategory"
+            body: "*"
         };
     };
     rpc TempApiInsert(ApiInfo) returns (ApiInfo) {
@@ -163,6 +175,11 @@ service BackendManager {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/dao.groups.updateImplement"
             body: "*"
+        };
+    };
+    rpc TempDaoGroupsSelectAll(Empty) returns (DaoGroupArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.dao.groups.selectAll"
         };
     };
     rpc DaoInterfaceInsert(DaoItfcIst) returns (DaoInterface) {
@@ -355,13 +372,16 @@ message Step {
 
 message ApiInfo {
     string name = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
-    string model = 2;
-    string table = 3;
-    map<string,string> params = 4;
-    string route = 5;
-    string method = 6;
-    repeated string returns = 7;
-    repeated Step steps = 8;
+    string category = 2;// 同DAO组的类别
+    string group = 3;// DAO组名
+    string symbol = 4;// 特殊标识
+    string model = 5;
+    string table = 6;
+    map<string,string> params = 7;
+    string route = 8;
+    string method = 9;
+    repeated string returns = 10;
+    repeated Step steps = 11;
 }
 
 message ApiInfoArray {
@@ -372,9 +392,18 @@ message StepArray {
     repeated Step steps = 1;
 }
 
+message AddTmpApiToMdlReq {
+    NameID modelName = 1;
+    ApiInfo tempApi = 2;
+}
+
 message SymbolsResp {
     map<string,int32> values = 1;
     map<int32,string> names = 2;
+}
+
+message CategoryIden {
+    string category = 1;
 }
 
 message StepReqs {

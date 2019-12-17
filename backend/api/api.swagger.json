@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api.proto",
+        "title": "api/api.proto",
         "version": "1"
     },
     "schemes": [
@@ -82,6 +82,43 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/apis.insertByTemp": {
+            "post": {
+                "summary": "/backend-dashboard/backend/apis.insertByTemp",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.AddTmpApiToMdlReq"
                         }
                     }
                 ],
@@ -1089,6 +1126,80 @@
                 ]
             }
         },
+        "/backend-dashboard/backend/temp.apis.selectByCategory": {
+            "post": {
+                "summary": "/backend-dashboard/backend/temp.apis.selectByCategory",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.ApiInfoArray"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.CategoryIden"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/temp.dao.groups.selectAll": {
+            "post": {
+                "summary": "/backend-dashboard/backend/temp.dao.groups.selectAll",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.DaoGroupArray"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.Empty"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
         "/backend-dashboard/backend/temp.steps.deleteByKey": {
             "post": {
                 "summary": "/backend-dashboard/backend/temp.steps.deleteByKey",
@@ -1276,10 +1387,30 @@
         }
     },
     "definitions": {
+        ".backend.manager.service.v1.AddTmpApiToMdlReq": {
+            "type": "object",
+            "properties": {
+                "modelName": {
+                    "$ref": "#/definitions/.backend.manager.service.v1.NameID"
+                },
+                "tempApi": {
+                    "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
+                }
+            }
+        },
         ".backend.manager.service.v1.ApiInfo": {
             "type": "object",
             "properties": {
                 "name": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "group": {
+                    "type": "string"
+                },
+                "symbol": {
                     "type": "string"
                 },
                 "model": {
@@ -1322,6 +1453,14 @@
                     "items": {
                         "$ref": "#/definitions/.backend.manager.service.v1.ApiInfo"
                     }
+                }
+            }
+        },
+        ".backend.manager.service.v1.CategoryIden": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
                 }
             }
         },

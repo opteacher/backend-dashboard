@@ -105,6 +105,14 @@
                 </el-popover>
             </div>
         </el-dialog>
+        <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+        <el-dialog title="实例化DAO组" :visible.sync="showLoadDaoGroup" :modal-append-to-body="false" width="50vw">
+            <load-dao-group ref="load-dao-group-form"/>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="showLoadDaoGroup = false">取 消</el-button>
+                <el-button type="primary" @click="loadGroup">确 定</el-button>
+            </div>
+        </el-dialog>
     </div>
 </dashboard>
 </template>
@@ -119,6 +127,7 @@ import editDaoInterface from "../forms/editDaoInterface"
 import implDaoGroup from "../forms/implDaoGroup"
 import daoImplInfo from "../forms/daoImplInfo"
 import chkLoadRes from "../forms/chkLoadRes"
+import loadDaoGroup from "../forms/loadDaoGroup"
 
 export default {
     components: {
@@ -126,7 +135,8 @@ export default {
         "edit-dao-group": editDaoGroup,
         "edit-dao-interface": editDaoInterface,
         "impl-dao-group": implDaoGroup,
-        "dao-impl-info": daoImplInfo
+        "dao-impl-info": daoImplInfo,
+        "load-dao-group": loadDaoGroup
     },
     data() {
         return {

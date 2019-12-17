@@ -37,20 +37,28 @@
             </el-col>
         </el-row>
     </el-form-item>
-    <el-form-item label="RPC接口" v-if="!structFlag">
-        <el-checkbox-group class="w-100" v-model="model.methods">
-            <el-checkbox-button label="POST" name="methods"/>
-            <el-checkbox-button label="DELETE" name="methods"/>
-            <el-checkbox-button label="PUT" name="methods"/>
-            <el-checkbox-button label="GET" name="methods"/>
-            <el-checkbox-button label="ALL" name="methods"/>
-        </el-checkbox-group>
+    <el-form-item label="RPC接口" v-if="!structFlag && persistDaoGrps.length !== 0">
+        <el-col :span="18">
+            <el-checkbox-group class="w-100" v-if="selPersistDao" v-model="model.methods">
+                <el-checkbox-button v-if="selPersistDao['insert']" label="insert" name="methods">增</el-checkbox-button>
+                <el-checkbox-button v-if="selPersistDao['delete']" label="delete" name="methods">删</el-checkbox-button>
+                <el-checkbox-button v-if="selPersistDao['update']" label="update" name="methods">改</el-checkbox-button>
+                <el-checkbox-button v-if="selPersistDao['query']" label="query" name="methods">查</el-checkbox-button>
+                <el-checkbox-button v-if="selPersistDao['quertAll']" label="queryAll" name="methods">全查</el-checkbox-button>
+            </el-checkbox-group>
+        </el-col>
+        <el-col :span="6">
+            <el-select class="w-100" v-model="selPersistDao">
+                <el-option v-for="(group, gname) in persistDaoGrps" :key="gname" :label="gname" :value="group"/>
+            </el-select>
+        </el-col>
     </el-form-item>
 </el-form>
 </template>
 
 <script>
 import utils from "../utils"
+import backend from '../backend'
 
 export default {
     props: {
@@ -70,15 +78,44 @@ export default {
                 y: 0,
                 width: 400,
                 height: 300
-            }
+            },
+            selPersistDao: null,
+            persistDaoGrps: {}
         }
     },
-    created() {
+    async created() {
         if (this["input-model"] && this["input-model"].name) {
             this.model.name = this["input-model"].name
         }
         if (this["input-model"] && this["input-model"].props) {
             this.model.props = this["input-model"].props
+        }
+        let res = await backend.qryTempApisByCategory("persist")
+        if (typeof res === "string") {
+            this.$message.error(`查询持久化DAO时发生错误：${res}`)
+        } else if (!res.infos) {
+            return
+        } else {
+            let categories = {"": []}
+            let firstGroup = ""
+            for (let info of res.infos) {
+                info.symbol = info.symbol || ""
+                if (categories[info.group]) {
+                    categories[info.group][info.symbol] = info
+                } else {
+                    categories[info.group] = {[info.symbol]: info}
+                    if (firstGroup.length === 0) {
+                        firstGroup = info.group
+                    }
+                }
+            }
+            if (categories[""].length === 0) {
+                delete categories[""]
+            }
+            this.persistDaoGrps = categories
+            if (firstGroup.length !== 0) {
+                this.selPersistDao = categories[firstGroup]
+            }
         }
     },
     methods: {

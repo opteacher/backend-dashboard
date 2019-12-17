@@ -45,6 +45,9 @@ export default {
     async addApi(api) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.insert`, api))
     },
+    async addApiByTemp(mname, tempApi) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/apis.insertByTemp`, {modelName: {name: mname}, tempApi}))
+    },
     async addTempApis(apis) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.apis.insertMany`, {infos: apis}))
     },
@@ -92,6 +95,9 @@ export default {
     },
     async qryAllDaoGroups() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/dao.groups.selectAll`))
+    },
+    async qryTempApisByCategory(category) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.apis.selectByCategory`, {category}))
     },
     async qryAllImplMods() {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/mod.sign.selectAll`, {type: "dao_implement"}))

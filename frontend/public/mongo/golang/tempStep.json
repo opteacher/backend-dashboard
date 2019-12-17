@@ -1,6 +1,7 @@
 {
     "steps": [{
         "key": "mongo_buildUpdateSet",
+        "group": "database",
         "desc": "构建数据库更新bson.D",
         "inputs": {
             "OMAP": ""

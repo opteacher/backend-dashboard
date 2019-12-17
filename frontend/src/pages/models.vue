@@ -90,13 +90,8 @@ export default {
                 this.links = res.links || []
             }
         },
-        async addModel(model) {
-            let res = await backend.addModel(_.assign(model, {"type": "model"}))
-            if (typeof res === "string") {
-                this.$message.error(`创建模块失败：${res}`)
-            } else {
-                this.models.push(model)
-            }
+        addModel(model) {
+            this.models.push(model)
         },
         async deleteModel(mname) {
             let res = await backend.delModel(mname)

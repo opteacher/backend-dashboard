@@ -1,0 +1,122 @@
+[{
+  "name" : "Mongo",
+  "category" : "persist",
+  "language" : "golang",
+  "interfaces" : [
+    {
+      "name" : "New",
+      "params" : [
+        {
+          "name" : "ctx",
+          "type" : "context.Context",
+          "xxx_nounkeyedliteral" : {},
+          "xxx_unrecognized" : null,
+          "xxx_sizecache" : 0
+        }
+      ],
+      "returns" : [
+        "Mongo"
+      ],
+      "requires" : null,
+      "desc" : "新增Mongo数据库DAO",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    },
+    {
+      "name" : "Ping",
+      "params" : [
+        {
+          "name" : "ctx",
+          "type" : "context.Context",
+          "xxx_nounkeyedliteral" : {},
+          "xxx_unrecognized" : null,
+          "xxx_sizecache" : 0
+        }
+      ],
+      "returns" : [
+        "error"
+      ],
+      "requires" : null,
+      "desc" : "测试数据库连接通畅",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    },
+    {
+      "name" : "Close",
+      "params" : [
+        {
+          "name" : "ctx",
+          "type" : "context.Context",
+          "xxx_nounkeyedliteral" : {},
+          "xxx_unrecognized" : null,
+          "xxx_sizecache" : 0
+        }
+      ],
+      "returns" : null,
+      "requires" : null,
+      "desc" : "关闭数据库连接",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    },
+    {
+      "name" : "Create",
+      "params" : [
+        {
+          "name" : "ctx",
+          "type" : "context.Context",
+          "xxx_nounkeyedliteral" : {},
+          "xxx_unrecognized" : null,
+          "xxx_sizecache" : 0
+        },
+        {
+          "name" : "colcName",
+          "type" : "string",
+          "xxx_nounkeyedliteral" : {},
+          "xxx_unrecognized" : null,
+          "xxx_sizecache" : 0
+        }
+      ],
+      "returns" : [
+        "error"
+      ],
+      "requires" : null,
+      "desc" : "创建数据集",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    },
+    {
+      "name" : "Drop",
+      "params" : [
+        {
+          "name" : "ctx",
+          "type" : "context.Context",
+          "xxx_nounkeyedliteral" : {},
+          "xxx_unrecognized" : null,
+          "xxx_sizecache" : 0
+        },
+        {
+          "name" : "colcName",
+          "type" : "string",
+          "xxx_nounkeyedliteral" : {},
+          "xxx_unrecognized" : null,
+          "xxx_sizecache" : 0
+        }
+      ],
+      "returns" : [
+        "error"
+      ],
+      "requires" : null,
+      "desc" : "删除数据集",
+      "xxx_nounkeyedliteral" : {},
+      "xxx_unrecognized" : null,
+      "xxx_sizecache" : 0
+    }
+  ],
+  "xxx_nounkeyedliteral" : {},
+  "xxx_unrecognized" : null,
+  "xxx_sizecache" : 0
+}]

@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"path"
 	"reflect"
+	"strings"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -228,6 +229,35 @@ func (s *Service) ApisInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo,
 	return req, nil
 }
 
+func (s *Service) ApisInsertByTemp(ctx context.Context, req *pb.AddTmpApiToMdlReq) (*pb.ApiInfo, error) {
+	mname := req.ModelName.Name
+	fmt.Printf("%v", req.TempApi)
+	req.TempApi.Name = strings.Replace(req.TempApi.Name, "%MODEL%", mname, -1)
+	req.TempApi.Model = strings.Replace(req.TempApi.Model, "%MODEL%", mname, -1)
+	for pname, ptype := range req.TempApi.Params {
+		req.TempApi.Params[pname] = strings.Replace(ptype, "%MODEL%", mname, -1)
+	}
+	req.TempApi.Route = strings.Replace(req.TempApi.Route, "%MODEL%", mname, -1)
+	for index, ret := range req.TempApi.Returns {
+		req.TempApi.Returns[index] = strings.Replace(ret, "%MODEL%", mname, -1)
+	}
+	for index, step := range req.TempApi.Steps {
+		for idx, require := range step.Requires {
+			step.Requires[idx] = strings.Replace(require, "%MODEL%", mname, -1)
+		}
+		step.Desc = strings.Replace(step.Desc, "%MODEL%", mname, -1)
+		for slot, in := range step.Inputs {
+			step.Inputs[slot] = strings.Replace(in, "%MODEL%", mname, -1)
+		}
+		req.TempApi.Steps[index] = step
+	}
+
+	if _, err := s.mongo.Insert(ctx, model.API_INFO_TABLE, req.TempApi); err != nil {
+		return nil, fmt.Errorf("插入接口信息失败：%v", err)
+	}
+	return req.TempApi, nil
+}
+
 func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.ApiInfo, error) {
 	res, err := s.ApisSelectByName(ctx, req)
 	if err != nil {
@@ -247,9 +277,28 @@ func (s *Service) TempApiSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiI
 		return nil, fmt.Errorf("查询所有模板接口失败：%v", err)
 	}
 
+	apiInfoType := reflect.TypeOf((*pb.ApiInfo)(nil)).Elem()
 	resp := new(pb.ApiInfoArray)
 	for _, res := range ress {
-		obj, err := utils.ToObj(res, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
+		obj, err := utils.ToObj(res, apiInfoType)
+		if err != nil {
+			return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
+		}
+		resp.Infos = append(resp.Infos, obj.(*pb.ApiInfo))
+	}
+	return resp, nil
+}
+
+func (s *Service) TempApiSelectByCategory(ctx context.Context, req *pb.CategoryIden) (*pb.ApiInfoArray, error) {
+	ress, err := s.mongo.Query(ctx, model.TEMP_API_TABLE, bson.D{{"category", req.Category}})
+	if err != nil {
+		return nil, fmt.Errorf("查询类别为（%s）模板接口失败：%v", req.Category, err)
+	}
+
+	apiInfoType := reflect.TypeOf((*pb.ApiInfo)(nil)).Elem()
+	resp := new(pb.ApiInfoArray)
+	for _, res := range ress {
+		obj, err := utils.ToObj(res, apiInfoType)
 		if err != nil {
 			return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
 		}
@@ -381,9 +430,10 @@ func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.Da
 		return nil, fmt.Errorf("查询DAO组失败：%v", err)
 	}
 
+	daoGroupType := reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()
 	resp := new(pb.DaoGroupArray)
 	for _, res := range ress {
-		daoGroup, err := utils.ToObj(res, reflect.TypeOf((*pb.DaoGroup)(nil)).Elem())
+		daoGroup, err := utils.ToObj(res, daoGroupType)
 		if err != nil {
 			return nil, fmt.Errorf("转DaoGroup对象失败：%v", err)
 		}
@@ -422,6 +472,24 @@ func (s *Service) DaoGroupDeleteByName(ctx context.Context, req *pb.NameID) (*pb
 	_, err = s.mongo.Delete(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Name}})
 	if err != nil {
 		return nil, fmt.Errorf("删除DAO组失败：%v", err)
+	}
+	return resp, nil
+}
+
+func (s *Service) TempDaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {
+	ress, err := s.mongo.Query(ctx, model.TEMP_DAO_GROUPS_TABLE, bson.D{})
+	if err != nil {
+		return nil, fmt.Errorf("查询所有模板DAO组失败：%v", err)
+	}
+
+	daoGroupType := reflect.TypeOf((*pb.DaoGroup)(nil)).Elem()
+	resp := new(pb.DaoGroupArray)
+	for _, res := range ress {
+		obj, err := utils.ToObj(res, daoGroupType)
+		if err != nil {
+			return nil, fmt.Errorf("转成DAO组类型失败：%v", err)
+		}
+		resp.Groups = append(resp.Groups, obj.(*pb.DaoGroup))
 	}
 	return resp, nil
 }

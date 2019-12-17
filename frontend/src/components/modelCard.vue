@@ -19,11 +19,11 @@
         </div>
         <div class="card-footer">
             <span v-for="method in [
-                {m:'POST', c:'success'},
-                {m:'DELETE', c:'danger'},
-                {m:'PUT', c:'warning'},
-                {m:'GET', c:'primary'},
-                {m:'ALL', c:'info'}
+                {m:'insert', c:'success'},
+                {m:'delete', c:'danger'},
+                {m:'update', c:'warning'},
+                {m:'query', c:'primary'},
+                {m:'queryAll', c:'info'}
             ]" :key="method.m" :class="`mr-1 badge badge-${model.methods.includes(method.m) ? method.c : 'secondary'}`">
                 {{method.m}}
             </span>

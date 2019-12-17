@@ -89,20 +89,34 @@ export default {
         }
     },
     methods: {
-        async addModel() {
+        addModel() {
             let form = this.$refs["add-model-form"]
             form.model.propName = "test"
-            form.$refs["edit-model-form"].validate(valid => {
-                if (valid) {
-                    let newModel = _.cloneDeep(form.model)
-                    delete newModel.propName
+            form.$refs["edit-model-form"].validate(async valid => {
+                if (!valid) {
+                    return false
+                }
+                let newModel = _.cloneDeep(form.model)
+                delete newModel.propName
+                let res = await backend.addModel(_.assign(newModel, {"type": "model"}))
+                if (typeof res === "string") {
+                    this.$message.error(`创建模块失败：${res}`)
+                } else {
+                    this.bindApiToNewModel(newModel, form.selPersistDao)
                     this.$emit("add-model", newModel)
                     form.resetModel()
                     this.showAddMdlDlg = false
-                } else {
-                    return false
                 }
             })
+        },
+        async bindApiToNewModel(model, daoGroup) {
+            for (let method of model.methods) {
+                let res = await backend.addApiByTemp(model.name, daoGroup[method])
+                if (typeof res === "string") {
+                    this.$message.error(`绑定模板API到模块时发生错误：${res}`)
+                    return
+                }
+            }
         },
         resetLink() {
             this.$refs["add-link-form"].resetLink()
