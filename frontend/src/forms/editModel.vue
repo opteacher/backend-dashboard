@@ -115,6 +115,21 @@ export default {
             this.persistDaoGrps = categories
             if (firstGroup.length !== 0) {
                 this.selPersistDao = categories[firstGroup]
+                if (this.selPersistDao["insert"]) {
+                    this.model.methods.push("insert")
+                }
+                if (this.selPersistDao["delete"]) {
+                    this.model.methods.push("delete")
+                }
+                if (this.selPersistDao["update"]) {
+                    this.model.methods.push("update")
+                }
+                if (this.selPersistDao["query"]) {
+                    this.model.methods.push("query")
+                }
+                if (this.selPersistDao["queryAll"]) {
+                    this.model.methods.push("queryAll")
+                }
             }
         }
     },

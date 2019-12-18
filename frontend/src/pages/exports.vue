@@ -34,9 +34,9 @@ export default {
             let form = this.$refs["exp-project-form"]
             form.$refs["exp-project-form"].validate(async valid => {
                 if (valid) {
-                    if (form.exportOption.name.slice(-4).toLowerCase() !== ".zip") {
-                        form.exportOption.name += ".zip"
-                    }
+                    // if (form.exportOption.name.slice(-4).toLowerCase() !== ".zip") {
+                    //     form.exportOption.name += ".zip"
+                    // }
                     let res = await backend.export(form.exportOption)
                     if (typeof res === "string") {
                         this.$message.error(`导出时发生错误：${res}`)

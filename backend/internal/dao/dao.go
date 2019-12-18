@@ -16,7 +16,7 @@ import (
 )
 
 // Dao dao.
-type Dao struct {
+type MongoDao struct {
 	cliOpns *options.ClientOptions
 	dbName string
 	mod string
@@ -29,7 +29,7 @@ func checkErr(err error) {
 }
 
 // New new a dao and return.
-func New() (dao *Dao) {
+func NewMongo() *MongoDao {
 	var (
 		dc struct {
 			Demo *struct{
@@ -41,7 +41,7 @@ func New() (dao *Dao) {
 		}
 	)
 	checkErr(paladin.Get("mongo.toml").UnmarshalTOML(&dc))
-	dao = &Dao{
+	mongoDao := &MongoDao{
 		cliOpns: options.Client().ApplyURI(dc.Demo.Url),
 		dbName: dc.Demo.Db,
 		mod: dc.Demo.Mod,
@@ -61,36 +61,36 @@ func New() (dao *Dao) {
 		}
 		ctx := context.TODO()
 		for _, jfname := range jfnames {
-			if err = dao.Source(ctx, jfname, true); err != nil {
+			if err = mongoDao.Source(ctx, jfname, true); err != nil {
 				panic(err)
 			}
 		}
 	}
-	return dao
+	return mongoDao
 }
 
 // Close close the resource.
-func (d *Dao) Close() {
+func (md *MongoDao) Close() {
 }
 
 // Ping ping the resource.
-func (d *Dao) Ping(ctx context.Context) error {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Ping(ctx context.Context) error {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	return err
 }
 
-func (d *Dao) Create(ctx context.Context, colcName string) error {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Create(ctx context.Context, colcName string) error {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
-	if d.mod == "DROP_CREATE" {
+	if md.mod == "DROP_CREATE" {
 		return colc.Drop(ctx)
-	} else if d.mod == "UPDATE" {
+	} else if md.mod == "UPDATE" {
 		if _, err := colc.DeleteMany(ctx, nil); err != nil {
 			return err
 		}
@@ -98,29 +98,29 @@ func (d *Dao) Create(ctx context.Context, colcName string) error {
 	return nil
 }
 
-func (d *Dao) Drop(ctx context.Context, colcName string) error {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Drop(ctx context.Context, colcName string) error {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	return colc.Drop(ctx)
 }
 
-func (d *Dao) Source(ctx context.Context, file string, create bool) error {
+func (md *MongoDao) Source(ctx context.Context, file string, create bool) error {
 	fname := filepath.Base(file)
 	cname := strings.SplitN(fname, ".", 2)[0]
 	cmd := exec.CommandContext(ctx, "mongoimport", []string{
 		"--drop",
 		"--jsonArray",
-		"--db", d.dbName,
+		"--db", md.dbName,
 		"--collection", cname,
 		"--file", file,
 	}...)
 	if create {
-		if err := d.Create(ctx, cname); err != nil {
+		if err := md.Create(ctx, cname); err != nil {
 			return err
 		}
 	}
@@ -132,13 +132,13 @@ func (d *Dao) Source(ctx context.Context, file string, create bool) error {
 	return nil
 }
 
-func (d *Dao) QueryOne(ctx context.Context, colcName string, conds bson.D) (map[string]interface{}, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) QueryOne(ctx context.Context, colcName string, conds bson.D) (map[string]interface{}, error) {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return nil, err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	var res bson.M
 	err = colc.FindOne(ctx, conds).Decode(&res)
@@ -148,13 +148,13 @@ func (d *Dao) QueryOne(ctx context.Context, colcName string, conds bson.D) (map[
 	return res, nil
 }
 
-func (d *Dao) Query(ctx context.Context, colcName string, conds bson.D) ([]map[string]interface{}, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Query(ctx context.Context, colcName string, conds bson.D) ([]map[string]interface{}, error) {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return nil, err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	cursor, err := colc.Find(ctx, conds)
 	if err != nil {
@@ -175,13 +175,13 @@ func (d *Dao) Query(ctx context.Context, colcName string, conds bson.D) ([]map[s
 	return mress, nil
 }
 
-func (d *Dao) Insert(ctx context.Context, colcName string, entry interface{}) (string, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Insert(ctx context.Context, colcName string, entry interface{}) (string, error) {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return "", err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	res, err := colc.InsertOne(ctx, entry)
 	if err != nil {
@@ -191,13 +191,13 @@ func (d *Dao) Insert(ctx context.Context, colcName string, entry interface{}) (s
 	}
 }
 
-func (d *Dao) InsertMany(ctx context.Context, colcName string, entries []interface{}) (int64, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) InsertMany(ctx context.Context, colcName string, entries []interface{}) (int64, error) {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return -1, err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	res, err := colc.InsertMany(ctx, entries)
 	if err != nil {
@@ -207,13 +207,13 @@ func (d *Dao) InsertMany(ctx context.Context, colcName string, entries []interfa
 	}
 }
 
-func (d *Dao) Save(ctx context.Context, colcName string, conds bson.D, entry interface{}) (map[string]interface{}, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Save(ctx context.Context, colcName string, conds bson.D, entry interface{}) (map[string]interface{}, error) {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return nil, err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	var res bson.M
@@ -224,13 +224,13 @@ func (d *Dao) Save(ctx context.Context, colcName string, conds bson.D, entry int
 	return res, nil
 }
 
-func (d *Dao) Delete(ctx context.Context, colcName string, conds bson.D) (int64, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Delete(ctx context.Context, colcName string, conds bson.D) (int64, error) {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return -1, err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	res, err := colc.DeleteMany(ctx, conds)
 	if err != nil {
@@ -240,13 +240,13 @@ func (d *Dao) Delete(ctx context.Context, colcName string, conds bson.D) (int64,
 	}
 }
 
-func (d *Dao) Update(ctx context.Context, colcName string, conds bson.D, entry interface{}) (int64, error) {
-	cli, err := mongo.Connect(ctx, d.cliOpns)
+func (md *MongoDao) Update(ctx context.Context, colcName string, conds bson.D, entry interface{}) (int64, error) {
+	cli, err := mongo.Connect(ctx, md.cliOpns)
 	defer cli.Disconnect(ctx)
 	if err != nil {
 		return -1, err
 	}
-	db := cli.Database(d.dbName)
+	db := cli.Database(md.dbName)
 	colc := db.Collection(colcName)
 	res, err := colc.UpdateMany(ctx, conds, entry)
 	if err != nil {

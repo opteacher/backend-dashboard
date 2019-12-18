@@ -2,16 +2,17 @@ package utils
 
 import (
 	"archive/zip"
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-	"bufio"
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
@@ -167,7 +168,7 @@ func Upload(absFile string, sc StorageConfig) (string, error) {
 	aryTmp := strings.Split(absFile, string(filepath.Separator))
 	fname := aryTmp[len(aryTmp)-1]
 	flmd := finfo.ModTime().UnixNano()
-	recordKey := Md5Hex(fmt.Sprintf("%s:%s:%s:%s", sc.Bucket, fname, absFile, flmd)) + ".progress"
+	recordKey := Md5Hex(fmt.Sprintf("%s:%s:%s:%d", sc.Bucket, fname, absFile, flmd)) + ".progress"
 	aryTmp[len(aryTmp)-1] = recordKey
 	recordPath := filepath.Join(aryTmp...)
 	if recordPath[0] != '/' {
@@ -217,30 +218,41 @@ func Upload(absFile string, sc StorageConfig) (string, error) {
 	if err := resumeUploader.PutFile(context.Background(), &ret, upToken, fname, absFile, &putExtra); err != nil {
 		return "", err
 	}
-	os.Remove(recordPath)
+	if err := os.Remove(recordPath); err != nil {
+		return "", err
+	}
 	url := sc.Url + ret.Key
 	fmt.Printf("%s上传成功，哈希：%s，通过%s可下载\n", ret.Key, ret.Hash, url)
 	return url, nil
 }
 
+func Download(url string, dest string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	bytes, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return ioutil.WriteFile(dest, bytes, os.ModePerm)
+}
+
 func CopyFolder(src string, dest string) {
-	src_original := src
-	err := filepath.Walk(src, func(src string, f os.FileInfo, err error) error {
-		if f == nil {
+	srcOriginal := src
+	err := filepath.Walk(src, func(src string, file os.FileInfo, err error) error {
+		if file == nil {
 			return err
 		}
-		if f.IsDir() {
-			//			fmt.Println(f.Name())
-			CopyFolder(f.Name(), filepath.Join(dest, f.Name()))
-		} else {
-			// fmt.Println(src)
-			// fmt.Println(src_original)
-			// fmt.Println(dest)
+		if !file.IsDir() {
+			//fmt.Println(src)
+			//fmt.Println(src_original)
+			//fmt.Println(dest)
 
-			dest_new := strings.Replace(src, src_original, dest, -1)
-			// fmt.Println(dest_new)
-			// fmt.Println("CopyFile:" + src + " to " + dest_new)
-			CopyFile(src, dest_new)
+			destNew := strings.Replace(src, srcOriginal, dest, -1)
+			//fmt.Println(dest_new)
+			//fmt.Println("CopyFile:" + src + " to " + dest_new)
+			if _, err := CopyFile(src, destNew); err != nil {
+				return err
+			}
 		}
 		//println(path)
 		return nil
@@ -271,17 +283,17 @@ func CopyFile(src, dst string) (w int64, err error) {
 	defer srcFile.Close()
 	// fmt.Println("dst:" + dst)
 	separator := string(filepath.Separator)
-	dst_slices := strings.Split(dst, separator)
-	dst_slices_len := len(dst_slices)
-	dest_dir := ""
-	for i := 0; i < dst_slices_len-1; i++ {
-		dest_dir = dest_dir + dst_slices[i] + separator
+	dstSlices := strings.Split(dst, separator)
+	dstSlicesLen := len(dstSlices)
+	destDir := ""
+	for i := 0; i < dstSlicesLen-1; i++ {
+		destDir = destDir + dstSlices[i] + separator
 	}
 	//dest_dir := getParentDirectory(dst)
 	// fmt.Println("dest_dir:" + dest_dir)
-	b, err := PathExists(dest_dir)
+	b, err := PathExists(destDir)
 	if b == false {
-		err := os.MkdirAll(dest_dir, os.ModePerm) //在当前目录下生成md目录
+		err := os.MkdirAll(destDir, os.ModePerm) //在当前目录下生成md目录
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -299,8 +311,8 @@ func CopyFile(src, dst string) (w int64, err error) {
 }
 
 // 文件插入（逐行操作，只使用文本文件）
-type ProcFunc func(string, *bool) (string, bool, error)
-func InsertTxt(fpath string, proc ProcFunc) error {
+type InsertProcFunc func(string, *bool) (string, bool, error)
+func InsertTxt(fpath string, proc InsertProcFunc) error {
 	// 读取import部分
 	file, err := os.Open(fpath)
 	if err != nil {
@@ -341,6 +353,51 @@ func InsertTxt(fpath string, proc ProcFunc) error {
 
 	if _, err = file.WriteString(code); err != nil {
 		return err
+	}
+	return nil
+}
+
+type ReplaceProcFunc func(string) (string, error)
+func ReplaceContentInFile(flPath string, rpFuns map[string]ReplaceProcFunc) error {
+	file, err := os.Open(flPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	code := ""
+	for {
+		line, _, err := reader.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return err
+			}
+		}
+		strLin := string(line)
+		matched := false
+		for repWds, procFun := range rpFuns {
+			if strings.Contains(strLin, repWds) {
+				matched = true
+				genTxt, err := procFun(strLin)
+				if err != nil {
+					return err
+				}
+				code += genTxt
+			}
+		}
+		if !matched {
+			code += strLin + "\n"
+		}
+	}
+	file, err = os.OpenFile(flPath, os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err := file.WriteString(code); err != nil {
+		return fmt.Errorf("重新写入文件失败：%v", err)
 	}
 	return nil
 }

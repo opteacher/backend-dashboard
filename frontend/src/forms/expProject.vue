@@ -25,29 +25,6 @@
         <el-form-item label="微服务">
             <el-checkbox v-model="exportOption.isMicoServ">生成为微服务</el-checkbox>
         </el-form-item>
-        <el-form-item label="数据源">
-            <el-select v-model="exportOption.database.type" style="width: 100%">
-                <el-option v-for="typ in databaseTypes" :key="typ.title" :label="typ.title" :value="typ.value"/>
-            </el-select>
-        </el-form-item>
-        <el-form-item v-show="exportOption.database.type.length !== 0">
-            <el-col :span="15">
-                <el-input v-model="exportOption.database.host" placeholder="主机IP" />
-            </el-col>
-            <el-col class="line text-center" :span="1">:</el-col>
-            <el-col :span="8">
-                <el-input v-model="exportOption.database.port" placeholder="主机端口"/>
-            </el-col>
-        </el-form-item>
-        <el-form-item v-show="exportOption.database.type.length !== 0">
-            <el-input v-model="exportOption.database.name" placeholder="数据库名"/>
-        </el-form-item>
-        <el-form-item v-show="exportOption.database.type.length !== 0">
-            <el-input v-model="exportOption.database.username" placeholder="用户名"/>
-        </el-form-item>
-        <el-form-item v-show="exportOption.database.type.length !== 0">
-            <el-input v-model="exportOption.database.password" placeholder="密码"/>
-        </el-form-item>
     </div>
 </el-form>
 </template>

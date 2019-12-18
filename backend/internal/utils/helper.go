@@ -1,7 +1,9 @@
 package utils
 
 import (
-	"encoding/json"
+	"bytes"
+"encoding/gob"
+"encoding/json"
 	"reflect"
 )
 
@@ -33,4 +35,17 @@ func CheckErr(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func Clone(in, out interface{}) error {
+	buff := new(bytes.Buffer)
+	enc := gob.NewEncoder(buff)
+	dec := gob.NewDecoder(buff)
+	if err := enc.Encode(in); err != nil {
+		return err
+	}
+	if err := dec.Decode(out); err != nil {
+		return err
+	}
+	return nil
 }

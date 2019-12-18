@@ -7,11 +7,14 @@ import (
 	"backend/internal/server"
 	"backend/internal/utils"
 	"context"
+	"crypto/md5"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"os"
 	"path"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,7 +26,8 @@ type Service struct {
 	cc struct {
 		Qiniu *utils.StorageConfig
 	}
-	mongo *dao.Dao
+	mongo *dao.MongoDao
+	pBuilder *ProjBuilder
 }
 
 // New new a service and return.
@@ -33,8 +37,9 @@ func New() (s *Service) {
 		panic(err)
 	}
 	s = &Service{
-		ac:  ac,
-		mongo: dao.New(),
+		ac:       ac,
+		mongo:    dao.NewMongo(),
+		pBuilder: NewProjBuilder(),
 	}
 	if err := paladin.Get("cdn.toml").UnmarshalTOML(&s.cc); err != nil {
 		panic(err)
@@ -178,23 +183,69 @@ func (s *Service) LinksDeleteBySymbol(ctx context.Context, req *pb.SymbolID) (*p
 	return resp.(*pb.Link), nil
 }
 
-func (s *Service) ApisSelectByName(ctx context.Context, req *pb.NameID) (*pb.ApiInfo, error) {
-	res, err := s.mongo.QueryOne(ctx, model.API_INFO_TABLE, bson.D{{"name", req.Name}})
-	if err != nil {
-		return nil, fmt.Errorf("查询接口信息失败：%v", err)
+func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{}) (*pb.ApiInfo, error) {
+	// 获取模板步骤作为API步骤
+	tempSteps := make(map[string]*pb.Step)
+	jsonSteps := minfo["steps"].([]interface{})
+	for _, obj := range jsonSteps {
+		mstep := obj.(map[string]interface{})
+		tempSteps[mstep["key"].(string)] = nil
+	}
+	for stepName := range tempSteps {
+		step, err := s.TempStepsSelectByKey(ctx, &pb.StrKey{Key: stepName})
+		if err != nil {
+			return nil, fmt.Errorf("查询模板步骤（%s）失败：%v", stepName, err)
+		}
+		tempSteps[stepName] = step
 	}
 
-	resp, err := utils.ToObj(res, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
+	for idx, obj := range jsonSteps {
+		mstep := obj.(map[string]interface{})
+		tempStep := tempSteps[mstep["key"].(string)]
+		if mstep["desc"] == nil || mstep["desc"] == "" {
+			mstep["desc"] = tempStep.Desc
+		}
+		if mstep["inputs"] == nil {
+			var inputs interface{}
+			if err := utils.Clone(tempStep.Inputs, &inputs); err != nil {
+				return nil, fmt.Errorf("复制步骤（%s）输入失败：%v", tempStep.Key, err)
+			}
+			mstep["inputs"] = inputs
+		}
+		if mstep["outputs"] == nil {
+			outputs := make([]string, len(tempStep.Outputs))
+			if err := utils.Clone(&tempStep.Outputs, &outputs); err != nil {
+				return nil, fmt.Errorf("复制步骤（%s）输出失败：%v", tempStep.Key, err)
+			}
+			mstep["outputs"] = outputs
+		}
+		if mstep["code"] == nil || mstep["code"] == "" {
+			mstep["code"] = tempStep.Code
+		}
+		jsonSteps[idx] = mstep
+	}
+	minfo["steps"] = jsonSteps
+
+	// 转成ApiInfo对象
+	obj, err := utils.ToObj(minfo, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
 	if err != nil {
 		return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
 	}
 
 	// 调整步骤的序列号
-	apiInfo := resp.(*pb.ApiInfo)
+	apiInfo := obj.(*pb.ApiInfo)
 	for idx := range apiInfo.Steps {
 		apiInfo.Steps[idx].Index = int32(idx)
 	}
 	return apiInfo, nil
+}
+
+func (s *Service) ApisSelectByName(ctx context.Context, req *pb.NameID) (*pb.ApiInfo, error) {
+	res, err := s.mongo.QueryOne(ctx, model.API_INFO_TABLE, bson.D{{"name", req.Name}})
+	if err != nil {
+		return nil, fmt.Errorf("查询接口信息失败：%v", err)
+	}
+	return s.complApiSteps(ctx, res)
 }
 
 func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfoArray, error) {
@@ -205,17 +256,10 @@ func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfo
 
 	resp := new(pb.ApiInfoArray)
 	for _, res := range ress {
-		api, err := utils.ToObj(res, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
+		apiInfo, err := s.complApiSteps(ctx, res)
 		if err != nil {
-			return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
+			return nil, err
 		}
-
-		// 调整步骤的序列号
-		apiInfo :=  api.(*pb.ApiInfo)
-		for idx := range apiInfo.Steps {
-			apiInfo.Steps[idx].Index = int32(idx)
-		}
-
 		resp.Infos = append(resp.Infos, apiInfo)
 	}
 	return resp, nil
@@ -559,8 +603,45 @@ func (s *Service) DaoConfigInsert(ctx context.Context, req *pb.DaoConfig) (*pb.D
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {
-	// TODO:
-	return nil, nil
+	if pjPath, err := s.ac.Get("projPath").String(); err != nil {
+		return nil, fmt.Errorf("配置文件中未定义项目目录：%v", err)
+	} else if wsPath, err := s.ac.Get("workspace").String(); err != nil {
+		return nil, fmt.Errorf("配置文件中未定义工作区目录：%v", err)
+	} else if wsPath = path.Join(pjPath, wsPath); false {
+		return nil, nil
+	} else if bin, err := time.Now().MarshalBinary(); err != nil {
+		return nil, fmt.Errorf("生成临时文件夹名失败：%v", err)
+	} else if cchName := fmt.Sprintf("%x", md5.Sum(bin)); false {
+		return nil, nil
+	} else if cchPath := path.Join(wsPath, "cache", cchName); false {
+		return nil, nil
+	} else if err := os.MkdirAll(cchPath, 0755); err != nil {
+		return nil, fmt.Errorf("创建临时文件夹：%s失败：%v", cchPath, err)
+	} else if tmpPath := path.Join(wsPath, "template", req.Type); false {
+		return nil, nil
+	} else if pathName := path.Join(cchPath, req.Name); false {
+		return nil, nil
+	} else if utils.CopyFolder(tmpPath, pathName); false {
+		return nil, nil
+	} else if err := s.pBuilder.Build(s, req, pathName).Adjust(ctx); err != nil {
+		return nil, fmt.Errorf("编辑项目失败：%v", err)
+	} else if wsFile, err := os.Open(pathName); err != nil {
+		return nil, fmt.Errorf("工作区目录有误，打开失败：%v", err)
+	} else if zipPath := path.Join(cchPath, req.Name); false {
+		return nil, nil
+	} else if err := utils.Compress([]*os.File{wsFile}, zipPath); err != nil {
+		wsFile.Close()
+		return nil, fmt.Errorf("压缩项目失败：%v", err)
+	} else if url, err := utils.Upload(zipPath, *s.cc.Qiniu); err != nil {
+		wsFile.Close()
+		return nil, fmt.Errorf("上传项目包失败：%v", err)
+	//} else if err := os.RemoveAll(cchPath); err != nil {
+	//	wsFile.Close()
+	//	return nil, fmt.Errorf("删除临时文件夹失败：%v", err)
+	} else {
+		wsFile.Close()
+		return &pb.UrlResp{Url: url}, nil
+	}
 }
 
 func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SymbolsResp, error) {

@@ -84,7 +84,7 @@ export default {
                 if (apis.length === 0) {
                     this.selApiLocal({name: ""})
                 } else {
-                    this.selApiLocal(apis[0])
+                    this.selApiLocal(apis[2])
                 }
             }
         },

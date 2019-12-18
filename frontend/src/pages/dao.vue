@@ -106,7 +106,7 @@
             </div>
         </el-dialog>
         <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-        <el-dialog title="实例化DAO组" :visible.sync="showLoadDaoGroup" :modal-append-to-body="false" width="50vw">
+        <el-dialog title="实例化DAO组" :visible.sync="showLoadDaoGroup" :modal-append-to-body="false" width="60vw">
             <load-dao-group ref="load-dao-group-form"/>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="showLoadDaoGroup = false">取 消</el-button>

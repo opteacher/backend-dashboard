@@ -88,25 +88,7 @@ export default {
             this.selApi = selApi
             this.istStepBtns = []
             let locVars = this.selApi.params ? _.keys(this.selApi.params) : []
-            this.selApi.steps = this.selApi.steps || []
-            let tempSteps = {}
-            for (let step of this.selApi.steps) {
-                tempSteps[step.key] = null
-            }
-            for (let key in tempSteps) {
-                let res = await backend.qryTempStepByKey(key)
-                if (typeof res === "string") {
-                    this.$message.error(`查询模板步骤时发生错误：${res}`)
-                } else {
-                    tempSteps[key] = res
-                }
-            }
-            this.selApi.steps = this.selApi.steps.map((step, idx) => {
-                let tempStep = tempSteps[step.key]
-                step.desc = step.desc || tempStep.desc
-                step.inputs = step.inputs || _.cloneDeep(tempStep.inputs)
-                step.outputs = step.outputs || _.cloneDeep(tempStep.outputs)
-                step.code = step.code || tempStep.code
+            this.selApi.steps = this.selApi.steps ? this.selApi.steps.map((step, idx) => {
                 // 做一些处理：只包含一个元素的输出数组全部设为空
                 if (!step.outputs || (step.outputs.length === 1 && step.outputs[0] === "")) {
                     step.outputs = []
@@ -143,7 +125,7 @@ export default {
                     locVars.concat(step.outputs)
                 }
                 return step
-            })
+            }) : []
             if (this.selApi.name && this.istStepBtns.length === 0) {
                 // 没有按钮，说明流程中没有步骤，添加一个按钮用于初始化
                 this.istStepBtns.push({
