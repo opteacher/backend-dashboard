@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"backend/internal/utils"
+	"template/internal/utils"
 	"bytes"
 	"context"
 	"errors"

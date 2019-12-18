@@ -311,7 +311,7 @@ export default {
                 this.$message.error(`查询模块标牌时发生错误：${res}`)
                 return
             }
-            const compTemps = (await axios.get(res.daoConfHref)).data
+            const compTemps = (await axios.get(res.daoConfHref)).data.configs
             let comps = []
             const h = this.$createElement;
             for (let compId in compTemps) {

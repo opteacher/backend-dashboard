@@ -200,6 +200,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc DaoConfigSelectByImpl(DaoConfImplIden) returns (DaoConfig) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/dao.config.selectByImpl"
+            body: "*"
+        };
+    };
     rpc Export(ExpOptions) returns (UrlResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/export"
@@ -301,6 +307,10 @@ message DaoGroupArray {
 message DaoConfig {
     string implement = 1;
     map<string, string> configs = 2;
+}
+
+message DaoConfImplIden {
+    string implement = 1;
 }
 
 message DaoInterface {

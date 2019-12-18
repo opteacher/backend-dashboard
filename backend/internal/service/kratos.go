@@ -51,6 +51,10 @@ type DaoImplInfo struct {
 	} `json:"files"`
 }
 
+type DaoConfInfo struct {
+	FileName string `json:"fileName"`
+}
+
 func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) error {
 	daoGroups, err := kratos.svc.DaoGroupsSelectAll(ctx, &pb.Empty{})
 	if err != nil {
@@ -76,6 +80,33 @@ func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) error {
 			return fmt.Errorf("关闭响应体失败：%v", err)
 		}
 
+		// 生成配置文件
+		resp, err = http.Get(modInfo.DaoConfHref)
+		if err != nil {
+			return fmt.Errorf("获取DAO实例化信息失败：%v", err)
+		}
+		body, err = ioutil.ReadAll(resp.Body)
+		var daoConfInfo DaoConfInfo
+		if err := json.Unmarshal(body, &daoConfInfo); err != nil {
+			return fmt.Errorf("解析DAO实例化信息失败：%v", err)
+		}
+		if err := resp.Body.Close(); err != nil {
+			return fmt.Errorf("关闭响应体失败：%v", err)
+		}
+		daoConfPath := filepath.Join(kratos.info.pathName, "configs", daoConfInfo.FileName)
+		daoConf, err := kratos.svc.DaoConfigSelectByImpl(ctx, &pb.DaoConfImplIden{Implement: group.Implement})
+		if err != nil {
+			return err
+		}
+		strConf := ""
+		for cfgKey, cfgVal := range daoConf.Configs {
+			strConf += fmt.Sprintf("%s=\"%s\"\n", cfgKey, cfgVal)
+		}
+		if err := ioutil.WriteFile(daoConfPath, []byte(strConf), os.ModePerm); err != nil {
+			return fmt.Errorf("写入DAO配置失败：%v", err)
+		}
+
+
 		// 下载模块下所有文件
 		for _, fileInfo := range daoImplInfo.Files {
 			if err := utils.Download(fileInfo.Href, filepath.Join(kratos.info.pathName, fileInfo.Location)); err != nil {
@@ -86,13 +117,6 @@ func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) error {
 
 	daoPath := path.Join(kratos.info.pathName, "internal", "dao", "dao.go")
 	return utils.ReplaceContentInFile(daoPath, map[string]utils.ReplaceProcFunc{
-		"\"template/": func(line string) (string, error) {
-			return strings.Replace(line, "\"template/", fmt.Sprintf("\"%s/", kratos.info.pkgName), -1) + "\n", nil
-		},
-		"[IMPORTS]": func(line string) (string, error) {
-			// TODO:
-			return "", nil
-		},
 		"[DEFINITION]": func(line string) (string, error) {
 			code := ""
 			for _, diInfo := range daoImplInfos {
@@ -206,6 +230,7 @@ func (kratos *Kratos) switchKratosMicoServ(ctx context.Context) error {
 
 func (kratos *Kratos) chgKratosProjName(ctx context.Context) error {
 	fixLst := []string{
+		path.Join(kratos.info.pathName, "cmd", "main.go"),
 		path.Join(kratos.info.pathName, "internal", "server", "grpc", "server.go"),
 		path.Join(kratos.info.pathName, "internal", "server", "http", "server.go"),
 	}

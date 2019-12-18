@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api/api.proto",
+        "title": "api.proto",
         "version": "1"
     },
     "schemes": [
@@ -230,6 +230,43 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/.backend.manager.service.v1.DaoConfig"
+                        }
+                    }
+                ],
+                "tags": [
+                    "backend.manager.service.v1.BackendManager"
+                ]
+            }
+        },
+        "/backend-dashboard/backend/dao.config.selectByImpl": {
+            "post": {
+                "summary": "/backend-dashboard/backend/dao.config.selectByImpl",
+                "responses": {
+                    "200": {
+                        "description": "A successful response.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "message": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "$ref": "#/definitions/.backend.manager.service.v1.DaoConfig"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.backend.manager.service.v1.DaoConfImplIden"
                         }
                     }
                 ],
@@ -1460,6 +1497,14 @@
             "type": "object",
             "properties": {
                 "category": {
+                    "type": "string"
+                }
+            }
+        },
+        ".backend.manager.service.v1.DaoConfImplIden": {
+            "type": "object",
+            "properties": {
+                "implement": {
                     "type": "string"
                 }
             }

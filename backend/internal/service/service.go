@@ -9,15 +9,14 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"os"
 	"path"
 	"reflect"
 	"strings"
 	"time"
-
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Service service.
@@ -600,6 +599,19 @@ func (s *Service) DaoConfigInsert(ctx context.Context, req *pb.DaoConfig) (*pb.D
 		return nil, fmt.Errorf("插入DAO配置失败：%v", err)
 	}
 	return req, nil
+}
+
+func (s *Service) DaoConfigSelectByImpl(ctx context.Context, req *pb.DaoConfImplIden) (*pb.DaoConfig, error) {
+	res, err := s.mongo.QueryOne(ctx, model.DAO_CONFIGS_TABLE, bson.D{{"implement", req.Implement}})
+	if err != nil {
+		return nil, fmt.Errorf("查询DAO配置失败：%v", err)
+	}
+
+	obj, err := utils.ToObj(res, reflect.TypeOf((*pb.DaoConfig)(nil)).Elem())
+	if err != nil {
+		return nil, fmt.Errorf("转成DAO配置失败：%v", err)
+	}
+	return obj.(*pb.DaoConfig), nil
 }
 
 func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, error) {
