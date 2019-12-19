@@ -1,14 +1,17 @@
 package service
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"reflect"
+	"regexp"
 	"strings"
 
 	pb "backend/api"
@@ -25,18 +28,20 @@ func NewKratos(svc *Service, pi *ProjInfo) (*Kratos, error) {
 }
 
 func (kratos *Kratos) Adjust(ctx context.Context) error {
-	if apis, err := kratos.genKratosProtoFile(ctx); err != nil {
+	if apis, apiTyps, err := kratos.genKratosProtoFile(ctx); err != nil {
 		return fmt.Errorf("生成Proto文件失败：%v", err)
 	} else if err := kratos.chgKratosConfig(ctx); err != nil {
 		return fmt.Errorf("修改配置文件失败：%v", err)
-	} else if err := kratos.chgKratosDaoFile(ctx); err != nil {
+	} else if files, err := kratos.chgKratosDaoFile(ctx); err != nil {
 		return fmt.Errorf("修改DAO文件失败：%v", err)
 	} else if err := kratos.chgKratosServiceFile(ctx, apis); err != nil {
 		return fmt.Errorf("修改Service文件失败：%v", err)
 	} else if err := kratos.switchKratosMicoServ(ctx); err != nil {
 		return fmt.Errorf("开启/关闭微服务功能失败:%v", err)
-	} else if err := kratos.chgKratosProjName(ctx); err != nil {
+	} else if err := kratos.chgKratosProjName(ctx, files); err != nil {
 		return fmt.Errorf("修改项目名称失败：%v", err)
+	} else if err := kratos.chgKratosTypeName(ctx, apiTyps); err != nil {
+		return fmt.Errorf("修改类型名称失败：%v", err)
 	}
 	return nil
 }
@@ -45,78 +50,104 @@ type DaoImplInfo struct {
 	Def string `json:"def"`
 	New string `json:"new"`
 	Init string `json:"init"`
+	Requires map[string]string `json:"requires"`
 	Files []struct {
 		Href string `json:"href"`
 		Location string `json:"location"`
 	} `json:"files"`
 }
 
-type DaoConfInfo struct {
-	FileName string `json:"fileName"`
-}
-
-func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) error {
-	daoGroups, err := kratos.svc.DaoGroupsSelectAll(ctx, &pb.Empty{})
-	if err != nil {
+func (kratos *Kratos) chgKratosTypeName(ctx context.Context, apiTyps map[string]*regexp.Regexp) error {
+	// 为所有API类型添加pb.前缀
+	svcPath := path.Join(kratos.info.pathName, "internal", "service", "service.go")
+	if err := utils.InsertTxt(svcPath, func(line string, doProc *bool) (string, bool, error) {
+		for mname, pattern := range apiTyps {
+			if len(line) < len(mname) {
+				continue
+			}
+			line = pattern.ReplaceAllStringFunc(line, func(str string) string {
+				return strings.Replace(str, mname, "pb." + mname, 1)
+			})
+		}
+		return line, false, nil
+	}); err != nil {
 		return err
 	}
-	daoImplInfos := make([]DaoImplInfo, 0)
+	return nil
+}
+
+func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) ([]string, error) {
+	daoGroups, err := kratos.svc.DaoGroupsSelectAll(ctx, &pb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+	modFiles := make(map[string]interface{})
+	daoImplInfos := make([]*DaoImplInfo, 0)
+	daoImplInfoType := reflect.TypeOf((*DaoImplInfo)(nil)).Elem()
 	for _, group := range daoGroups.Groups {
 		modInfo, err := kratos.svc.ModuleInfoSelectBySignId(ctx, &pb.StrID{Id: group.Implement})
 		if err != nil {
-			return err
+			return nil, err
 		}
-		resp, err := http.Get(modInfo.DaoImplHref)
+		jsonMap, err := utils.HttpGetJsonMap(modInfo.DaoImplHref)
 		if err != nil {
-			return fmt.Errorf("获取DAO实例化信息失败：%v", err)
+			return nil, fmt.Errorf("获取DAO实例化信息失败：%v", err)
 		}
-		body, err := ioutil.ReadAll(resp.Body)
-		var daoImplInfo DaoImplInfo
-		if err := json.Unmarshal(body, &daoImplInfo); err != nil {
-			return fmt.Errorf("解析DAO实例化信息失败：%v", err)
+		obj, err := utils.ToObj(jsonMap, daoImplInfoType)
+		if err != nil {
+			return nil, fmt.Errorf("DAO实例化信息转换失败：%v", err)
+		}
+		daoImplInfo := obj.(*DaoImplInfo)
+		// 检查是否有依赖MOD，有则添加关联文件至下载列表中
+		for _, daoImplId := range modInfo.Requires {
+			reqModInfo, err := kratos.svc.ModuleInfoSelectBySignId(ctx, &pb.StrID{Id: daoImplId})
+			if err != nil {
+				return nil, fmt.Errorf("查询依赖MOD信息失败：%v", err)
+			}
+			jsonMap, err = utils.HttpGetJsonMap(reqModInfo.DaoImplHref)
+			if err != nil {
+				return nil, fmt.Errorf("获取依赖MOD实例化信息失败：%v", err)
+			}
+			obj, err = utils.ToObj(jsonMap, daoImplInfoType)
+			if err != nil {
+				return nil, fmt.Errorf("DAO实例化信息转换失败：%v", err)
+			}
+			for _, reqFile := range obj.(*DaoImplInfo).Files {
+				daoImplInfo.Files = append(daoImplInfo.Files, reqFile)
+			}
 		}
 		daoImplInfos = append(daoImplInfos, daoImplInfo)
-		if err := resp.Body.Close(); err != nil {
-			return fmt.Errorf("关闭响应体失败：%v", err)
-		}
 
 		// 生成配置文件
-		resp, err = http.Get(modInfo.DaoConfHref)
+		jsonMap, err = utils.HttpGetJsonMap(modInfo.DaoConfHref)
 		if err != nil {
-			return fmt.Errorf("获取DAO实例化信息失败：%v", err)
+			return nil, fmt.Errorf("获取DAO配置信息失败：%v", err)
 		}
-		body, err = ioutil.ReadAll(resp.Body)
-		var daoConfInfo DaoConfInfo
-		if err := json.Unmarshal(body, &daoConfInfo); err != nil {
-			return fmt.Errorf("解析DAO实例化信息失败：%v", err)
-		}
-		if err := resp.Body.Close(); err != nil {
-			return fmt.Errorf("关闭响应体失败：%v", err)
-		}
-		daoConfPath := filepath.Join(kratos.info.pathName, "configs", daoConfInfo.FileName)
+		daoConfPath := filepath.Join(kratos.info.pathName, "configs", jsonMap["fileName"].(string))
 		daoConf, err := kratos.svc.DaoConfigSelectByImpl(ctx, &pb.DaoConfImplIden{Implement: group.Implement})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		strConf := ""
-		for cfgKey, cfgVal := range daoConf.Configs {
-			strConf += fmt.Sprintf("%s=\"%s\"\n", cfgKey, cfgVal)
+		for _, config := range daoConf.Configs {
+			strConf += fmt.Sprintf("%s=\"%s\"\n", config.Key, config.Value)
 		}
 		if err := ioutil.WriteFile(daoConfPath, []byte(strConf), os.ModePerm); err != nil {
-			return fmt.Errorf("写入DAO配置失败：%v", err)
+			return nil, fmt.Errorf("写入DAO配置失败：%v", err)
 		}
-
 
 		// 下载模块下所有文件
 		for _, fileInfo := range daoImplInfo.Files {
-			if err := utils.Download(fileInfo.Href, filepath.Join(kratos.info.pathName, fileInfo.Location)); err != nil {
-				return fmt.Errorf("下载文件失败：%v", err)
+			flPath := filepath.Join(kratos.info.pathName, fileInfo.Location)
+			if err := utils.Download(fileInfo.Href, flPath); err != nil {
+				return nil, fmt.Errorf("下载文件失败：%v", err)
 			}
+			modFiles[flPath] = nil
 		}
 	}
 
 	daoPath := path.Join(kratos.info.pathName, "internal", "dao", "dao.go")
-	return utils.ReplaceContentInFile(daoPath, map[string]utils.ReplaceProcFunc{
+	return utils.GenMapKeys(modFiles), utils.ReplaceContentInFile(daoPath, map[string]utils.ReplaceProcFunc{
 		"[DEFINITION]": func(line string) (string, error) {
 			code := ""
 			for _, diInfo := range daoImplInfos {
@@ -228,16 +259,20 @@ func (kratos *Kratos) switchKratosMicoServ(ctx context.Context) error {
 	return nil
 }
 
-func (kratos *Kratos) chgKratosProjName(ctx context.Context) error {
+func (kratos *Kratos) chgKratosProjName(ctx context.Context, addedFiles []string) error {
 	fixLst := []string{
+		path.Join(kratos.info.pathName, "go.mod"),
 		path.Join(kratos.info.pathName, "cmd", "main.go"),
 		path.Join(kratos.info.pathName, "internal", "server", "grpc", "server.go"),
 		path.Join(kratos.info.pathName, "internal", "server", "http", "server.go"),
+		path.Join(kratos.info.pathName, "internal", "service", "service.go"),
+	}
+	if addedFiles != nil && len(addedFiles) != 0 {
+		fixLst = append(fixLst, addedFiles...)
 	}
 	if kratos.info.option.IsMicoServ {
 		fixLst = append(fixLst, path.Join(kratos.info.pathName, "internal", "server", "common.go"))
 	}
-	impPkg := fmt.Sprintf("\"%s/", kratos.info.pkgName)
 	for _, p := range fixLst {
 		if err := utils.InsertTxt(p, func(line string, doProc *bool) (string, bool, error) {
 			if strings.Contains(line, ")") {
@@ -246,7 +281,7 @@ func (kratos *Kratos) chgKratosProjName(ctx context.Context) error {
 			if !*doProc {
 				return line, false, nil
 			}
-			return strings.Replace(line, "\"template/", impPkg, -1), false, nil
+			return strings.Replace(line, "template", kratos.info.pkgName, -1), false, nil
 		}); err != nil {
 			return err
 		}
@@ -255,21 +290,28 @@ func (kratos *Kratos) chgKratosProjName(ctx context.Context) error {
 }
 
 // 根据数据库中模型的定义，生成proto的message和service
-func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, error) {
+func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, map[string]*regexp.Regexp, error) {
 	// 添加proto文件并根据数据库添加message和service
 	code := "syntax = \"proto3\";\n\n"
 	code += fmt.Sprintf("package %s.service.v1;\n\n", kratos.info.pkgName)
 	code += "import \"gogoproto/gogo.proto\";\n"
-	code += "import \"google/api/annotationkpg.proto\";\n\n"
+	code += "import \"google/api/annotations.proto\";\n\n"
 	code += "option go_package = \"api\";\n"
 	code += "option (gogoproto.goproto_getters_all) = false;\n\n"
 
 	// 收集接口信息
 	mdls, err := kratos.svc.ModelsSelectAll(ctx, &pb.TypeIden{Type: "model"})
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("查询所有模块失败：%v", err)
 	}
+	stts, err := kratos.svc.ModelsSelectAll(ctx, &pb.TypeIden{Type: "struct"})
+	if err != nil {
+		return nil, nil, fmt.Errorf("查询所有结构失败：%v", err)
+	}
+	mdls.Models = append(mdls.Models, stts.Models...)
+	apiTyps := make(map[string]*regexp.Regexp)
 	for _, mdl := range mdls.Models {
+		apiTyps[mdl.Name] = regexp.MustCompile(fmt.Sprintf("\\W+%s\\W+", mdl.Name))
 		code += fmt.Sprintf("message %s {\n", mdl.Name)
 		for i, prop := range mdl.Props {
 			code += fmt.Sprintf("\t%s %s=%d;\n", prop.Type, prop.Name, i+1)
@@ -280,7 +322,7 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, er
 	// 生成proto文件
 	apis, err := kratos.svc.ApisSelectAll(ctx, &pb.Empty{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(apis.Infos) != 0 {
 		code += fmt.Sprintf("service %s {\n", utils.Capital(kratos.info.option.Name))
@@ -305,13 +347,23 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, er
 	protoPath := path.Join(kratos.info.pathName, "api", "api.proto")
 	protoFile, err := os.OpenFile(protoPath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer protoFile.Close()
 	if _, err := protoFile.WriteString(code); err != nil {
-		return nil, fmt.Errorf("写入proto文件失败：%v", err)
+		return nil, nil, fmt.Errorf("写入proto文件失败：%v", err)
 	}
-	return apis.Infos, nil
+
+	// 生成proto文件
+	cmd := exec.CommandContext(ctx, "kratos", []string{
+		"tool", "protoc", protoPath,
+	}...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, nil, errors.New(err.Error() + "\n" + stderr.String())
+	}
+	return apis.Infos, apiTyps, nil
 }
 
 // 根据抽取的接口信息，生成完整的service
@@ -338,12 +390,12 @@ func (kratos *Kratos) chgKratosServiceFile(ctx context.Context, apis []*pb.ApiIn
 				aparams := make([]string, 0)
 				for pname, ptype := range ai.Params {
 					// 参数都是api包下的类型，所以要附上pb前缀
-					aparams = append(aparams, fmt.Sprintf("%s *pb.%s", pname, ptype))
+					aparams = append(aparams, fmt.Sprintf("%s *%s", pname, ptype))
 				}
 				sparams := strings.Join(aparams, ", ")
 				areturns := make([]string, 0)
 				for _, ret := range ai.Returns {
-					areturns = append(areturns, "*pb." + ret)
+					areturns = append(areturns, "*" + ret)
 				}
 				sreturns := strings.Join(areturns, ", ")
 				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (%s, error) {\n", ai.Name, sparams, sreturns)

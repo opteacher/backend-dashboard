@@ -1,0 +1,9 @@
+{
+    "files": [{
+        "href": "http://127.0.0.1:4000/tools/golang/daoImpls/file.go",
+        "location": "internal/utils/file.go"
+    }, {
+        "href": "http://127.0.0.1:4000/tools/golang/daoImpls/helper.go",
+        "location": "internal/utils/helper.go"
+    }]
+}

@@ -346,9 +346,13 @@ export default {
             if (action !== "confirm") {
                 return
             }
-            let configs = {}
+            let configs = []
             for (let compId in compTemps) {
-                configs[compId] = $(`[name='${compId}']`)[0].value
+                configs.push({
+                    key: compId,
+                    type: compTemps[compId].type,
+                    value: $(`[name='${compId}']`)[0].value
+                })
             }
             res = await backend.addDaoConfig(implId, configs)
             if (typeof res === "string") {

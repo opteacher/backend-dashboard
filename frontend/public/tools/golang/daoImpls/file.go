@@ -165,18 +165,14 @@ func Upload(absFile string, sc StorageConfig) (string, error) {
 	}
 
 	fsize := finfo.Size()
-	lstIdx := strings.LastIndex(absFile, string(filepath.Separator))
-	dname := ""
-	fname := absFile
-	if lstIdx != -1 {
-		dname = absFile[:lstIdx]
-		fname = absFile[lstIdx + 1:]
-	}
+	aryTmp := strings.Split(absFile, string(filepath.Separator))
+	fname := aryTmp[len(aryTmp)-1]
 	flmd := finfo.ModTime().UnixNano()
 	recordKey := Md5Hex(fmt.Sprintf("%s:%s:%s:%d", sc.Bucket, fname, absFile, flmd)) + ".progress"
-	recordPath := filepath.Join(dname, recordKey)
-	if recordPath[0] != filepath.Separator {
-		recordPath = string(filepath.Separator) + recordPath
+	aryTmp[len(aryTmp)-1] = recordKey
+	recordPath := filepath.Join(aryTmp...)
+	if recordPath[0] != '/' {
+		recordPath = "/" + recordPath
 	}
 
 	pgsRcd := ProgressRecord{}
@@ -225,7 +221,7 @@ func Upload(absFile string, sc StorageConfig) (string, error) {
 	if err := os.Remove(recordPath); err != nil {
 		return "", err
 	}
-	url := sc.Url + "/" + ret.Key
+	url := sc.Url + ret.Key
 	fmt.Printf("%s上传成功，哈希：%s，通过%s可下载\n", ret.Key, ret.Hash, url)
 	return url, nil
 }
@@ -237,15 +233,6 @@ func Download(url string, dest string) error {
 	}
 	bytes, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	lstIdx := strings.LastIndex(dest, string(filepath.Separator))
-	if lstIdx != -1 {
-		dirPath := dest[:lstIdx]
-		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-			if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-				return err
-			}
-		}
-	}
 	return ioutil.WriteFile(dest, bytes, os.ModePerm)
 }
 
@@ -324,11 +311,6 @@ func CopyFile(src, dst string) (w int64, err error) {
 }
 
 // 文件插入（逐行操作，只使用文本文件）
-// @Param{1}: 读取到的一行文本
-// @Param{2}: 中断处理标识，在回调中设为false会导致之后的文本均不加处理
-// @Return{1}: 处理之后的行文本
-// @Return{2}: 是否直接停止处理
-// @Return{3}: 处理过程发生的错误
 type InsertProcFunc func(string, *bool) (string, bool, error)
 func InsertTxt(fpath string, proc InsertProcFunc) error {
 	// 读取import部分

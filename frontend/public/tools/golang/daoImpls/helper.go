@@ -65,10 +65,3 @@ func HttpGetJsonMap(url string) (map[string]interface{}, error) {
 	}
 	return retMap, nil
 }
-
-func GenMapKeys(mp map[string]interface{}) (keys []string) {
-	for key := range mp {
-		keys = append(keys, key)
-	}
-	return
-}

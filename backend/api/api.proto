@@ -304,9 +304,15 @@ message DaoGroupArray {
     repeated DaoGroup groups = 1;
 }
 
+message DaoConfItem {
+    string key = 1;
+    string type = 2;
+    string value = 3;
+}
+
 message DaoConfig {
     string implement = 1;
-    map<string, string> configs = 2;
+    repeated DaoConfItem configs = 2;
 }
 
 message DaoConfImplIden {
@@ -453,11 +459,12 @@ message ModuleSign {
     string icon = 3;
     string type = 4;
     string desc = 5;
-    string daoImplHref = 6;// 获得DAO布置表（json），罗列DAO所需文件和位置信息
-    string daoConfHref = 7;// 获得DAO配置表（json），罗列配置和组件在画面的类型
-    string tmpStepHref = 8;// 获得模板步骤信息（json）
-    string apiTempHref = 9;// 获得API模板信息（json）
-    string homeUrl = 10;
+    repeated string requires = 6;
+    string daoImplHref = 7;// 获得DAO布置表（json），罗列DAO所需文件和位置信息
+    string daoConfHref = 8;// 获得DAO配置表（json），罗列配置和组件在画面的类型
+    string tmpStepHref = 9;// 获得模板步骤信息（json）
+    string apiTempHref = 10;// 获得API模板信息（json）
+    string homeUrl = 11;
 }
 
 message ModuleSignArray {

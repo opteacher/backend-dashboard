@@ -32,11 +32,11 @@
     "steps": [{
         "key": "assignment_create",
         "inputs": {
-            "SOURCE": "bson.D{{'_id', iden.Id}}",
+            "SOURCE": "bson.D{{\"_id\", iden.Id}}",
             "TARGET": "conds"
         }
     }, {
-        "key": "mongo_query",
+        "key": "mongo_queryOne",
         "desc": "查询_id为（%iden.Id%）的%MODEL%",
         "inputs": {
             "COLC_NAME": "%MODEL%",
@@ -50,8 +50,15 @@
             "CONDITIONS": "conds"
         }
     }, {
+        "key": "optools_toObj",
+        "desc": "将查询得到的res转成%MODEL%",
+        "inputs": {
+            "OMAP": "res",
+            "TARGET_TYPE": "%MODEL%"
+        }
+    }, {
         "key": "return_succeed",
-        "inputs": {"RETURN": "res"}
+        "inputs": {"RETURN": "obj.(*%MODEL%)"}
     }]
 }, {
     "name": "update%MODEL%InMongoByRowId",
@@ -59,24 +66,21 @@
     "group": "Mongo",
     "symbol": "update",
     "model": "%MODEL%",
-    "params": {
-        "iden": "StrIden",
-        "entry": "JsonData"
-    },
+    "params": {"entry": "JsonData"},
     "returns": ["%MODEL%"],
     "route": "/%PROJ_NAME%/models/%MODEL%.updateByRowId",
     "method": "post",
     "steps": [{
         "key": "json_unmarshalToMap",
         "desc": "将更新的实体转成map",
-        "inputs": {"BYTES": "entry.Data"}
+        "inputs": {"BYTES": "[]byte(entry.Data)"}
     }, {
         "key": "mongo_buildUpdateSet",
         "inputs": {"OMAP": "omap"}
     }, {
         "key": "assignment_create",
         "inputs": {
-            "SOURCE": "bson.D{{'_id', iden.Id}}",
+            "SOURCE": "bson.D{{\"_id\", iden.Id}}",
             "TARGET": "conds"
         }
     }, {
@@ -87,15 +91,22 @@
             "ENTRY": "updSet"
         }
     }, {
-        "key": "mongo_query",
+        "key": "mongo_queryOne",
         "desc": "查询_id为（%iden.Id%）的%MODEL%",
         "inputs": {
             "COLC_NAME": "%MODEL%",
             "CONDITIONS": "conds"
         }
     }, {
+        "key": "optools_toObj",
+        "desc": "将查询得到的res转成%MODEL%",
+        "inputs": {
+            "OMAP": "res",
+            "TARGET_TYPE": "%MODEL%"
+        }
+    }, {
         "key": "return_succeed",
-        "inputs": {"RETURN": "res"}
+        "inputs": {"RETURN": "obj.(*%MODEL%)"}
     }]
 }, {
     "name": "select%MODEL%FromMongoByRowId",
@@ -108,14 +119,21 @@
     "route": "/%PROJ_NAME%/models/%MODEL%.selectByRowId",
     "method": "post",
     "steps": [{
-        "key": "mongo_query",
+        "key": "mongo_queryOne",
         "desc": "查询_id为（%iden.Id%）的%MODEL%",
         "inputs": {
             "COLC_NAME": "%MODEL%",
-            "CONDITIONS": "conds"
+            "CONDITIONS": "bson.D{{\"_id\", iden.Id}}"
+        }
+    }, {
+        "key": "optools_toObj",
+        "desc": "将查询得到的res转成%MODEL%",
+        "inputs": {
+            "OMAP": "res",
+            "TARGET_TYPE": "%MODEL%"
         }
     }, {
         "key": "return_succeed",
-        "inputs": {"RETURN": "res"} 
+        "inputs": {"RETURN": "obj.(*%MODEL%)"} 
     }]
 }]

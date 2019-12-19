@@ -1,0 +1,14 @@
+{
+    "steps": [{
+        "key": "optools_toObj",
+        "group": "OpGoTools",
+        "desc": "将对象转成%TARGET_TYPE%",
+        "requires": ["reflect", "template/internal/utils"],
+        "inputs": {
+            "OMAP": "",
+            "TARGET_TYPE": ""
+        },
+        "outputs": ["obj"],
+        "code": "obj, err := utils.ToObj(res, reflect.TypeOf((*%TARGET_TYPE%)(nil)).Elem())\nif err != nil {\n\treturn nil, fmt.Errorf(\"转Model对象失败：%v\", err)\n}\n"
+    }]
+}

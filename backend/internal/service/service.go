@@ -9,14 +9,14 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"github.com/bilibili/kratos/pkg/conf/paladin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"os"
 	"path"
 	"reflect"
 	"strings"
 	"time"
-	"github.com/bilibili/kratos/pkg/conf/paladin"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Service service.
@@ -204,6 +204,11 @@ func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{
 		if mstep["desc"] == nil || mstep["desc"] == "" {
 			mstep["desc"] = tempStep.Desc
 		}
+		requires := make([]string, len(tempStep.Requires))
+		if err := utils.Clone(&tempStep.Requires, &requires); err != nil {
+			return nil, fmt.Errorf("复制步骤（%s）依赖失败：%v", tempStep.Key, err)
+		}
+		mstep["requires"] = requires
 		if mstep["inputs"] == nil {
 			var inputs interface{}
 			if err := utils.Clone(tempStep.Inputs, &inputs); err != nil {
@@ -211,13 +216,11 @@ func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{
 			}
 			mstep["inputs"] = inputs
 		}
-		if mstep["outputs"] == nil {
-			outputs := make([]string, len(tempStep.Outputs))
-			if err := utils.Clone(&tempStep.Outputs, &outputs); err != nil {
-				return nil, fmt.Errorf("复制步骤（%s）输出失败：%v", tempStep.Key, err)
-			}
-			mstep["outputs"] = outputs
+		outputs := make([]string, len(tempStep.Outputs))
+		if err := utils.Clone(&tempStep.Outputs, &outputs); err != nil {
+			return nil, fmt.Errorf("复制步骤（%s）输出失败：%v", tempStep.Key, err)
 		}
+		mstep["outputs"] = outputs
 		if mstep["code"] == nil || mstep["code"] == "" {
 			mstep["code"] = tempStep.Code
 		}
@@ -538,6 +541,11 @@ func (s *Service) TempDaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*p
 }
 
 func (s *Service) DaoGroupUpdateImplement(ctx context.Context, req *pb.DaoGrpSetImpl) (*pb.DaoGroup, error) {
+	modSign, err := s.ModuleInfoSelectBySignId(ctx, &pb.StrID{Id: req.ImplId})
+	if err != nil {
+		return nil, fmt.Errorf("查询MOD信息失败：%v", err)
+	}
+
 	group, err := s.DaoGroupSelectByName(ctx, &pb.NameID{Name: req.Gpname})
 	if err != nil {
 		return nil, err
@@ -549,6 +557,44 @@ func (s *Service) DaoGroupUpdateImplement(ctx context.Context, req *pb.DaoGrpSet
 	})
 	if err != nil {
 		return nil, fmt.Errorf("配置DAO组实例化失败：%v", err)
+	}
+
+	// 生成配置
+	if len(modSign.DaoConfHref) != 0 {
+		jsonMap, err := utils.HttpGetJsonMap(modSign.DaoConfHref)
+		if err != nil {
+			return nil, fmt.Errorf("获取MOD配置信息失败：%v", err)
+		}
+		var configs []*pb.DaoConfItem
+		for cfgKey, obj := range jsonMap["configs"].(map[string]interface{}) {
+			cfgInfo := obj.(map[string]interface{})
+			configs = append(configs, &pb.DaoConfItem{
+				Key:                  cfgKey,
+				Type:                 cfgInfo["type"].(string),
+				Value:                "",
+			})
+		}
+		if _, err := s.DaoConfigInsert(ctx, &pb.DaoConfig{Implement: req.ImplId, Configs: configs}); err != nil {
+			return nil, fmt.Errorf("生成DAO配置失败：%v" , err)
+		}
+	}
+
+	// 检查依赖
+	for _, reqModId := range modSign.Requires {
+		reqMod, err := s.ModuleInfoSelectBySignId(ctx, &pb.StrID{Id: reqModId})
+		if err != nil {
+			return nil, fmt.Errorf("查询依赖MOD信息失败：%v", err)
+		}
+		// 插入模板步骤
+		if len(reqMod.TmpStepHref) != 0 {
+			jsonMap, err := utils.HttpGetJsonMap(reqMod.TmpStepHref)
+			if err != nil {
+				return nil, fmt.Errorf("获取MOD模板步骤失败：%v", err)
+			}
+			if _, err := s.mongo.InsertMany(ctx, model.TEMP_STEP_TABLE, jsonMap["steps"].([]interface{})); err != nil {
+				return nil, fmt.Errorf("添加MOD依赖的模板步骤失败：%v", err)
+			}
+		}
 	}
 	return group, nil
 }
@@ -594,9 +640,18 @@ func (s *Service) DaoInterfaceDelete(ctx context.Context, req *pb.DaoItfcIden) (
 }
 
 func (s *Service) DaoConfigInsert(ctx context.Context, req *pb.DaoConfig) (*pb.DaoConfig, error) {
-	_, err := s.mongo.Insert(ctx, model.DAO_CONFIGS_TABLE, req)
+	_, err := s.DaoConfigSelectByImpl(ctx, &pb.DaoConfImplIden{Implement: req.Implement})
 	if err != nil {
-		return nil, fmt.Errorf("插入DAO配置失败：%v", err)
+		_, err := s.mongo.Insert(ctx, model.DAO_CONFIGS_TABLE, req)
+		if err != nil {
+			return nil, fmt.Errorf("插入DAO配置失败：%v", err)
+		}
+	}
+	if _, err := s.mongo.Update(ctx, model.DAO_CONFIGS_TABLE,
+		bson.D{{"implement", req.Implement}},
+		bson.D{{"$set", bson.D{{"configs", req.Configs}}}},
+	); err != nil {
+		return nil, fmt.Errorf("更新DAO配置失败：%v", err)
 	}
 	return req, nil
 }
@@ -639,7 +694,7 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 		return nil, fmt.Errorf("编辑项目失败：%v", err)
 	} else if wsFile, err := os.Open(pathName); err != nil {
 		return nil, fmt.Errorf("工作区目录有误，打开失败：%v", err)
-	} else if zipPath := path.Join(cchPath, req.Name); false {
+	} else if zipPath := path.Join(cchPath, req.Name + ".zip"); false {
 		return nil, nil
 	} else if err := utils.Compress([]*os.File{wsFile}, zipPath); err != nil {
 		wsFile.Close()

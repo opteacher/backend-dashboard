@@ -22,12 +22,6 @@ type MongoDao struct {
 	mod string
 }
 
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 // New new a dao and return.
 func NewMongo() *MongoDao {
 	var (
@@ -40,7 +34,7 @@ func NewMongo() *MongoDao {
 			}
 		}
 	)
-	checkErr(paladin.Get("mongo.toml").UnmarshalTOML(&dc))
+	utils.CheckErr(paladin.Get("mongo.toml").UnmarshalTOML(&dc))
 	mongoDao := &MongoDao{
 		cliOpns: options.Client().ApplyURI(dc.Demo.Url),
 		dbName: dc.Demo.Db,

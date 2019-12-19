@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api.proto",
+        "title": "api/api.proto",
         "version": "1"
     },
     "schemes": [
@@ -1509,6 +1509,20 @@
                 }
             }
         },
+        ".backend.manager.service.v1.DaoConfItem": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         ".backend.manager.service.v1.DaoConfig": {
             "type": "object",
             "properties": {
@@ -1516,9 +1530,9 @@
                     "type": "string"
                 },
                 "configs": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.DaoConfItem"
                     }
                 }
             }
@@ -1782,6 +1796,12 @@
                 },
                 "desc": {
                     "type": "string"
+                },
+                "requires": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "daoImplHref": {
                     "type": "string"

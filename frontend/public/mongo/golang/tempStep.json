@@ -3,11 +3,12 @@
         "key": "mongo_buildUpdateSet",
         "group": "Mongo",
         "desc": "构建数据库更新bson.D",
+        "requires": ["go.mongodb.org/mongo-driver/bson"],
         "inputs": {
             "OMAP": ""
         },
         "outputs": ["updSet"],
-        "code": "temp := bson.D{}\nfor key, val := range %OMAP% {\n\ttemp = append(temp, bson.E{key, val})\n}\nupdSet := bson.D{{'$set', temp}}\n"
+        "code": "temp := bson.D{}\nfor key, val := range %OMAP% {\n\ttemp = append(temp, bson.E{key, val})\n}\nupdSet := bson.D{{\"$set\", temp}}\n"
     }, {
         "key": "mongo_insert",
         "group": "Mongo",
@@ -17,7 +18,7 @@
             "ENTRY": ""
         },
         "outputs": ["_id"],
-        "code": "_id, err := s.dao.Mongo.Insert(ctx, \"%TABLE_NAME%\", %OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n"
+        "code": "_id, err := s.dao.Mongo.Insert(ctx, \"%COLC_NAME%\", %ENTRY%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n"
     }, {
         "key": "mongo_query",
         "group": "Mongo",
@@ -26,8 +27,18 @@
             "COLC_NAME": "",
             "CONDITIONS": ""
         },
+        "outputs": ["ress"],
+        "code": "ress, err := s.dao.Mongo.Query(ctx, \"%COLC_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n"
+    }, {
+        "key": "mongo_queryOne",
+        "group": "Mongo",
+        "desc": "做数据库查询操作",
+        "inputs": {
+            "COLC_NAME": "",
+            "CONDITIONS": ""
+        },
         "outputs": ["res"],
-        "code": "res, err := s.dao.Mongo.Query(ctx, \"%TABLE_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n"
+        "code": "res, err := s.dao.Mongo.QueryOne(ctx, \"%COLC_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"查询数据表失败：%v\", err)\n}\n"
     }, {
         "key": "mongo_update",
         "group": "Mongo",
@@ -37,7 +48,7 @@
             "CONDITIONS": "",
             "ENTRY": ""
         },
-        "code": "_, err := s.dao.Mongo.Update(ctx, \"%TABLE_NAME%\", %CONDITIONS%, %OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n"
+        "code": "_, err := s.dao.Mongo.Update(ctx, \"%COLC_NAME%\", %CONDITIONS%, %ENTRY%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n"
     }, {
         "key": "mongo_delete",
         "group": "Mongo",
@@ -46,6 +57,6 @@
             "COLC_NAME": "",
             "CONDITIONS": ""
         },
-        "code": "_, err := s.dao.Mongo.Delete(ctx, \"%TABLE_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n"
+        "code": "_, err := s.dao.Mongo.Delete(ctx, \"%COLC_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n"
     }]
 }
