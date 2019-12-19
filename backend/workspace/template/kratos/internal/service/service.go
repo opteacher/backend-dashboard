@@ -7,6 +7,9 @@ import (
 	pb "template/api"
 	"template/internal/dao"
 	"github.com/bilibili/kratos/pkg/conf/paladin"
+	// [MICO_SERV_BEG]
+	"template/internal/server"
+	// [MICO_SERV_END]
 
 	// [IMPORTS]
 )
@@ -52,10 +55,11 @@ func (s *Service) Ping(ctx context.Context) (err error) {
 // Close close the resource.
 func (s *Service) Close() {
 	s.dao.Close()
-	// 注销服务
+	// [MICO_SERV_BEG]
 	if cli, err := server.RegisterService(); err != nil {
 		panic(err)
 	} else if _, err := cli.Cancel(context.Background(), &pb.IdenSvcReqs{AppID: s.AppID()}); err != nil {
 		panic(err)
 	}
+	// [MICO_SERV_END]
 }

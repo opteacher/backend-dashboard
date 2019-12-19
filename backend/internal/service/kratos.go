@@ -30,17 +30,17 @@ func NewKratos(svc *Service, pi *ProjInfo) (*Kratos, error) {
 func (kratos *Kratos) Adjust(ctx context.Context) error {
 	if apis, apiTyps, err := kratos.genKratosProtoFile(ctx); err != nil {
 		return fmt.Errorf("生成Proto文件失败：%v", err)
-	} else if err := kratos.chgKratosConfig(ctx); err != nil {
+	} else if err := kratos.chgKratosConfig(); err != nil {
 		return fmt.Errorf("修改配置文件失败：%v", err)
 	} else if files, err := kratos.chgKratosDaoFile(ctx); err != nil {
 		return fmt.Errorf("修改DAO文件失败：%v", err)
-	} else if err := kratos.chgKratosServiceFile(ctx, apis); err != nil {
+	} else if err := kratos.chgKratosServiceFile(apis); err != nil {
 		return fmt.Errorf("修改Service文件失败：%v", err)
-	} else if err := kratos.switchKratosMicoServ(ctx); err != nil {
+	} else if err := kratos.switchKratosMicoServ(); err != nil {
 		return fmt.Errorf("开启/关闭微服务功能失败:%v", err)
-	} else if err := kratos.chgKratosProjName(ctx, files); err != nil {
+	} else if err := kratos.chgKratosProjName(files); err != nil {
 		return fmt.Errorf("修改项目名称失败：%v", err)
-	} else if err := kratos.chgKratosTypeName(ctx, apiTyps); err != nil {
+	} else if err := kratos.chgKratosTypeName(apiTyps); err != nil {
 		return fmt.Errorf("修改类型名称失败：%v", err)
 	}
 	return nil
@@ -57,7 +57,7 @@ type DaoImplInfo struct {
 	} `json:"files"`
 }
 
-func (kratos *Kratos) chgKratosTypeName(ctx context.Context, apiTyps map[string]*regexp.Regexp) error {
+func (kratos *Kratos) chgKratosTypeName(apiTyps map[string]*regexp.Regexp) error {
 	// 为所有API类型添加pb.前缀
 	svcPath := path.Join(kratos.info.pathName, "internal", "service", "service.go")
 	if err := utils.InsertTxt(svcPath, func(line string, doProc *bool) (string, bool, error) {
@@ -70,7 +70,7 @@ func (kratos *Kratos) chgKratosTypeName(ctx context.Context, apiTyps map[string]
 			})
 		}
 		return line, false, nil
-	}); err != nil {
+	}, true); err != nil {
 		return err
 	}
 	return nil
@@ -169,7 +169,7 @@ func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) ([]string, error) {
 	})
 }
 
-func (kratos *Kratos) chgKratosConfig(ctx context.Context) error {
+func (kratos *Kratos) chgKratosConfig() error {
 	// 修改configs/application.toml
 	appCfgPath := path.Join(kratos.info.pathName, "configs", "application.toml")
 	if err := utils.InsertTxt(appCfgPath, func(line string, doProc *bool) (string, bool, error) {
@@ -188,7 +188,7 @@ func (kratos *Kratos) chgKratosConfig(ctx context.Context) error {
 			}
 		}
 		return line, false, nil
-	}); err != nil {
+	}, true); err != nil {
 		return err
 	}
 	return nil
@@ -211,13 +211,13 @@ func (kratos *Kratos) adjServerFile(pathName string, regSvr string, regSvc strin
 			return "", false, nil
 		}
 		return line, false, nil
-	}); err != nil {
+	}, true); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (kratos *Kratos) switchKratosMicoServ(ctx context.Context) error {
+func (kratos *Kratos) switchKratosMicoServ() error {
 	// 调整cmd/main.go
 	if !kratos.info.option.IsMicoServ {
 		if err := utils.InsertTxt(path.Join(kratos.info.pathName, "cmd", "main.go"), func(line string, doProc *bool) (string, bool, error) {
@@ -225,7 +225,7 @@ func (kratos *Kratos) switchKratosMicoServ(ctx context.Context) error {
 				return "", false, nil
 			}
 			return line, false, nil
-		}); err != nil {
+		}, true); err != nil {
 			return err
 		}
 	}
@@ -256,10 +256,33 @@ func (kratos *Kratos) switchKratosMicoServ(ctx context.Context) error {
 	if err := kratos.adjServerFile("http", "RegisterDemoBMServer", "RegisterHTTPService"); err != nil {
 		return err
 	}
+	// 调整internal/service/service.go的逻辑
+	adjLst := []string{
+		path.Join(kratos.info.pathName, "cmd", "main.go"),
+		path.Join(kratos.info.pathName, "internal", "service", "service.go"),
+	}
+	for _, flPath := range adjLst {
+		foundEnd := false
+		if err := utils.InsertTxt(flPath, func(line string, doProc *bool) (string, bool, error) {
+			if foundEnd {
+				foundEnd = false
+				*doProc = false
+			}
+			if strings.Index(line, "// [MICO_SERV_BEG]") != -1 {
+				*doProc = true
+			}
+			if strings.Index(line, "// [MICO_SERV_END]") != -1 {
+				foundEnd = true
+			}
+			return "", false, nil
+		}, false); err != nil {
+			return fmt.Errorf("调整service.go的为服务逻辑时发生错误：%v", err)
+		}
+	}
 	return nil
 }
 
-func (kratos *Kratos) chgKratosProjName(ctx context.Context, addedFiles []string) error {
+func (kratos *Kratos) chgKratosProjName(addedFiles []string) error {
 	fixLst := []string{
 		path.Join(kratos.info.pathName, "go.mod"),
 		path.Join(kratos.info.pathName, "cmd", "main.go"),
@@ -282,7 +305,7 @@ func (kratos *Kratos) chgKratosProjName(ctx context.Context, addedFiles []string
 				return line, false, nil
 			}
 			return strings.Replace(line, "template", kratos.info.pkgName, -1), false, nil
-		}); err != nil {
+		}, true); err != nil {
 			return err
 		}
 	}
@@ -367,7 +390,7 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, ma
 }
 
 // 根据抽取的接口信息，生成完整的service
-func (kratos *Kratos) chgKratosServiceFile(ctx context.Context, apis []*pb.ApiInfo) error {
+func (kratos *Kratos) chgKratosServiceFile(apis []*pb.ApiInfo) error {
 	svcPath := path.Join(kratos.info.pathName, "internal", "service", "service.go")
 	// 收集import文件
 	requires := make(map[string]interface{})

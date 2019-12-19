@@ -13,8 +13,10 @@ import (
 	"template/internal/service"
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/log"
+	// [MICO_SERV_BEG]
 	"github.com/bilibili/kratos/pkg/net/rpc/warden/resolver"
 	"github.com/bilibili/kratos/pkg/naming/discovery"
+	// [MICO_SERV_END]
 )
 
 func main() {
@@ -25,7 +27,9 @@ func main() {
 	log.Init(nil) // debug flag: log.dir={path}
 	defer log.Close()
 	log.Info("template start")
+	// [MICO_SERV_BEG]
 	resolver.Register(discovery.Builder())
+	// [MICO_SERV_END]
 	svc := service.New()
 	grpcSrv := grpc.New(svc)
 	httpSrv := http.New(svc)

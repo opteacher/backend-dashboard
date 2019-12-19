@@ -32,7 +32,7 @@ func New(s *service.Service) (engine *bm.Engine) {
 	svc = s
 	engine = bm.DefaultServer(hc.Server)
 	engine.Use(mws.SetupCORS())
-	pb.RegisterDemoBMServer(engine, svc)
+	bm.RegisterDemoBMServer(engine, svc)
 	svr.RegisterHTTPService(svc, []string{strings.Replace(hc.Server.Addr, "0.0.0.0", "127.0.0.1", 1)})
 	if err := engine.Start(); err != nil {
 		panic(err)

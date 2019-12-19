@@ -13,8 +13,6 @@ import (
 	"backend/internal/service"
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"github.com/bilibili/kratos/pkg/log"
-	"github.com/bilibili/kratos/pkg/net/rpc/warden/resolver"
-	"github.com/bilibili/kratos/pkg/naming/discovery"
 )
 
 func main() {
@@ -25,7 +23,6 @@ func main() {
 	log.Init(nil) // debug flag: log.dir={path}
 	defer log.Close()
 	log.Info("backend start")
-	resolver.Register(discovery.Builder())
 	svc := service.New()
 	grpcSrv := grpc.New(svc)
 	httpSrv := http.New(svc)

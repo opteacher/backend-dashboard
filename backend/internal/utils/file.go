@@ -330,7 +330,10 @@ func CopyFile(src, dst string) (w int64, err error) {
 // @Return{2}: 是否直接停止处理
 // @Return{3}: 处理过程发生的错误
 type InsertProcFunc func(string, *bool) (string, bool, error)
-func InsertTxt(fpath string, proc InsertProcFunc) error {
+// @Param{1}: 文件路径
+// @Param{2}: 处理回调
+// @Param{3}: 默认是否开启中断处理
+func InsertTxt(fpath string, proc InsertProcFunc, first bool) error {
 	// 读取import部分
 	file, err := os.Open(fpath)
 	if err != nil {
@@ -339,7 +342,7 @@ func InsertTxt(fpath string, proc InsertProcFunc) error {
 	defer file.Close()
 	reader := bufio.NewReader(file)
 
-	doProc := true
+	doProc := first
 	code := ""
 	for {
 		line, _, err := reader.ReadLine()

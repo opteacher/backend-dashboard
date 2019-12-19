@@ -3,6 +3,7 @@ package grpc
 import (
 	"strings"
 	"template/internal/service"
+	pb "template/api"
 	svr "template/internal/server"
 
 	"github.com/bilibili/kratos/pkg/conf/paladin"

@@ -4,7 +4,6 @@ import (
 	pb "backend/api"
 	"backend/internal/dao"
 	"backend/internal/model"
-	"backend/internal/server"
 	"backend/internal/utils"
 	"context"
 	"crypto/md5"
@@ -146,7 +145,7 @@ func (s *Service) LinksInsert(ctx context.Context, req *pb.Link) (*pb.Link, erro
 	return req, nil
 }
 
-func (s *Service) LinksSelectAll(ctx context.Context, req *pb.Empty) (*pb.LinkArray, error) {
+func (s *Service) LinksSelectAll(ctx context.Context, _ *pb.Empty) (*pb.LinkArray, error) {
 	ress, err := s.mongo.Query(ctx, model.LINKS_TABLE, bson.D{{}})
 	if err != nil {
 		return nil, fmt.Errorf("查询数据库失败：%v", err)
@@ -250,7 +249,7 @@ func (s *Service) ApisSelectByName(ctx context.Context, req *pb.NameID) (*pb.Api
 	return s.complApiSteps(ctx, res)
 }
 
-func (s *Service) ApisSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfoArray, error) {
+func (s *Service) ApisSelectAll(ctx context.Context, _ *pb.Empty) (*pb.ApiInfoArray, error) {
 	ress, err := s.mongo.Query(ctx, model.API_INFO_TABLE, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("查询接口信息失败：%v", err)
@@ -317,7 +316,7 @@ func (s *Service) ApisDeleteByName(ctx context.Context, req *pb.NameID) (*pb.Api
 	return res, nil
 }
 
-func (s *Service) TempApiSelectAll(ctx context.Context, req *pb.Empty) (*pb.ApiInfoArray, error) {
+func (s *Service) TempApiSelectAll(ctx context.Context, _ *pb.Empty) (*pb.ApiInfoArray, error) {
 	ress, err := s.mongo.Query(ctx, model.TEMP_API_TABLE, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("查询所有模板接口失败：%v", err)
@@ -417,7 +416,7 @@ func (s *Service) TempStepsInsert(ctx context.Context, req *pb.Step) (*pb.Step, 
 	}
 }
 
-func (s *Service) TempStepsSelectAll(ctx context.Context, req *pb.Empty) (*pb.StepArray, error) {
+func (s *Service) TempStepsSelectAll(ctx context.Context, _ *pb.Empty) (*pb.StepArray, error) {
 	ress, err := s.mongo.Query(ctx, model.TEMP_STEP_TABLE, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("查询所有模板步骤失败：%v", err)
@@ -470,7 +469,7 @@ func (s *Service) TempStepsDeleteByKey(ctx context.Context, req *pb.StrKey) (*pb
 	return step, nil
 }
 
-func (s *Service) DaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {
+func (s *Service) DaoGroupsSelectAll(ctx context.Context, _ *pb.Empty) (*pb.DaoGroupArray, error) {
 	ress, err := s.mongo.Query(ctx, model.DAO_GROUPS_TABLE, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("查询DAO组失败：%v", err)
@@ -522,7 +521,7 @@ func (s *Service) DaoGroupDeleteByName(ctx context.Context, req *pb.NameID) (*pb
 	return resp, nil
 }
 
-func (s *Service) TempDaoGroupsSelectAll(ctx context.Context, req *pb.Empty) (*pb.DaoGroupArray, error) {
+func (s *Service) TempDaoGroupsSelectAll(ctx context.Context, _ *pb.Empty) (*pb.DaoGroupArray, error) {
 	ress, err := s.mongo.Query(ctx, model.TEMP_DAO_GROUPS_TABLE, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("查询所有模板DAO组失败：%v", err)
@@ -756,10 +755,4 @@ func (s *Service) Ping(ctx context.Context) (err error) {
 // Close close the resource.
 func (s *Service) Close() {
 	s.mongo.Close()
-	// 注销服务
-	if cli, err := server.RegisterService(); err != nil {
-		panic(err)
-	} else if _, err := cli.Cancel(context.Background(), &pb.IdenSvcReqs{AppID: s.AppID()}); err != nil {
-		panic(err)
-	}
 }
