@@ -57,23 +57,28 @@ type DaoImplInfo struct {
 	} `json:"files"`
 }
 
-func (kratos *Kratos) chgKratosTypeName(apiTyps map[string]*regexp.Regexp) error {
+func (kratos *Kratos) chgKratosTypeName(apiTyps []string) error {
 	// 为所有API类型添加pb.前缀
 	svcPath := path.Join(kratos.info.pathName, "internal", "service", "service.go")
-	if err := utils.InsertTxt(svcPath, func(line string, doProc *bool) (string, bool, error) {
-		for mname, pattern := range apiTyps {
-			if len(line) < len(mname) {
-				continue
-			}
-			line = pattern.ReplaceAllStringFunc(line, func(str string) string {
-				return strings.Replace(str, mname, "pb." + mname, 1)
-			})
-		}
-		return line, false, nil
-	}, true); err != nil {
-		return err
+	svcFile, err := os.Open(svcPath)
+	if err != nil {
+		return fmt.Errorf("打开service.go文件失败：%v", err)
 	}
-	return nil
+	defer svcFile.Close()
+	svcBytes, err := ioutil.ReadAll(svcFile)
+	if err != nil {
+		return fmt.Errorf("读取service.go文件失败：%v", err)
+	}
+	for _, tname := range apiTyps {
+		if strings.Index(string(svcBytes), tname) == -1 {
+			continue
+		}
+		pattern := regexp.MustCompile(fmt.Sprintf("\\W%s\\W", tname))
+		svcBytes = pattern.ReplaceAllFunc(svcBytes, func(matched []byte) []byte {
+			return []byte(strings.Replace(string(matched), tname, "pb." + tname, 1))
+		})
+	}
+	return ioutil.WriteFile(svcPath, svcBytes, os.ModePerm)
 }
 
 func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) ([]string, error) {
@@ -194,17 +199,18 @@ func (kratos *Kratos) chgKratosConfig() error {
 	return nil
 }
 
-func (kratos *Kratos) adjServerFile(pathName string, regSvr string, regSvc string) error {
+func (kratos *Kratos) adjServerFile(pathName string, regSvc string) error {
 	fpath := path.Join(kratos.info.pathName, "internal", "server", pathName, "server.go")
 	if err := utils.InsertTxt(fpath, func(line string, doProc *bool) (string, bool, error) {
 		if !*doProc {
 			return line, false, nil
 		}
-		if strings.Contains(line, "svr \"") && !kratos.info.option.IsMicoServ {
+		if strings.Trim(strings.TrimSpace(line), "\t") == "\"strings\"" && !kratos.info.option.IsMicoServ {
 			return "", false, nil
-		} else if strings.Contains(line, fmt.Sprintf("pb.%s", regSvr)) {
-			regName := fmt.Sprintf("Register%sServer", utils.Capital(kratos.info.option.Name))
-			return strings.Replace(line, regSvr, regName, -1), false, nil
+		} else if strings.Contains(line, "svr \"") && !kratos.info.option.IsMicoServ {
+			return "", false, nil
+		} else if strings.Contains(line, "Demo") {
+			return strings.Replace(line, "Demo", utils.Capital(kratos.info.option.Name), -1), false, nil
 		} else if strings.Contains(line, fmt.Sprintf("func %s", regSvc)) {
 			*doProc = kratos.info.option.IsMicoServ
 		} else if strings.Contains(line, regSvc) && !kratos.info.option.IsMicoServ {
@@ -249,14 +255,17 @@ func (kratos *Kratos) switchKratosMicoServ() error {
 		}
 	}
 	// 调整internal/server/grpc/server.go的逻辑
-	if err := kratos.adjServerFile("grpc", "RegisterDemoServer", "RegisterGRPCService"); err != nil {
+	if err := kratos.adjServerFile("grpc", "RegisterGRPCService"); err != nil {
 		return err
 	}
 	// 调整internal/server/http/server.go的逻辑
-	if err := kratos.adjServerFile("http", "RegisterDemoBMServer", "RegisterHTTPService"); err != nil {
+	if err := kratos.adjServerFile("http", "RegisterHTTPService"); err != nil {
 		return err
 	}
 	// 调整internal/service/service.go的逻辑
+	if kratos.info.option.IsMicoServ {
+		return nil
+	}
 	adjLst := []string{
 		path.Join(kratos.info.pathName, "cmd", "main.go"),
 		path.Join(kratos.info.pathName, "internal", "service", "service.go"),
@@ -313,7 +322,7 @@ func (kratos *Kratos) chgKratosProjName(addedFiles []string) error {
 }
 
 // 根据数据库中模型的定义，生成proto的message和service
-func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, map[string]*regexp.Regexp, error) {
+func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, []string, error) {
 	// 添加proto文件并根据数据库添加message和service
 	code := "syntax = \"proto3\";\n\n"
 	code += fmt.Sprintf("package %s.service.v1;\n\n", kratos.info.pkgName)
@@ -332,9 +341,9 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, ma
 		return nil, nil, fmt.Errorf("查询所有结构失败：%v", err)
 	}
 	mdls.Models = append(mdls.Models, stts.Models...)
-	apiTyps := make(map[string]*regexp.Regexp)
+	var apiTyps []string
 	for _, mdl := range mdls.Models {
-		apiTyps[mdl.Name] = regexp.MustCompile(fmt.Sprintf("\\W+%s\\W+", mdl.Name))
+		apiTyps = append(apiTyps, mdl.Name)
 		code += fmt.Sprintf("message %s {\n", mdl.Name)
 		for i, prop := range mdl.Props {
 			code += fmt.Sprintf("\t%s %s=%d;\n", prop.Type, prop.Name, i+1)
@@ -421,7 +430,7 @@ func (kratos *Kratos) chgKratosServiceFile(apis []*pb.ApiInfo) error {
 					areturns = append(areturns, "*" + ret)
 				}
 				sreturns := strings.Join(areturns, ", ")
-				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (%s, error) {\n", ai.Name, sparams, sreturns)
+				code += fmt.Sprintf("func (s *Service) %s(ctx context.Context, %s) (%s, error) {\n", utils.Capital(ai.Name), sparams, sreturns)
 				preSpaces := 1
 				for _, step := range ai.Steps {
 					// 添加注释

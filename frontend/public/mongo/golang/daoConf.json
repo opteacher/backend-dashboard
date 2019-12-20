@@ -1,25 +1,34 @@
 {
     "fileName": "mongo.toml",
     "configs": {
-        "host": {
-            "label": "主机IP",
+        "url": {
+            "label": "主机URL",
             "type": "text"
         },
-        "port": {
-            "label": "端口",
-            "type": "number"
-        },
-        "database": {
+        "db": {
             "label": "数据库名",
             "type": "text"
         },
-        "username": {
-            "label": "用户名",
-            "type": "text"
+        "mod": {
+            "label": "启动模式",
+            "type": "select",
+            "options": [{
+                "label": "没有则创建表",
+                "value": "CREATE"
+            }, {
+                "label": "有则删表再创建表",
+                "value": "DROP_CREATE"
+            }, {
+                "label": "删除表中所有内容",
+                "value": "UPDATE"
+            }, {
+                "label": "不做任何处理",
+                "value": "NONE"
+            }]
         },
-        "password": {
-            "label": "密码",
-            "type": "password"
+        "initData": {
+            "label": "初始化数据源目录",
+            "type": "text"
         }
     }
 }

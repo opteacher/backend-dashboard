@@ -282,6 +282,11 @@ export default {
                 if (typeof res === "string") {
                     this.$message.error(`导入模板接口时发生错误：${res}`)
                 }
+                const models = (await axios.get(selImpl.mdlTempHref)).data
+                res = await backend.addModels(models)
+                if (typeof res === "string") {
+                    this.$message.error(`导入模板模块时发生错误：${res}`)
+                }
             }
             this.$message({
                 type: "success",
@@ -321,20 +326,28 @@ export default {
                     case "number":
                     case "text":
                     case "password":
-                        content = [
-                            h("input", {
-                                "attrs": {
-                                    "name": compId,
-                                    "type": cmpTmp.type
-                                },
-                                "class": "form-control"
-                            })
-                        ]
+                        content = h("input", {
+                            "class": "form-control",
+                            "attrs": {
+                                "name": compId,
+                                "type": cmpTmp.type
+                            }
+                        })
+                        break
+                    case "select":
+                        content = h("select", {
+                            "class": "form-control",
+                            "attrs": {"name": compId}
+                        }, cmpTmp.options.map(option => {
+                            return h("option", {
+                                "attrs": {"value": option.value}
+                            }, option.label)
+                        }))
                         break
                 }
                 comps.push(h("div", {"class": "form-group row"}, [
                     h("label", {"class": "col-sm-2 col-form-label"}, cmpTmp.label),
-                    h("div", {"class": "col-sm-10"}, content)
+                    h("div", {"class": "col-sm-10"}, [content])
                 ]))
             }
             const action = await this.$msgbox({

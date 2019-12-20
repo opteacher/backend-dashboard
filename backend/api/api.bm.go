@@ -23,6 +23,7 @@ var _ context.Context
 var _ binding.StructValidator
 
 var PathBackendManagerModelsInsert = "/backend-dashboard/backend/models.insert"
+var PathBackendManagerModelsInsertMany = "/backend-dashboard/backend/models.insertMany"
 var PathBackendManagerModelsDelete = "/backend-dashboard/backend/models.delete"
 var PathBackendManagerModelsUpdate = "/backend-dashboard/backend/models.update"
 var PathBackendManagerModelsSelectAll = "/backend-dashboard/backend/models.selectAll"
@@ -64,6 +65,8 @@ var PathBackendManagerModuleInfoSelectBySignId = "/backend-dashboard/backend/mod
 // BackendManagerBMServer is the server API for BackendManager service.
 type BackendManagerBMServer interface {
 	ModelsInsert(ctx context.Context, req *Model) (resp *Model, err error)
+
+	ModelsInsertMany(ctx context.Context, req *ModelArray) (resp *ModelArray, err error)
 
 	ModelsDelete(ctx context.Context, req *NameID) (resp *Model, err error)
 
@@ -148,6 +151,15 @@ func backendManagerModelsInsert(c *bm.Context) {
 		return
 	}
 	resp, err := BackendManagerSvc.ModelsInsert(c, p)
+	c.JSON(resp, err)
+}
+
+func backendManagerModelsInsertMany(c *bm.Context) {
+	p := new(ModelArray)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.ModelsInsertMany(c, p)
 	c.JSON(resp, err)
 }
 
@@ -488,6 +500,7 @@ func backendManagerModuleInfoSelectBySignId(c *bm.Context) {
 func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer) {
 	BackendManagerSvc = server
 	e.POST("/backend-dashboard/backend/models.insert", backendManagerModelsInsert)
+	e.POST("/backend-dashboard/backend/models.insertMany", backendManagerModelsInsertMany)
 	e.POST("/backend-dashboard/backend/models.delete", backendManagerModelsDelete)
 	e.POST("/backend-dashboard/backend/models.update", backendManagerModelsUpdate)
 	e.POST("/backend-dashboard/backend/models.selectAll", backendManagerModelsSelectAll)

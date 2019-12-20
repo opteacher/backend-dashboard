@@ -9,6 +9,9 @@ export default {
     async addModel(model) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.insert`, _.omit(model, "id")))
     },
+    async addModels(models) {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.insertMany`, {models: models.map(mdl => _.omit(mdl, "id"))}))
+    },
     async delModel(name) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.delete`, {name}))
     },

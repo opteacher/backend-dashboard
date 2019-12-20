@@ -14,7 +14,8 @@
         "inputs": {
             "COLC_NAME": "%MODEL%",
             "ENTRY": "entry"
-        }
+        },
+        "code": "_, err := s.dao.Mongo.Insert(ctx, \"%COLC_NAME%\", %ENTRY%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n"
     }, {
         "key": "return_succeed",
         "inputs": {"RETURN": "entry"}
@@ -48,7 +49,8 @@
         "inputs": {
             "COLC_NAME": "%MODEL%",
             "CONDITIONS": "conds"
-        }
+        },
+        "code": "_, err = s.dao.Mongo.Delete(ctx, \"%COLC_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n"
     }, {
         "key": "optools_toObj",
         "desc": "将查询得到的res转成%MODEL%",
@@ -66,21 +68,21 @@
     "group": "Mongo",
     "symbol": "update",
     "model": "%MODEL%",
-    "params": {"entry": "JsonData"},
+    "params": {"req": "UpdateReq"},
     "returns": ["%MODEL%"],
     "route": "/%PROJ_NAME%/models/%MODEL%.updateByRowId",
     "method": "post",
     "steps": [{
         "key": "json_unmarshalToMap",
         "desc": "将更新的实体转成map",
-        "inputs": {"BYTES": "[]byte(entry.Data)"}
+        "inputs": {"BYTES": "[]byte(req.JsonData)"}
     }, {
         "key": "mongo_buildUpdateSet",
         "inputs": {"OMAP": "omap"}
     }, {
         "key": "assignment_create",
         "inputs": {
-            "SOURCE": "bson.D{{\"_id\", iden.Id}}",
+            "SOURCE": "bson.D{{\"_id\", req.Id}}",
             "TARGET": "conds"
         }
     }, {
@@ -89,7 +91,8 @@
             "COLC_NAME": "%MODEL%",
             "CONDITIONS": "conds",
             "ENTRY": "updSet"
-        }
+        },
+        "code": "if _, err := s.dao.Mongo.Update(ctx, \"%COLC_NAME%\", %CONDITIONS%, %ENTRY%); err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n"
     }, {
         "key": "mongo_queryOne",
         "desc": "查询_id为（%iden.Id%）的%MODEL%",

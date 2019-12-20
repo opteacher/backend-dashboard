@@ -59,7 +59,7 @@
   "outputs" : null,
   "code" : "return %RETURN%, nil\n",
   "apiname" : "",
-  "symbol" : 0,
+  "symbol" : 4,
   "xxx_nounkeyedliteral" : {},
   "xxx_unrecognized" : null,
   "xxx_sizecache" : 0

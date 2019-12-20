@@ -1,0 +1,12 @@
+[{
+    "name" : "UpdateReq",
+    "props" : [{
+        "name" : "id",
+        "type" : "string"
+    }, {
+        "name": "jsonData",
+        "type": "string"
+    }],
+    "type" : "struct",
+    "model" : "%MODEL%"
+}]

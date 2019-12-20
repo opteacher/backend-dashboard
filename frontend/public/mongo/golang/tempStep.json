@@ -48,7 +48,7 @@
             "CONDITIONS": "",
             "ENTRY": ""
         },
-        "code": "_, err := s.dao.Mongo.Update(ctx, \"%COLC_NAME%\", %CONDITIONS%, %ENTRY%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n"
+        "code": "numUpd, err := s.dao.Mongo.Update(ctx, \"%COLC_NAME%\", %CONDITIONS%, %ENTRY%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"更新数据表记录失败：%v\", err)\n}\n"
     }, {
         "key": "mongo_delete",
         "group": "Mongo",
@@ -57,6 +57,6 @@
             "COLC_NAME": "",
             "CONDITIONS": ""
         },
-        "code": "_, err := s.dao.Mongo.Delete(ctx, \"%COLC_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n"
+        "code": "numDel, err := s.dao.Mongo.Delete(ctx, \"%COLC_NAME%\", %CONDITIONS%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"删除数据表记录失败：%v\", err)\n}\n"
     }]
 }

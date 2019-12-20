@@ -65,6 +65,17 @@ func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, e
 	return req, nil
 }
 
+func (s *Service) ModelsInsertMany(ctx context.Context, req *pb.ModelArray) (*pb.ModelArray, error) {
+	var entries []interface{}
+	for _, mdl := range req.Models {
+		entries = append(entries, mdl)
+	}
+	if _, err := s.mongo.InsertMany(ctx, model.MODELS_TABLE, entries); err != nil {
+		return nil, fmt.Errorf("批量插入模块失败：%v", err)
+	}
+	return req, nil
+}
+
 func (s *Service) ModelsDelete(ctx context.Context, req *pb.NameID) (*pb.Model, error) {
 	conds := bson.D{{"name", req.Name }}
 
@@ -223,6 +234,7 @@ func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{
 		if mstep["code"] == nil || mstep["code"] == "" {
 			mstep["code"] = tempStep.Code
 		}
+		mstep["symbol"] = tempStep.Symbol
 		jsonSteps[idx] = mstep
 	}
 	minfo["steps"] = jsonSteps

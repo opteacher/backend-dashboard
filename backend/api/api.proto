@@ -15,6 +15,12 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc ModelsInsertMany(ModelArray) returns (ModelArray) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/models.insertMany"
+            body: "*"
+        };
+    };
     rpc ModelsDelete(NameID) returns (Model) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/models.delete"
@@ -464,7 +470,8 @@ message ModuleSign {
     string daoConfHref = 8;// 获得DAO配置表（json），罗列配置和组件在画面的类型
     string tmpStepHref = 9;// 获得模板步骤信息（json）
     string apiTempHref = 10;// 获得API模板信息（json）
-    string homeUrl = 11;
+    string mdlTempHref = 11;// 获得Model模板信息（json）
+    string homeUrl = 12;
 }
 
 message ModuleSignArray {

@@ -359,7 +359,9 @@ func InsertTxt(fpath string, proc InsertProcFunc, first bool) error {
 		} else if isBreak {
 			break
 		} else if doProc {
-			code += scd + "\n"
+			if len(scd) != 0 {
+				code += scd + "\n"
+			}
 		} else {
 			code += str + "\n"
 		}

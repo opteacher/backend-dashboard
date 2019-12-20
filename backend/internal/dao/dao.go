@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -104,6 +105,9 @@ func (md *MongoDao) Drop(ctx context.Context, colcName string) error {
 }
 
 func (md *MongoDao) Source(ctx context.Context, file string, create bool) error {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return nil
+	}
 	fname := filepath.Base(file)
 	cname := strings.SplitN(fname, ".", 2)[0]
 	cmd := exec.CommandContext(ctx, "mongoimport", []string{

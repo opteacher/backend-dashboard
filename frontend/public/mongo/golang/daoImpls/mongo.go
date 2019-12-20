@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"os"
 	"template/internal/utils"
 	"bytes"
 	"context"
@@ -26,21 +27,19 @@ type MongoDao struct {
 func NewMongo() *MongoDao {
 	var (
 		dc struct {
-			Demo *struct{
-				Url string
-				Db string
-				Mod string
-				InitData string
-			}
+			Url string
+			Db string
+			Mod string
+			InitData string
 		}
 	)
 	utils.CheckErr(paladin.Get("mongo.toml").UnmarshalTOML(&dc))
 	mongoDao := &MongoDao{
-		cliOpns: options.Client().ApplyURI(dc.Demo.Url),
-		dbName: dc.Demo.Db,
-		mod: dc.Demo.Mod,
+		cliOpns: options.Client().ApplyURI(dc.Url),
+		dbName: dc.Db,
+		mod: dc.Mod,
 	}
-	if len(dc.Demo.InitData) != 0 {
+	if len(dc.InitData) != 0 {
 		var ac struct {
 			ProjPath string
 		}
@@ -48,7 +47,7 @@ func NewMongo() *MongoDao {
 		if err != nil {
 			panic(err)
 		}
-		initDataPath := filepath.Join(ac.ProjPath, dc.Demo.InitData)
+		initDataPath := filepath.Join(ac.ProjPath, dc.InitData)
 		jfnames, err := utils.ScanAllFilesByFolder(initDataPath, "json")
 		if err != nil {
 			panic(err)
@@ -104,6 +103,9 @@ func (md *MongoDao) Drop(ctx context.Context, colcName string) error {
 }
 
 func (md *MongoDao) Source(ctx context.Context, file string, create bool) error {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return nil
+	}
 	fname := filepath.Base(file)
 	cname := strings.SplitN(fname, ".", 2)[0]
 	cmd := exec.CommandContext(ctx, "mongoimport", []string{

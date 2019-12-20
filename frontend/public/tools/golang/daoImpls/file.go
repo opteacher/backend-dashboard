@@ -3,7 +3,6 @@ package utils
 import (
 	"archive/zip"
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,10 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
-
-	"github.com/qiniu/api.v7/v7/auth/qbox"
-	"github.com/qiniu/api.v7/v7/storage"
 )
 
 func PickPathsFromSwaggerJSON(fname string) ([]byte, error) {
@@ -134,96 +129,6 @@ func compress(file *os.File, prefix string, zw *zip.Writer) error {
 		}
 	}
 	return nil
-}
-
-type StorageConfig struct {
-	Url       string
-	Bucket    string
-	AccessKey string
-	SecretKey string
-}
-
-type ProgressRecord struct {
-	Progresses []storage.BlkputRet `json:"progresses"`
-}
-
-func Upload(absFile string, sc StorageConfig) (string, error) {
-	putPolicy := storage.PutPolicy{
-		Scope: sc.Bucket,
-	}
-	mac := qbox.NewMac(sc.AccessKey, sc.SecretKey)
-	upToken := putPolicy.UploadToken(mac)
-
-	cfg := storage.Config{}
-	cfg.Zone = &storage.ZoneHuadong
-	cfg.UseHTTPS = false
-	cfg.UseCdnDomains = false
-
-	finfo, err := os.Stat(absFile)
-	if err != nil {
-		return "", err
-	}
-
-	fsize := finfo.Size()
-	aryTmp := strings.Split(absFile, string(filepath.Separator))
-	fname := aryTmp[len(aryTmp)-1]
-	flmd := finfo.ModTime().UnixNano()
-	recordKey := Md5Hex(fmt.Sprintf("%s:%s:%s:%d", sc.Bucket, fname, absFile, flmd)) + ".progress"
-	aryTmp[len(aryTmp)-1] = recordKey
-	recordPath := filepath.Join(aryTmp...)
-	if recordPath[0] != '/' {
-		recordPath = "/" + recordPath
-	}
-
-	pgsRcd := ProgressRecord{}
-
-	if rcdFile, err := os.Open(recordPath); err != nil {
-
-	} else if pgsByte, err := ioutil.ReadAll(rcdFile); err != nil {
-		return "", err
-	} else if err := json.Unmarshal(pgsByte, &pgsRcd); err != nil {
-		return "", err
-	} else {
-		for _, item := range pgsRcd.Progresses {
-			if storage.IsContextExpired(item) {
-				fmt.Println(item.ExpiredAt)
-				pgsRcd.Progresses = make([]storage.BlkputRet, storage.BlockCount(fsize))
-				break
-			}
-		}
-		rcdFile.Close()
-	}
-
-	if len(pgsRcd.Progresses) == 0 {
-		pgsRcd.Progresses = make([]storage.BlkputRet, storage.BlockCount(fsize))
-	}
-
-	resumeUploader := storage.NewResumeUploader(&cfg)
-	ret := storage.PutRet{}
-	pgsLock := sync.RWMutex{}
-	putExtra := storage.RputExtra{
-		Progresses: pgsRcd.Progresses,
-		Notify: func(blkIdx int, blkSize int, ret *storage.BlkputRet) {
-			pgsLock.Lock()
-			pgsLock.Unlock()
-
-			pgsRcd.Progresses[blkIdx] = *ret
-			pgsBytes, _ := json.Marshal(pgsRcd)
-			fmt.Println("write progress file", blkIdx, recordPath)
-			if err := ioutil.WriteFile(recordPath, pgsBytes, 0644); err != nil {
-				panic(err)
-			}
-		},
-	}
-	if err := resumeUploader.PutFile(context.Background(), &ret, upToken, fname, absFile, &putExtra); err != nil {
-		return "", err
-	}
-	if err := os.Remove(recordPath); err != nil {
-		return "", err
-	}
-	url := sc.Url + ret.Key
-	fmt.Printf("%s上传成功，哈希：%s，通过%s可下载\n", ret.Key, ret.Hash, url)
-	return url, nil
 }
 
 func Download(url string, dest string) error {
