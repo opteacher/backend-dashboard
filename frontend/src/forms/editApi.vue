@@ -64,23 +64,88 @@
             </el-form-item>
         </el-tab-pane>
         <el-tab-pane label="激活方式" name="active">
-                <el-form-item label="激活方式">
-                    <el-select class="w-100" v-model="value" placeholder="请选择">
-                        <el-option v-for="actTyp in activeTypes" :key="actTyp.value" :label="actTyp.label" :value="actTyp.value"/>
-                    </el-select>
-                </el-form-item>
-                <el-form-item v-show="api.enableHttp" label="路由" :rules="[
+            <el-form-item label="激活方式">
+                <el-select class="w-100" v-model="activeType" placeholder="请选择">
+                    <el-option label="普通/RPC接口" value="interface"/>
+                    <el-option label="HTTP接口" value="http"/>
+                    <el-option label="定时任务" value="timing"/>
+                    <el-option label="订阅频道" value="subscribe"/>
+                </el-select>
+            </el-form-item>
+            <div v-show="activeType == 'http'">
+                <el-form-item label="路由" :rules="[
                     { required: true, message: '请输入路由', trigger: 'blur' }
                 ]" prop="route">
-                    <el-input v-model="api.route"/>
+                    <el-input v-model="api.http.route"/>
                 </el-form-item>
-                <el-form-item v-show="api.enableHttp" label="方法" :rules="[
+                <el-form-item label="方法" :rules="[
                     { required: true, message: '请选择方法', trigger: 'blur' }
-                ]" prop="route">
-                    <el-select class="w-100" v-model="api.method" placeholder="请选择">
-                        <el-option v-for="method in methodMap" :key="method" :label="method" :value="method"/>
+                ]" prop="method">
+                    <el-select class="w-100" v-model="api.http.method">
+                        <el-option label="GET" value="GET"/>
+                        <el-option label="POST" value="POST"/>
+                        <el-option label="PUT" value="PUT"/>
+                        <el-option label="DELETE" value="DELETE"/>
+                        <el-option label="PATCH" value="PATCH"/>
                     </el-select>
                 </el-form-item>
+            </div>
+            <div v-show="activeType == 'timing'">
+                <el-form-item label="定时方式">
+                    <el-select class="w-100" v-model="api.timing.type" placeholder="请选择">
+                        <el-option label="间隔" value="interval"/>
+                        <el-option label="延时" value="timeout"/>
+                        <el-option label="定期" value="crontab"/>
+                    </el-select>
+                </el-form-item>
+                <div v-show="api.timing.type == 'interval'">
+                    <el-form-item label="间隔执行">
+                        <el-input v-model="numTempTime[0]" class="input-with-select" text="number">
+                            <el-select slot="append" v-model="numTempTime[1]">
+                                <el-option label="天" value="d"/>
+                                <el-option label="时" value="H"/>
+                                <el-option label="分" value="m"/>
+                                <el-option label="秒" value="s"/>
+                                <el-option label="毫秒" value="ms"/>
+                            </el-select>
+                        </el-input>
+                    </el-form-item>
+                </div>
+                <div v-show="api.timing.type == 'timeout'">
+                    <el-form-item label="延时执行">
+                        <el-input v-model="numTempTime[0]" class="input-with-select" text="number">
+                            <el-select slot="append" v-model="numTempTime[1]">
+                                <el-option label="天" value="d"/>
+                                <el-option label="时" value="H"/>
+                                <el-option label="分" value="m"/>
+                                <el-option label="秒" value="s"/>
+                                <el-option label="毫秒" value="ms"/>
+                            </el-select>
+                        </el-input>
+                    </el-form-item>
+                </div>
+                <div v-show="api.timing.type == 'crontab'">
+                    <el-form-item label="定期执行">
+                        <el-time-select
+                            class="w-100"
+                            v-model="strTempTime"
+                            :picker-options="{step: '00:15'}"
+                            placeholder="选择时间"/>
+                    </el-form-item>
+                </div>
+            </div>
+            <div v-show="activeType == 'subscribe'">
+                <el-form-item label="频道">
+                    <el-col :span="13">
+                        <el-input v-model="api.subscribe.channel"/>
+                    </el-col>
+                    <el-col :span="11">
+                        <el-select class="float-right" v-model="api.subscribe.daoGroup" placeholder="请选择通讯DAO">
+                            <el-option v-for="daoGrp in subscbDaos" :key="daoGrp.name" :label="daoGrp.name" :value="daoGrp"/>
+                        </el-select>
+                    </el-col>
+                </el-form-item>
+            </div>
         </el-tab-pane>
         <el-tab-pane label="其他" name="others">
             <el-form-item label="绑定模块">
@@ -100,16 +165,22 @@ export default {
     data() {
         return {
             activeTab: "base",
-            methodMap: [
-                "GET", "POST", "PUT", "DELETE", "PATCH"
-            ],
             api: {
                 name: "",
                 params: [],
                 returns: [],
-                enableHttp: true,
-                route: "",
-                method: "",
+                http: {
+                    route: "/",
+                    method: "GET"
+                },
+                timing: {
+                    type: "interval",
+                    crontab: ""
+                },
+                subscribe: {
+                    channel: "",
+                    daoGroup: ""
+                },
                 model: ""
             },
             newParam: {
@@ -121,16 +192,10 @@ export default {
             },
             models: [],
             types: [],
-            activeTypes: [{
-                label: "HTTP接口",
-                value: "http"
-            }, {
-                label: "RPC接口",
-                value: "rpc"
-            }, {
-                label: "定时任务",
-                value: "timing"
-            }]
+            activeType: "interface",
+            numTempTime: [0, "s"],
+            strTempTime: "",
+            subscbDaos: []
         }
     },
     async created() {

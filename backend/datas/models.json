@@ -8,52 +8,33 @@
   "x" : 0,
   "y" : 0,
   "width" : 0,
-  "height" : 0,
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "height" : 0
 }, {
   "id" : "",
   "name" : "NumIden",
-  "props" : [
-    {
-      "name" : "id",
-      "type" : "int64",
-      "xxx_nounkeyedliteral" : {},
-      "xxx_unrecognized" : null,
-      "xxx_sizecache" : 0
-    }
-  ],
+  "props" : [{
+    "name" : "id",
+    "type" : "int64"
+  }],
   "methods" : null,
   "type" : "struct",
   "model" : "",
   "x" : 0,
   "y" : 0,
   "width" : 0,
-  "height" : 0,
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "height" : 0
 }, {
   "id" : "",
   "name" : "StrIden",
-  "props" : [
-    {
-      "name" : "id",
-      "type" : "string",
-      "xxx_nounkeyedliteral" : {},
-      "xxx_unrecognized" : null,
-      "xxx_sizecache" : 0
-    }
-  ],
+  "props" : [{
+    "name" : "id",
+    "type" : "string"
+  }],
   "methods" : null,
   "type" : "struct",
   "model" : "",
   "x" : 0,
   "y" : 0,
   "width" : 0,
-  "height" : 0,
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "height" : 0
 }]

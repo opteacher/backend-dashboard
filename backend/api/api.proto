@@ -294,7 +294,7 @@ message ModelArray {
 
 message DaoGroup {
     string name = 1[(gogoproto.moretags)='orm:",PRIMARY_KEY|UNIQUE_KEY"'];
-    string category = 2[(gogoproto.moretags)='orm:",FOREIGN_KEY(dao_categories.name)"'];
+    repeated string categories = 2[(gogoproto.moretags)='orm:",FOREIGN_KEY(dao_categories.name)"'];
     string language = 3;
     string implement = 4;
     repeated DaoInterface interfaces = 5[(gogoproto.moretags)='orm:"*"'];

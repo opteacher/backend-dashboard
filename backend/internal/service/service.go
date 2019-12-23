@@ -36,7 +36,7 @@ func New() (s *Service) {
 	}
 	s = &Service{
 		ac:       ac,
-		mongo:    dao.NewMongo(),
+		mongo:    dao.New(),
 		pBuilder: NewProjBuilder(),
 	}
 	if err := paladin.Get("cdn.toml").UnmarshalTOML(&s.cc); err != nil {
@@ -361,7 +361,7 @@ func (s *Service) TempApiSelectByCategory(ctx context.Context, req *pb.CategoryI
 		}
 		resp.Infos = append(resp.Infos, obj.(*pb.ApiInfo))
 	}
-	return resp, nil
+ 	return resp, nil
 }
 
 func (s *Service) TempApiInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo, error) {

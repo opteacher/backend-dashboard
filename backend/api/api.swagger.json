@@ -1580,8 +1580,11 @@
                 "name": {
                     "type": "string"
                 },
-                "category": {
-                    "type": "string"
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "language": {
                     "type": "string"

@@ -83,3 +83,10 @@
 .table-container {
     padding: 5vh 5vw;
 }
+
+.input-with-select {
+    background-color: #fff;
+    .el-select {
+        width: 80px;
+    }
+}

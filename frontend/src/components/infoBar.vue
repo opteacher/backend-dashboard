@@ -131,21 +131,12 @@ export default {
         },
         addApi() {
             let form = this.$refs["add-api-form"]
-            if (!form.api.enableHttp) {
-                form.api.route = "/"
-                form.api.method = "GET"
-            }
             form.$refs["form"].validate(async valid => {
                 if (!valid) {
                     return false
                 }
                 // 根据需要消除http相关信息
                 let api = _.cloneDeep(form.api)
-                if (!api.enableHttp) {
-                    delete(api.route)
-                    delete(api.method)
-                }
-                delete(api.enableHttp)
                 // 将params转化成一个对象
                 let params = {}
                 api.params.map(param => {

@@ -11,8 +11,8 @@
         </el-select>
     </el-form-item>
     <el-form-item class="float-right" label="导入的DAO组">
-        <el-select v-model="selDaoGroup">
-            <el-option v-for="group in filterTmpDaoGrps" :key="group.name" :label="group.name" :value="group"/>
+        <el-select v-model="selGrpName" @change="chgDaoGroup">
+            <el-option v-for="group in filterTmpDaoGrps" :key="group.name" :label="group.name" :value="group.name"/>
         </el-select>
     </el-form-item>
 </el-form>
@@ -31,7 +31,8 @@ export default {
             supportCategories: [],
             selLang: "*",
             selCategory: "*",
-            selDaoGroup: null
+            selDaoGroup: null,
+            selGrpName: ""
         }
     },
     async created() {
@@ -45,7 +46,9 @@ export default {
             let sptCatgrs = ["*"]
             for (let group of this.tempDaoGroups) {
                 sptLangs.push(group.language)
-                sptCatgrs.push(group.category)
+                for (let category of group.categories) {
+                    sptCatgrs.push(category)
+                }
             }
             this.supportLangs = _.uniq(sptLangs)
             this.supportCategories = _.uniq(sptCatgrs)
@@ -58,8 +61,11 @@ export default {
                 this.filterTmpDaoGrps = _.filter(this.filterTmpDaoGrps, grp => grp.language === this.selLang)
             }
             if (this.selCategory !== "*") {
-                this.filterTmpDaoGrps = _.filter(this.filterTmpDaoGrps, grp => grp.category === this.selCategory)
+                this.filterTmpDaoGrps = _.filter(this.filterTmpDaoGrps, grp => grp.categories.includes(this.selCategory))
             }
+        },
+        chgDaoGroup(selected) {
+            this.selDaoGroup = this.tempDaoGroups.find(grp => grp.name === selected)
         }
     }
 }

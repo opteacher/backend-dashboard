@@ -4,7 +4,7 @@ import VueAxios from "vue-axios"
 import axios from "axios"
 import routes from "./routes"
 import ElementUI from "element-ui"
-import "./styles/common.css"
+import "./styles/common.scss"
 import VueHolder from 'vue-holderjs'
 
 Vue.use(VueHolder)

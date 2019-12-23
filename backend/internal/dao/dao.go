@@ -24,7 +24,7 @@ type MongoDao struct {
 }
 
 // New new a dao and return.
-func NewMongo() *MongoDao {
+func New() *MongoDao {
 	var (
 		dc struct {
 			Demo *struct{

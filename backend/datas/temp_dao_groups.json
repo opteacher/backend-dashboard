@@ -1,122 +1,218 @@
 [{
   "name" : "Mongo",
-  "category" : "persist",
+  "categories" : ["persist"],
   "language" : "golang",
-  "interfaces" : [
-    {
-      "name" : "New",
-      "params" : [
-        {
-          "name" : "ctx",
-          "type" : "context.Context",
-          "xxx_nounkeyedliteral" : {},
-          "xxx_unrecognized" : null,
-          "xxx_sizecache" : 0
-        }
-      ],
-      "returns" : [
-        "Mongo"
-      ],
-      "requires" : null,
-      "desc" : "新增Mongo数据库DAO",
-      "xxx_nounkeyedliteral" : {},
-      "xxx_unrecognized" : null,
-      "xxx_sizecache" : 0
-    },
-    {
-      "name" : "Ping",
-      "params" : [
-        {
-          "name" : "ctx",
-          "type" : "context.Context",
-          "xxx_nounkeyedliteral" : {},
-          "xxx_unrecognized" : null,
-          "xxx_sizecache" : 0
-        }
-      ],
-      "returns" : [
-        "error"
-      ],
-      "requires" : null,
-      "desc" : "测试数据库连接通畅",
-      "xxx_nounkeyedliteral" : {},
-      "xxx_unrecognized" : null,
-      "xxx_sizecache" : 0
-    },
-    {
-      "name" : "Close",
-      "params" : [
-        {
-          "name" : "ctx",
-          "type" : "context.Context",
-          "xxx_nounkeyedliteral" : {},
-          "xxx_unrecognized" : null,
-          "xxx_sizecache" : 0
-        }
-      ],
-      "returns" : null,
-      "requires" : null,
-      "desc" : "关闭数据库连接",
-      "xxx_nounkeyedliteral" : {},
-      "xxx_unrecognized" : null,
-      "xxx_sizecache" : 0
-    },
-    {
-      "name" : "Create",
-      "params" : [
-        {
-          "name" : "ctx",
-          "type" : "context.Context",
-          "xxx_nounkeyedliteral" : {},
-          "xxx_unrecognized" : null,
-          "xxx_sizecache" : 0
-        },
-        {
-          "name" : "colcName",
-          "type" : "string",
-          "xxx_nounkeyedliteral" : {},
-          "xxx_unrecognized" : null,
-          "xxx_sizecache" : 0
-        }
-      ],
-      "returns" : [
-        "error"
-      ],
-      "requires" : null,
-      "desc" : "创建数据集",
-      "xxx_nounkeyedliteral" : {},
-      "xxx_unrecognized" : null,
-      "xxx_sizecache" : 0
-    },
-    {
-      "name" : "Drop",
-      "params" : [
-        {
-          "name" : "ctx",
-          "type" : "context.Context",
-          "xxx_nounkeyedliteral" : {},
-          "xxx_unrecognized" : null,
-          "xxx_sizecache" : 0
-        },
-        {
-          "name" : "colcName",
-          "type" : "string",
-          "xxx_nounkeyedliteral" : {},
-          "xxx_unrecognized" : null,
-          "xxx_sizecache" : 0
-        }
-      ],
-      "returns" : [
-        "error"
-      ],
-      "requires" : null,
-      "desc" : "删除数据集",
-      "xxx_nounkeyedliteral" : {},
-      "xxx_unrecognized" : null,
-      "xxx_sizecache" : 0
-    }
-  ],
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "interfaces" : [{
+    "name" : "New",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }],
+    "returns" : ["*Mongo"],
+    "requires" : null,
+    "desc" : "新增Mongo数据库DAO"
+  }, {
+    "name" : "Ping",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }],
+    "returns" : ["error"],
+    "requires" : null,
+    "desc" : "测试连接通畅"
+  }, {
+    "name" : "Close",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }],
+    "returns" : null,
+    "requires" : null,
+    "desc" : "关闭连接"
+  }, {
+    "name" : "Create",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "colcName",
+      "type" : "string"
+    }],
+    "returns" : ["error"],
+    "requires" : null,
+    "desc" : "创建数据集"
+  }, {
+    "name" : "Drop",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "colcName",
+      "type" : "string"
+    }],
+    "returns" : ["error"],
+    "requires" : null,
+    "desc" : "删除数据集"
+  }, {
+    "name" : "Source",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "file",
+      "type" : "string"
+    }],
+    "returns" : ["error"],
+    "requires" : null,
+    "desc" : "导入数据集"
+  }, {
+    "name" : "Insert",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "colcName",
+      "type" : "string"
+    }, {
+      "name" : "entry",
+      "type" : "interface{}"
+    }],
+    "returns" : ["string", "error"],
+    "requires" : null,
+    "desc" : "新增记录"
+  }, {
+    "name" : "InsertMany",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "colcName",
+      "type" : "string"
+    }, {
+      "name" : "entries",
+      "type" : "[]interface{}"
+    }],
+    "returns" : ["int64", "error"],
+    "requires" : null,
+    "desc" : "批量新增记录"
+  }, {
+    "name" : "Save",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "colcName",
+      "type" : "string"
+    }, {
+      "name" : "conds",
+      "type" : "bson.D"
+    }, {
+      "name" : "entry",
+      "type" : "interface{}"
+    }],
+    "returns" : ["map[string]interface{}", "error"],
+    "requires" : null,
+    "desc" : "查询并更新记录"
+  }, {
+    "name" : "Delete",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "colcName",
+      "type" : "string"
+    }, {
+      "name" : "conds",
+      "type" : "bson.D"
+    }],
+    "returns" : ["int64", "error"],
+    "requires" : null,
+    "desc" : "删除记录"
+  }, {
+    "name" : "Update",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name" : "colcName",
+      "type" : "string"
+    }, {
+      "name" : "conds",
+      "type" : "bson.D"
+    }, {
+      "name" : "entry",
+      "type" : "interface{}"
+    }],
+    "returns" : ["int64", "error"],
+    "requires" : null,
+    "desc" : "更新记录"
+  }]
+}, {
+  "name": "Redis",
+  "categories": ["persist", "message"],
+  "language" : "golang",
+  "interfaces": [{
+    "name": "New",
+    "params": [{
+      "name": "ctx",
+      "type": "context.Context"
+    }],
+    "returns" : ["*Redis"],
+    "requires" : null,
+    "desc" : "新增Redis数据库DAO"
+  }, {
+    "name" : "Ping",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }],
+    "returns" : ["error"],
+    "requires" : null,
+    "desc" : "测试连接通畅"
+  }, {
+    "name" : "Close",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }],
+    "returns" : null,
+    "requires" : null,
+    "desc" : "关闭连接"
+  }, {
+    "name" : "Subscribe",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name": "channel",
+      "type": "string"
+    }],
+    "returns" : null,
+    "requires" : null,
+    "desc" : "注册通讯频道"
+  }, {
+    "name" : "Unsubscribe",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name": "channel",
+      "type": "string"
+    }],
+    "returns" : null,
+    "requires" : null,
+    "desc" : "注销通讯频道"
+  }, {
+    "name" : "Publish",
+    "params" : [{
+      "name" : "ctx",
+      "type" : "context.Context"
+    }, {
+      "name": "channel",
+      "type": "string"
+    }],
+    "returns" : null,
+    "requires" : null,
+    "desc" : "发布消息"
+  }]
 }]

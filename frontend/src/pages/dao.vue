@@ -7,7 +7,7 @@
             <el-table-column type="expand">
                 <template slot-scope="scope">
                     <el-table class="demo-table-expand" :data="scope.row.interfaces">
-                        <el-table-column label="接口名" prop="name"/>
+                        <el-table-column label="接口名" prop="name" width="100px"/>
                         <el-table-column label="参数" prop="params">
                             <template slot-scope="subScope">
                                 <div class="interval-container">
@@ -23,7 +23,13 @@
                                 </div>
                             </template>
                         </el-table-column>
-                        <el-table-column label="返回值" prop="returns"/>
+                        <el-table-column label="返回值" prop="returns">
+                            <template slot-scope="subScope">
+                                <div class="interval-container">
+                                    <el-tag class="interval-item" size="small" v-for="ret in subScope.row.returns" :key="ret">{{ret}}</el-tag>
+                                </div>
+                            </template>
+                        </el-table-column>
                         <el-table-column label="依赖模块" prop="requires"/>
                         <el-table-column label="描述" prop="desc"/>
                         <el-table-column label="配置" prop="setting">
@@ -38,9 +44,11 @@
                 </template>
             </el-table-column>
             <el-table-column label="组名" prop="name"/>
-            <el-table-column label="类别" prop="category">
+            <el-table-column label="类别" prop="categories">
                 <template slot-scope="scope">
-                    <el-tag type="info">{{scope.row.category}}</el-tag>
+                    <div class="interval-container">
+                        <el-tag class="interval-item" v-for="category in scope.row.categories" :key="category" type="info">{{category}}</el-tag>
+                    </div>
                 </template>
             </el-table-column>
             <el-table-column label="语言" prop="language">
