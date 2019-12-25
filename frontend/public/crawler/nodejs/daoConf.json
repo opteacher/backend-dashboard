@@ -1,0 +1,13 @@
+{
+    "fileName": "puppeteer.json",
+    "configs": {
+        "chromium": {
+            "label": "chrome的可执行文件路径",
+            "type": "text"
+        },
+        "timeout": {
+            "label": "页面等待时间",
+            "type": "number"
+        }
+    }
+}

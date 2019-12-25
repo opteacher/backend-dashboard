@@ -1,0 +1,21 @@
+[{
+    "name": "login",
+    "group": "Puppeteer",
+    "params": {
+        "account": "String",
+        "password": "String"
+    },
+    "returns": ["Promise<puppeteer.Page>"],
+    "steps": [{
+        "key": "mongo_insert",
+        "desc": "将%MODEL%插入mongo数据库",
+        "inputs": {
+            "COLC_NAME": "%MODEL%",
+            "ENTRY": "entry"
+        },
+        "code": "_, err := s.dao.Mongo.Insert(ctx, \"%COLC_NAME%\", %ENTRY%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n"
+    }, {
+        "key": "return_succeed",
+        "inputs": {"RETURN": "entry"}
+    }]
+}]

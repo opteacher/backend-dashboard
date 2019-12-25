@@ -7,7 +7,7 @@
             <el-table-column type="expand">
                 <template slot-scope="scope">
                     <el-table class="demo-table-expand" :data="scope.row.interfaces">
-                        <el-table-column label="接口名" prop="name" width="100px"/>
+                        <el-table-column label="接口名" prop="name"/>
                         <el-table-column label="参数" prop="params">
                             <template slot-scope="subScope">
                                 <div class="interval-container">
@@ -16,7 +16,7 @@
                                         v-for="param in subScope.row.params" :key="param.name"
                                         placement="top-start"
                                         trigger="hover"
-                                        :content="param.type"
+                                        :content="`（${param.type}）${param.desc || ''}`"
                                     >
                                         <el-tag size="small" slot="reference">{{param.name}}</el-tag>
                                     </el-popover>
@@ -26,11 +26,10 @@
                         <el-table-column label="返回值" prop="returns">
                             <template slot-scope="subScope">
                                 <div class="interval-container">
-                                    <el-tag class="interval-item" size="small" v-for="ret in subScope.row.returns" :key="ret">{{ret}}</el-tag>
+                                    <el-tag class="interval-item" size="small" type="success" v-for="ret in subScope.row.returns" :key="ret">{{ret}}</el-tag>
                                 </div>
                             </template>
                         </el-table-column>
-                        <el-table-column label="依赖模块" prop="requires"/>
                         <el-table-column label="描述" prop="desc"/>
                         <el-table-column label="配置" prop="setting">
                             <template slot-scope="subScope">

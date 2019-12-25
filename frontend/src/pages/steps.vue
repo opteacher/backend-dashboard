@@ -2,7 +2,10 @@
 <dashboard>
     <div class="table-container">
         <el-button type="primary" @click="showAddTempStep = true">添加模板步骤</el-button>
-        <el-table class="mt-10" :data="tempSteps" style="width: 100%">
+        <el-select v-model="selLang" placeholder="请选择语言" @change="chgLang">
+            <el-option v-for="lang in langs" :key="lang" :label="lang" :value="lang"/>
+        </el-select>
+        <el-table class="mt-10" :data="filterSteps" style="width: 100%">
             <el-table-column prop="key" label="标识"/>
             <el-table-column prop="group" label="组"/>
             <el-table-column prop="requires" label="依赖"/>
@@ -59,7 +62,10 @@ export default {
     data() {
         return {
             showAddTempStep: false,
-            tempSteps: []
+            allSteps: [],
+            filterSteps: [],
+            selLang: "",
+            langs: []
         }
     },
     async created() {
@@ -71,8 +77,19 @@ export default {
             if (typeof res === "string") {
                 this.$message.error(`查询模板步骤发生错误：${res}`)
             } else {
-                this.tempSteps = res.steps
+                this.allSteps = res.steps
+                this.langs = _.uniq(this.allSteps.map(step => step.lang))
+                if (this.langs.length !== 0) {
+                    this.selLang = this.langs[0]
+                    this.filterSteps = this.allSteps.filter(step => step.lang === this.selLang)
+                } else {
+                    this.selLang = ""
+                    this.filterSteps = []
+                }
             }
+        },
+        chgLang() {
+            this.filterSteps = this.allSteps.filter(step => step.lang === this.selLang)
         },
         addTempStep() {
             const form = this.$refs["add-temp-step-form"]

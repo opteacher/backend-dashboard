@@ -271,6 +271,7 @@ message NameArray {
 message Prop {
     string name = 1;
     string type = 2;
+    string desc = 3;
 }
 
 message Model {
@@ -381,15 +382,16 @@ enum SpcSymbol {
 // 所有事务流都是函数调用，而且所有的函数返回值都是err结尾
 message Step {
     string key = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
-    repeated string requires = 2;
-    string desc = 3;
-    map<string,string> inputs = 4;
-    repeated string outputs = 5;
-    string code = 6;
-    string apiname = 7[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
-    SpcSymbol symbol = 8;
-    int32 index = 9[(gogoproto.jsontag) = 'index'];
-    string group = 10;
+    string lang = 2;
+    repeated string requires = 3;
+    string desc = 4;
+    map<string,string> inputs = 5;
+    repeated string outputs = 6;
+    string code = 7;
+    string apiname = 8[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
+    SpcSymbol symbol = 9;
+    int32 index = 10[(gogoproto.jsontag) = 'index'];
+    string group = 11;
 }
 
 message ApiInfo {

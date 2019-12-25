@@ -105,11 +105,20 @@ func (md *MongoDao) Drop(ctx context.Context, colcName string) error {
 }
 
 func (md *MongoDao) Source(ctx context.Context, file string, create bool) error {
-	if _, err := os.Stat(file); os.IsNotExist(err) {
+	flInfo, err := os.Stat(file)
+	if os.IsNotExist(err) {
 		return nil
 	}
 	fname := filepath.Base(file)
 	cname := strings.SplitN(fname, ".", 2)[0]
+	if flInfo.Size() == 0 {
+		if create {
+			if err := md.Create(ctx, cname); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	cmd := exec.CommandContext(ctx, "mongoimport", []string{
 		"--drop",
 		"--jsonArray",

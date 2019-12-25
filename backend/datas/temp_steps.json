@@ -1,41 +1,30 @@
 [{
   "key" : "json_marshal",
-  "requires" : [
-    "encoding/json"
-  ],
+  "lang": "golang",
+  "requires" : ["encoding/json"],
   "desc" : "将收到的请求参数编码成JSON字节数组",
-  "inputs" : {
-    "OBJECT" : ""
-  },
-  "outputs" : [
-    "bytes"
-  ],
+  "inputs" : {"OBJECT" : ""},
+  "outputs" : ["bytes"],
   "code" : "bytes, err := json.Marshal(%OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"转JSON失败：%v\", err)\n}\n",
   "apiname" : "",
   "symbol" : 0,
-  "group": "json",
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "group": "json"
 }, {
   "key" : "assignment_create",
+  "lang": "golang",
   "requires" : null,
   "desc" : "创建%TARGET%并用%SOURCE%初始化",
   "inputs" : {
     "SOURCE" : "",
     "TARGET" : ""
   },
-  "outputs" : [
-    "%TARGET%"
-  ],
+  "outputs" : ["%TARGET%"],
   "code" : "%TARGET% := %SOURCE%\n",
   "apiname" : "",
-  "symbol" : 0,
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "symbol" : 0
 }, {
   "key" : "assignment",
+  "lang": "golang",
   "requires" : null,
   "desc" : "将%SOURCE%赋值给%TARGET%",
   "inputs" : {
@@ -45,45 +34,31 @@
   "outputs" : null,
   "code" : "%TARGET% = %SOURCE%\n",
   "apiname" : "",
-  "symbol" : 0,
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "symbol" : 0
 }, {
   "key" : "return_succeed",
+  "lang": "golang",
   "requires" : null,
   "desc" : "成功返回%RETURN%",
-  "inputs" : {
-    "RETURN" : ""
-  },
+  "inputs" : {"RETURN" : ""},
   "outputs" : null,
   "code" : "return %RETURN%, nil\n",
   "apiname" : "",
-  "symbol" : 4,
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "symbol" : 4
 }, {
   "key" : "json_unmarshalToMap",
-  "requires" : [
-    "encoding/json"
-  ],
+  "lang": "golang",
+  "requires" : ["encoding/json"],
   "desc" : "将JSON字节数组转成Map键值对",
-  "inputs" : {
-    "BYTES": ""
-  },
-  "outputs" : [
-    "omap"
-  ],
+  "inputs" : {"BYTES": ""},
+  "outputs" : ["omap"],
   "code" : "omap := make(map[string]interface{})\nif err := json.Unmarshal(%BYTES%, &omap); err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
   "apiname" : "",
   "symbol" : 0,
-  "group": "json",
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "group": "json"
 }, {
   "key" : "assignment_append",
+  "lang": "golang",
   "requires" : null,
   "desc" : "将%NEW_ADD%添加进%ARRAY%",
   "inputs" : {
@@ -93,8 +68,28 @@
   "outputs" : null,
   "code" : "%ARRAY% = append(%ARRAY%, %NEW_ADD%)\n",
   "apiname" : "",
-  "symbol" : 0,
-  "xxx_nounkeyedliteral" : {},
-  "xxx_unrecognized" : null,
-  "xxx_sizecache" : 0
+  "symbol" : 0
+}, {
+  "key" : "console_log",
+  "lang": "nodejs",
+  "requires" : null,
+  "desc" : "输出",
+  "inputs" : {"TEXT" : ""},
+  "outputs" : null,
+  "code" : "console.log(\"%TEXT%\")\n",
+  "apiname" : "",
+  "symbol" : 0
+}, {
+  "key" : "assignment_create",
+  "lang": "nodejs",
+  "requires" : null,
+  "desc" : "创建%TARGET%并用%SOURCE%初始化",
+  "inputs" : {
+    "SOURCE" : "",
+    "TARGET" : ""
+  },
+  "outputs" : ["%TARGET%"],
+  "code" : "let %TARGET% = %SOURCE%\n",
+  "apiname" : "",
+  "symbol" : 0
 }]

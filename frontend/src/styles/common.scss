@@ -76,8 +76,16 @@
     width: 60vw;
 }
 
-.interval-container .interval-item+.interval-item {
-    margin-left: 10px;
+.interval-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -10px;
+    margin-bottom: -5px;
+
+    .interval-item {
+        margin-right: 10px;
+        margin-bottom: 5px;
+    }
 }
 
 .table-container {

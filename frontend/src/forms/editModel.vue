@@ -37,7 +37,7 @@
             </el-col>
         </el-row>
     </el-form-item>
-    <el-form-item label="RPC接口" v-if="!structFlag && persistDaoGrps.length !== 0">
+    <el-form-item label="RPC接口" v-if="!structFlag && hasPersistDao">
         <el-col :span="18">
             <el-checkbox-group class="w-100" v-if="selPersistDao" v-model="model.methods">
                 <el-checkbox-button v-if="selPersistDao['insert']" label="insert" name="methods">增</el-checkbox-button>
@@ -80,7 +80,8 @@ export default {
                 height: 300
             },
             selPersistDao: null,
-            persistDaoGrps: {}
+            persistDaoGrps: {},
+            hasPersistDao: false
         }
     },
     async created() {
@@ -95,41 +96,41 @@ export default {
             this.$message.error(`查询持久化DAO时发生错误：${res}`)
         } else if (!res.infos) {
             return
-        } else {
-            let categories = {"": []}
-            let firstGroup = ""
-            for (let info of res.infos) {
-                info.symbol = info.symbol || ""
-                if (categories[info.group]) {
-                    categories[info.group][info.symbol] = info
-                } else {
-                    categories[info.group] = {[info.symbol]: info}
-                    if (firstGroup.length === 0) {
-                        firstGroup = info.group
-                    }
+        }
+        this.hasPersistDao = res.infos.length !== 0
+        let categories = {"": []}
+        let firstGroup = ""
+        for (let info of res.infos) {
+            info.symbol = info.symbol || ""
+            if (categories[info.group]) {
+                categories[info.group][info.symbol] = info
+            } else {
+                categories[info.group] = {[info.symbol]: info}
+                if (firstGroup.length === 0) {
+                    firstGroup = info.group
                 }
             }
-            if (categories[""].length === 0) {
-                delete categories[""]
+        }
+        if (categories[""].length === 0) {
+            delete categories[""]
+        }
+        this.persistDaoGrps = categories
+        if (firstGroup.length !== 0) {
+            this.selPersistDao = categories[firstGroup]
+            if (this.selPersistDao["insert"]) {
+                this.model.methods.push("insert")
             }
-            this.persistDaoGrps = categories
-            if (firstGroup.length !== 0) {
-                this.selPersistDao = categories[firstGroup]
-                if (this.selPersistDao["insert"]) {
-                    this.model.methods.push("insert")
-                }
-                if (this.selPersistDao["delete"]) {
-                    this.model.methods.push("delete")
-                }
-                if (this.selPersistDao["update"]) {
-                    this.model.methods.push("update")
-                }
-                if (this.selPersistDao["query"]) {
-                    this.model.methods.push("query")
-                }
-                if (this.selPersistDao["queryAll"]) {
-                    this.model.methods.push("queryAll")
-                }
+            if (this.selPersistDao["delete"]) {
+                this.model.methods.push("delete")
+            }
+            if (this.selPersistDao["update"]) {
+                this.model.methods.push("update")
+            }
+            if (this.selPersistDao["query"]) {
+                this.model.methods.push("query")
+            }
+            if (this.selPersistDao["queryAll"]) {
+                this.model.methods.push("queryAll")
             }
         }
     },

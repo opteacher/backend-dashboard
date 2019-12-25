@@ -1901,6 +1901,9 @@
                 },
                 "type": {
                     "type": "string"
+                },
+                "desc": {
+                    "type": "string"
                 }
             }
         },
@@ -1908,6 +1911,9 @@
             "type": "object",
             "properties": {
                 "key": {
+                    "type": "string"
+                },
+                "lang": {
                     "type": "string"
                 },
                 "requires": {

@@ -23,4 +23,16 @@
   "apitemphref" : "",
   "mdltemphref" : "",
   "homeurl" : "http://127.0.0.1:4000/tools/op"
+}, {
+  "id" : "PuppeteerCrawler",
+  "name" : "Puppeteer爬虫",
+  "icon" : "http://news.online.sh.cn/news/gb/content/attachement/jpg/site1/20161229/IMGf48e3894467143297498563.jpg",
+  "type" : "dao_implement",
+  "desc" : "官方版本",
+  "daoimplhref" : "http://127.0.0.1:4000/crawler/nodejs/daoImpl.json",
+  "daoconfhref" : "http://127.0.0.1:4000/crawler/nodejs/daoConf.json",
+  "tmpstephref" : "http://127.0.0.1:4000/crawler/nodejs/tempStep.json",
+  "apitemphref" : "http://127.0.0.1:4000/crawler/nodejs/apiTemp.json",
+  "mdltemphref" : "",
+  "homeurl" : "http://127.0.0.1:4000/tools/op"
 }]

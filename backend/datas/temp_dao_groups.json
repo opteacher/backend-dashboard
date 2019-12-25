@@ -215,4 +215,162 @@
     "requires" : null,
     "desc" : "发布消息"
   }]
+}, {
+  "name": "Puppeteer",
+  "categories": ["crawler"],
+  "language" : "nodejs",
+  "interfaces": [{
+    "name": "openChrome",
+    "desc": "打开chrome",
+    "params": [{
+      "name": "show",
+      "type": "Boolean",
+      "desc": "是否显示chrome"
+    }],
+    "returns": ["Promise<puppeteer.Browser>"]
+  }, {
+    "name": "newPage",
+    "desc": "新建一个页面",
+    "params": [{
+      "name": "browser",
+      "type": "puppeteer.Browser",
+      "desc": "打开的浏览器"
+    }],
+    "returns": ["Promise<puppeteer.Page>"]
+  }, {
+    "name": "close",
+    "desc": "关闭浏览器",
+    "params": [{
+      "name": "browser",
+      "type": "puppeteer.Browser",
+      "desc": "打开的浏览器"
+    }],
+    "returns": ["Promise<*>"]
+  }, {
+    "name": "goto",
+    "desc": "跳转至地址url",
+    "params": [{
+      "name": "page",
+      "type": "puppeteer.Page",
+      "desc": "跳转所在页面"
+    }, {
+      "name": "url",
+      "type": "String",
+      "desc": "要跳转的地址"
+    }],
+    "returns": ["Promise<*>"]
+  }, {
+    "name": "wait",
+    "desc": "在当前页面等待",
+    "params": [{
+      "name": "page",
+      "type": "puppeteer.Page",
+      "desc": "当前页面"
+    }, {
+      "name": "time",
+      "type": "Number",
+      "desc": "等待的时间（毫秒）"
+    }],
+    "returns": ["Promise<*>"]
+  }, {
+    "name": "classStartsWith",
+    "desc": "查询class以prefix的页面组件",
+    "params": [{
+      "name": "page",
+      "type": "puppeteer.Page",
+      "desc": "当前页面"
+    }, {
+      "name": "prefix",
+      "type": "String",
+      "desc": "class前缀"
+    }],
+    "returns": ["Promise<ElementHandle>"]
+  }, {
+    "name": "classContains",
+    "desc": "查询class包含text的页面组件",
+    "params": [{
+      "name": "page",
+      "type": "puppeteer.Page",
+      "desc": "当前页面"
+    }, {
+      "name": "text",
+      "type": "String",
+      "desc": "class包含的文字"
+    }],
+    "returns": ["Promise<Array<ElementHandle>>"]
+  }, {
+    "name": "querySelector",
+    "desc": "选取页面DOM元素",
+    "params": [{
+      "name": "element",
+      "type": "puppeteer.ElementHandle",
+      "desc": "DOM所在页面或者父DOM元素"
+    }, {
+      "name": "selector",
+      "type": "String",
+      "desc": "jquery选择器"
+    }],
+    "returns": ["Promise<ElementHandle>"]
+  }, {
+    "name": "querySelectorAll",
+    "desc": "选取所有页面DOM元素",
+    "params": [{
+      "name": "element",
+      "type": "puppeteer.ElementHandle",
+      "desc": "DOM所在页面或者父DOM元素"
+    }, {
+      "name": "selector",
+      "type": "String",
+      "desc": "jquery选择器"
+    }],
+    "returns": ["Promise<Array<ElementHandle>>"]
+  }, {
+    "name": "queryAndAdjustSelector",
+    "desc": "选取并整合所有页面DOM元素",
+    "params": [{
+      "name": "element",
+      "type": "puppeteer.ElementHandle",
+      "desc": "DOM所在页面或者父DOM元素"
+    }, {
+      "name": "selector",
+      "type": "String",
+      "desc": "jquery选择器"
+    }, {
+      "name": "procFunc",
+      "type": "Function",
+      "desc": "处理函数，接受匹配的DOM元素，返回处理之后的结果"
+    }],
+    "returns": ["Promise<*>"]
+  }, {
+    "name": "tap",
+    "desc": "点击页面控件",
+    "params": [{
+      "name": "element",
+      "type": "ElementHandle",
+      "desc": "DOM所在页面或者父DOM元素"
+    }],
+    "returns": ["Promise<*>"]
+  }, {
+    "name": "type",
+    "desc": "向页面控件做输入操作",
+    "params": [{
+      "name": "element",
+      "type": "ElementHandle",
+      "desc": "DOM所在页面或者父DOM元素"
+    }, {
+      "name": "text",
+      "type": "String",
+      "desc": "要输入的文本"
+    }],
+    "returns": ["Promise<*>"]
+  }, {
+    "name": "click",
+    "desc": "向页面控件做点击操作",
+    "params": [{
+      "name": "element",
+      "type": "ElementHandle",
+      "desc": "DOM所在页面或者父DOM元素"
+    }],
+    "returns": ["Promise<*>"]
+  }]
 }]

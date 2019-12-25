@@ -1,0 +1,8 @@
+{
+    "def": "const Puppeteer = require(\"./crawler/puppeteer\")",
+    "new": "const ppr = new Puppeteer()",
+    "files": [{
+        "href": "http://127.0.0.1:4000/crawler/nodejs/daoImpls/puppeteer.js",
+        "location": "crawler/puppeteer.js"
+    }]
+}
