@@ -394,6 +394,21 @@ message Step {
     string group = 11;
 }
 
+message ActivatedByHttp {
+    string route = 1;
+    string method = 2;
+}
+
+message ActivatedByTiming {
+    string type = 1;
+    string crontab = 2;
+}
+
+message ActivatedBySubscribe {
+    string channel = 1;
+    string daoGroup = 2;
+}
+
 message ApiInfo {
     string name = 1[(gogoproto.moretags)='orm:",NOT_NULL|PRIMARY_KEY"'];
     string category = 2;// 同DAO组的类别
@@ -402,10 +417,13 @@ message ApiInfo {
     string model = 5;
     string table = 6;
     map<string,string> params = 7;
-    string route = 8;
-    string method = 9;
-    repeated string returns = 10;
-    repeated Step steps = 11;
+    oneof activated {
+        ActivatedByHttp http = 8;
+        ActivatedByTiming timing = 9;
+        ActivatedBySubscribe subscribe = 10;
+    }
+    repeated string returns = 11;
+    repeated Step steps = 12;
 }
 
 message ApiInfoArray {

@@ -1,5 +1,5 @@
 {
-    "fileName": "mongo.toml",
+    "fileName": "configs/mongo.toml",
     "configs": {
         "url": {
             "label": "主机URL",

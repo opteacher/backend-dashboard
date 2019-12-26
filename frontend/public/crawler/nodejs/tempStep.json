@@ -1,0 +1,26 @@
+{
+    "steps": [{
+        "key": "puppeteer_openBrowserAndNewPage",
+        "group": "Puppeteer",
+        "lang": "nodejs",
+        "desc": "打开并新建一个标签页跳转到指定页面",
+        "inputs": {
+            "SHOW_CHROME": "",
+            "URL": ""
+        },
+        "outputs": ["browser", "page"],
+        "code": "const browser = await puppeteer.openChrome(%SHOW_CHROME%)\nconst page = await puppeteer.newPage(browser)\nif (%URL%.length !== 0) {\n\tawait puppeteer.goto(page, %URL%)\n}\nreturn {browser, page}\n"
+    }, {
+        "key": "puppeteer_tapAndTypeInput",
+        "group": "Puppeteer",
+        "lang": "nodejs",
+        "desc": "点击聚焦输入框控件并输入",
+        "inputs": {
+            "PARENT_ELE": "",
+            "ELE_NAME": "",
+            "ELE_SELECTOR": "",
+            "INPUT_TEXT": ""
+        },
+        "code": "const %ELE_NAME% = await %PARENT_ELE%.$(%ELE_SELECTOR%)\nawait %ELE_NAME%.tap()\nawait %ELE_NAME%.type(%INPUT_TEXT%)\n"
+    }]
+}

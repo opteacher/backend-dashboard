@@ -3,19 +3,60 @@
     "group": "Puppeteer",
     "params": {
         "account": "String",
-        "password": "String"
+        "password": "String",
+        "elements": "Object"
     },
     "returns": ["Promise<puppeteer.Page>"],
     "steps": [{
-        "key": "mongo_insert",
-        "desc": "将%MODEL%插入mongo数据库",
+        "key": "puppeteer_openBrowserAndNewPage",
+        "desc": "跳转至含有登录链接的页面",
         "inputs": {
-            "COLC_NAME": "%MODEL%",
-            "ENTRY": "entry"
-        },
-        "code": "_, err := s.dao.Mongo.Insert(ctx, \"%COLC_NAME%\", %ENTRY%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"插入数据表失败：%v\", err)\n}\n"
+            "SHOW_CHROME": "false",
+            "URL": "elements[\"LOGIN_PAGE\"]"
+        }
     }, {
-        "key": "return_succeed",
-        "inputs": {"RETURN": "entry"}
+        "key": "",
+        "desc": "点击显示登录页面或对话框（如果存在的话）",
+        "code": "if (elements[\"LOGIN_ELEMENT\"]) {\n\tconsole.log(\"点击登录组件\")\n\tconst lgnElement = await puppeteer.waitForElement(elements[\"LOGIN_ELEMENT\"])\n\tawait puppeteer.tap(lgnElement)\n}\n"
+    }, {
+        "key": "",
+        "desc": "等待登录表单（如果存在的话）",
+        "code": "let lgnForm = page\nif (elements[\"LOGIN_FORM\"]) {\n\tconsole.log(\"等待登录表单\")\n\tlgnForm = await puppeteer.waitForElement(elements[\"LOGIN_FORM\"])\n}\n"
+    }, {
+        "key": "console_log",
+        "inputs": {"TEXT": "输入账户名"}
+    }, {
+        "key": "puppeteer_tapAndTypeInput",
+        "desc": "点击并输入账户名",
+        "inputs": {
+            "PARENT_ELE": "lgnForm",
+            "ELE_NAME": "accountEle",
+            "ELE_SELECTOR": "elements[\"ACCOUNT_SELECTOR\"]",
+            "INPUT_TEXT": "account"
+        }
+    }, {
+        "key": "console_log",
+        "inputs": {"TEXT": "输入密码"}
+    }, {
+        "key": "puppeteer_tapAndTypeInput",
+        "desc": "点击并输入密码",
+        "inputs": {
+            "PARENT_ELE": "lgnForm",
+            "ELE_NAME": "passwordEle",
+            "ELE_SELECTOR": "elements[\"PASSWORD_SELECTOR\"]",
+            "INPUT_TEXT": "password"
+        }
+    }, {
+        "key": "console_log",
+        "inputs": {"TEXT": "点击按钮登录"}
+    }, {
+        "key": "",
+        "desc": "点击登录",
+        "code": "const loginBtn = await puppeteer.querySelector(lgnForm, elements[\"LOGIN_BUTTON\"])\nawait loginBtn.click()"
+    }, {
+        "key": "",
+        "symbol": 4,
+        "desc": "等待一段时间",
+        "code": "await puppeteer.wait(page, 2000)"
     }]
 }]

@@ -128,7 +128,8 @@ func (kratos *Kratos) chgKratosDaoFile(ctx context.Context) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("获取DAO配置信息失败：%v", err)
 		}
-		daoConfPath := filepath.Join(kratos.info.pathName, "configs", jsonMap["fileName"].(string))
+		// 配置文件根据文件自身自定
+		daoConfPath := filepath.Join(kratos.info.pathName, jsonMap["fileName"].(string))
 		daoConf, err := kratos.svc.DaoConfigSelectByImpl(ctx, &pb.DaoConfImplIden{Implement: group.Implement})
 		if err != nil {
 			return nil, err
@@ -366,10 +367,10 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, []
 		}
 		sparams = strings.TrimRight(sparams, ",")
 		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.Name, sparams, strings.Join(api.Returns, ","))
-		if len(api.Route) != 0 && len(api.Method) != 0 {
-			fixedRoute := strings.Replace(api.Route, "%PROJ_NAME%", kratos.info.pkgName, -1)
+		if len(api.GetHttp().Route) != 0 && len(api.GetHttp().Method) != 0 {
+			fixedRoute := strings.Replace(api.GetHttp().Route, "%PROJ_NAME%", kratos.info.pkgName, -1)
 			code += " {\n\t\toption (google.api.http) = {\n"
-			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.Method, fixedRoute)
+			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.GetHttp().Method, fixedRoute)
 		} else {
 			code += ";\n"
 		}

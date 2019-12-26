@@ -32,6 +32,10 @@ class Puppeteer {
 		return page.waitFor(time)
     }
 
+    waitForElement(page, selector) {
+        return page.waitForXPath(selector)
+    }
+
     classStartsWith(page, prefix) {
         return page.waitForXPath(`//[starts-with(@class,'${prefix}')]`)
     }

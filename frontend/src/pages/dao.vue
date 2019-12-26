@@ -276,7 +276,7 @@ export default {
                 return
             }
             const result = this.$refs["tip-load-temp-res-form"]
-            if (result.loadTmpStep) {
+            if (result.loadTmpStep && selImpl.tmpStepHref && selImpl.tmpStepHref.length !== 0) {
                 const steps = (await axios.get(selImpl.tmpStepHref)).data.steps
                 res = await backend.addTempSteps(steps)
                 if (typeof res === "string") {
@@ -284,15 +284,19 @@ export default {
                 }
             }
             if (result.loadApiTemp) {
-                const apis = (await axios.get(selImpl.apiTempHref)).data
-                res = await backend.addTempApis(apis)
-                if (typeof res === "string") {
-                    this.$message.error(`导入模板接口时发生错误：${res}`)
+                if (selImpl.apiTempHref && selImpl.apiTempHref.length !== 0) {
+                    const apis = (await axios.get(selImpl.apiTempHref)).data
+                    res = await backend.addTempApis(apis)
+                    if (typeof res === "string") {
+                        this.$message.error(`导入模板接口时发生错误：${res}`)
+                    }
                 }
-                const models = (await axios.get(selImpl.mdlTempHref)).data
-                res = await backend.addModels(models)
-                if (typeof res === "string") {
-                    this.$message.error(`导入模板模块时发生错误：${res}`)
+                if (selImpl.mdlTempHref && selImpl.mdlTempHref.length !== 0) {
+                    const models = (await axios.get(selImpl.mdlTempHref)).data
+                    res = await backend.addModels(models)
+                    if (typeof res === "string") {
+                        this.$message.error(`导入模板模块时发生错误：${res}`)
+                    }
                 }
             }
             this.$message({

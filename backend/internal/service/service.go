@@ -294,7 +294,7 @@ func (s *Service) ApisInsertByTemp(ctx context.Context, req *pb.AddTmpApiToMdlRe
 	for pname, ptype := range req.TempApi.Params {
 		req.TempApi.Params[pname] = strings.Replace(ptype, "%MODEL%", mname, -1)
 	}
-	req.TempApi.Route = strings.Replace(req.TempApi.Route, "%MODEL%", mname, -1)
+	req.TempApi.GetHttp().Route = strings.Replace(req.TempApi.GetHttp().Route, "%MODEL%", mname, -1)
 	for index, ret := range req.TempApi.Returns {
 		req.TempApi.Returns[index] = strings.Replace(ret, "%MODEL%", mname, -1)
 	}
@@ -552,6 +552,35 @@ func (s *Service) TempDaoGroupsSelectAll(ctx context.Context, _ *pb.Empty) (*pb.
 }
 
 func (s *Service) DaoGroupUpdateImplement(ctx context.Context, req *pb.DaoGrpSetImpl) (*pb.DaoGroup, error) {
+	if len(req.ImplId) == 0 {
+		// 卸载DAO实例
+		group, err := s.DaoGroupSelectByName(ctx, &pb.NameID{Name: req.Gpname})
+		if err != nil {
+			return nil, err
+		}
+		daoImplId := group.Implement
+		group.Implement = ""
+
+		if _, err = s.mongo.Update(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Gpname}}, bson.D{
+			{"$set", bson.D{{"implement", ""}}},
+		}); err != nil {
+			return nil, fmt.Errorf("卸载DAO组实例失败：%v", err)
+		}
+		if _, err := s.mongo.Delete(ctx, model.DAO_CONFIGS_TABLE, bson.D{{"implement", daoImplId}}); err != nil {
+			return nil, fmt.Errorf("删除DAO组实例配置失败：%v", err)
+		}
+		if _, err := s.mongo.Delete(ctx, model.DAO_CONFIGS_TABLE, bson.D{{"implement", daoImplId}}); err != nil {
+			return nil, fmt.Errorf("删除DAO组实例配置失败：%v", err)
+		}
+		if _, err := s.mongo.Delete(ctx, model.TEMP_STEP_TABLE, bson.D{{"group", req.Gpname}}); err != nil {
+			return nil, fmt.Errorf("删除DAO组实例依赖的模板步骤失败：%v", err)
+		}
+		if _, err := s.mongo.Delete(ctx, model.TEMP_API_TABLE, bson.D{{"group", req.Gpname}}); err != nil {
+			return nil, fmt.Errorf("删除DAO组实例依赖的模板API失败：%v", err)
+		}
+		return group, nil
+	}
+
 	modSign, err := s.ModuleInfoSelectBySignId(ctx, &pb.StrID{Id: req.ImplId})
 	if err != nil {
 		return nil, fmt.Errorf("查询MOD信息失败：%v", err)
