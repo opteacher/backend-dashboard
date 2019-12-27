@@ -137,6 +137,32 @@ export default {
                 }
                 // 根据需要消除http相关信息
                 let api = _.cloneDeep(form.api)
+                // 删除不需要的激活方式
+                switch (form.activeType) {
+                    case "http":
+                        delete api.timing
+                        delete api.subscribe
+                        break
+                    case "timing":
+                        delete api.http
+                        delete api.subscribe
+                        if (api.timing.type == "interval" || api.timing.type == "timeout") {
+                            api.timing.mseconds = form.tempTime[0] * Number(form.tempTime[1])
+                            delete api.timing.hms
+                        } else {
+                            delete api.timing.mseconds
+                        }
+                        break
+                    case "subscribe":
+                        delete api.http
+                        delete api.timing
+                        break
+                    case "interface":
+                    default:
+                        delete api.http
+                        delete api.timing
+                        delete api.subscribe
+                }
                 // 将params转化成一个对象
                 let params = {}
                 api.params.map(param => {

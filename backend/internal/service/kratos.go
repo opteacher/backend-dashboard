@@ -367,13 +367,13 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, []
 		}
 		sparams = strings.TrimRight(sparams, ",")
 		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.Name, sparams, strings.Join(api.Returns, ","))
-		if len(api.GetHttp().Route) != 0 && len(api.GetHttp().Method) != 0 {
-			fixedRoute := strings.Replace(api.GetHttp().Route, "%PROJ_NAME%", kratos.info.pkgName, -1)
-			code += " {\n\t\toption (google.api.http) = {\n"
-			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.GetHttp().Method, fixedRoute)
-		} else {
-			code += ";\n"
-		}
+		//if len(api.GetHttp().Route) != 0 && len(api.GetHttp().Method) != 0 {
+		//	fixedRoute := strings.Replace(api.GetHttp().Route, "%PROJ_NAME%", kratos.info.pkgName, -1)
+		//	code += " {\n\t\toption (google.api.http) = {\n"
+		//	code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.GetHttp().Method, fixedRoute)
+		//} else {
+		//	code += ";\n"
+		//}
 	}
 	code += "}\n\n"
 

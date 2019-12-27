@@ -1489,7 +1489,10 @@
                 "type": {
                     "type": "string"
                 },
-                "crontab": {
+                "mseconds": {
+                    "type": "integer"
+                },
+                "hms": {
                     "type": "string"
                 }
             }
@@ -1533,13 +1536,16 @@
                     }
                 },
                 "http": {
-                    "$ref": "#/definitions/.backend.manager.service.v1.ActivatedByHttp"
+                    "$ref": "#/definitions/.backend.manager.service.v1.ActivatedByHttp",
+                    "description": "目前有三种激活方式：\n 1. HTTP方式（http），包含：method和route字段指定访问方式和路径"
                 },
                 "timing": {
-                    "$ref": "#/definitions/.backend.manager.service.v1.ActivatedByTiming"
+                    "$ref": "#/definitions/.backend.manager.service.v1.ActivatedByTiming",
+                    "description": "2. 定时方式（timing），包含：cron字段指定定时规则"
                 },
                 "subscribe": {
-                    "$ref": "#/definitions/.backend.manager.service.v1.ActivatedBySubscribe"
+                    "$ref": "#/definitions/.backend.manager.service.v1.ActivatedBySubscribe",
+                    "description": "3. 订阅通知方式（subscribe），包含：channel和daoGroup字段指定监听频道和处理通知的DAO组"
                 },
                 "returns": {
                     "type": "array",

@@ -258,6 +258,10 @@ message StrKey {
     string key = 1;
 }
 
+message StrResp {
+    string message = 1;
+}
+
 message TypeIden {
     string type = 1;
 }
@@ -401,7 +405,8 @@ message ActivatedByHttp {
 
 message ActivatedByTiming {
     string type = 1;
-    string crontab = 2;
+    int64 mseconds = 2;
+    string hms = 3;
 }
 
 message ActivatedBySubscribe {
@@ -417,11 +422,13 @@ message ApiInfo {
     string model = 5;
     string table = 6;
     map<string,string> params = 7;
-    oneof activated {
-        ActivatedByHttp http = 8;
-        ActivatedByTiming timing = 9;
-        ActivatedBySubscribe subscribe = 10;
-    }
+    // 目前有三种激活方式：
+    // 1. HTTP方式（http），包含：method和route字段指定访问方式和路径
+    ActivatedByHttp http = 8;
+    // 2. 定时方式（timing），包含：cron字段指定定时规则
+    ActivatedByTiming timing = 9;
+    // 3. 订阅通知方式（subscribe），包含：channel和daoGroup字段指定监听频道和处理通知的DAO组
+    ActivatedBySubscribe subscribe = 10;
     repeated string returns = 11;
     repeated Step steps = 12;
 }

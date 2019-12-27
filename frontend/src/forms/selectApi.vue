@@ -9,8 +9,8 @@
         <el-table :data="apiList" highlight-current-row @current-change="handleCurrentChange" style="width: 100%">
             <el-table-column label="接口名" property="name"/>
             <el-table-column label="所属" property="model" width="100"/>
-            <el-table-column label="HTTP方法" property="method" width="100"/>
-            <el-table-column label="HTTP路径" property="route"/>
+            <el-table-column label="HTTP方法" property="http.method" width="100"/>
+            <el-table-column label="HTTP路径" property="http.route"/>
         </el-table>
     </el-form-item>
 </el-form>

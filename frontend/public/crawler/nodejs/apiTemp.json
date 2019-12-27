@@ -15,11 +15,9 @@
             "URL": "elements[\"LOGIN_PAGE\"]"
         }
     }, {
-        "key": "",
         "desc": "点击显示登录页面或对话框（如果存在的话）",
         "code": "if (elements[\"LOGIN_ELEMENT\"]) {\n\tconsole.log(\"点击登录组件\")\n\tconst lgnElement = await puppeteer.waitForElement(elements[\"LOGIN_ELEMENT\"])\n\tawait puppeteer.tap(lgnElement)\n}\n"
     }, {
-        "key": "",
         "desc": "等待登录表单（如果存在的话）",
         "code": "let lgnForm = page\nif (elements[\"LOGIN_FORM\"]) {\n\tconsole.log(\"等待登录表单\")\n\tlgnForm = await puppeteer.waitForElement(elements[\"LOGIN_FORM\"])\n}\n"
     }, {
@@ -50,11 +48,9 @@
         "key": "console_log",
         "inputs": {"TEXT": "点击按钮登录"}
     }, {
-        "key": "",
         "desc": "点击登录",
         "code": "const loginBtn = await puppeteer.querySelector(lgnForm, elements[\"LOGIN_BUTTON\"])\nawait loginBtn.click()"
     }, {
-        "key": "",
         "symbol": 4,
         "desc": "等待一段时间",
         "code": "await puppeteer.wait(page, 2000)"

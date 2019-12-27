@@ -1,16 +1,21 @@
 <template>
 <el-form ref="form" :model="step" label-width="80px">
     <el-form-item label="操作KEY">
-        <el-col :span="18">
+        <el-col :span="9">
             <el-select class="w-100" v-model="step.key" placeholder="选择既存操作" @change="hdlSelStep">
-                <el-option v-for="step in steps" :key="step.key" :label="step.key" :value="step.key"/>
+                <el-option v-for="step in groupByLang[selLang]" :key="step.key" :label="step.key" :value="step.key"/>
+            </el-select>
+        </el-col>
+        <el-col :span="9">
+            <el-select class="float-right w-90" v-model="selLang" placeholder="选择语言">
+                <el-option v-for="lang in Object.keys(groupByLang)" :key="lang" :label="lang" :value="lang"/>
             </el-select>
         </el-col>
         <el-col :span="6">
-            <el-button class="float-right" @click="hdlAddStep">添加操作模板</el-button>
+            <el-button class="float-right" @click="hdlAddStep">添加模板步骤</el-button>
         </el-col>
     </el-form-item>
-    <step-detail v-if="Object.keys(stepMap).includes(step.key)" :selStep="step" preMode="editing-step" :locVars="stepInfo.locVars"/>
+    <step-detail v-if="Object.keys(stepMapper).includes(step.key)" :selStep="step" preMode="editing-step" :locVars="stepInfo.locVars"/>
 </el-form>
 </template>
 
@@ -30,10 +35,12 @@ export default {
     data() {
         return {
             steps: [],
-            stepMap: {},
+            groupByLang: {},
+            stepMapper: {},
             step: {
                 key: ""
-            }
+            },
+            selLang: ""
         }
     },
     async created() {
@@ -43,7 +50,12 @@ export default {
         } else {
             this.steps = res.steps || []
             for (let step of this.steps) {
-                this.stepMap[step.key] = step
+                this.stepMapper[step.key] = step
+            }
+            this.groupByLang = _.groupBy(this.steps, "lang")
+            const langs = Object.keys(this.groupByLang)
+            if (langs.length !== 0) {
+                this.selLang = langs[0]
             }
         }
     },
@@ -52,7 +64,7 @@ export default {
 
         },
         hdlSelStep() {
-            this.step = _.cloneDeep(this.stepMap[this.step.key])
+            this.step = _.cloneDeep(this.stepMapper[this.step.key])
         }
     }
 }

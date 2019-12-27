@@ -6,8 +6,10 @@
     "model": "%MODEL%",
     "params": {"entry": "%MODEL%"},
     "returns": ["%MODEL%"],
-    "route": "/%PROJ_NAME%/models/%MODEL%.insert",
-    "method": "post",
+    "http": {
+        "route": "/%PROJ_NAME%/models/%MODEL%.insert",
+        "method": "post"
+    },
     "steps": [{
         "key": "mongo_insert",
         "desc": "将%MODEL%插入mongo数据库",
@@ -28,8 +30,10 @@
     "model": "%MODEL%",
     "params": {"iden": "StrIden"},
     "returns": ["%MODEL%"],
-    "route": "/%PROJ_NAME%/models/%MODEL%.deleteByRowId",
-    "method": "post",
+    "http": {
+        "route": "/%PROJ_NAME%/models/%MODEL%.deleteByRowId",
+        "method": "post"
+    },
     "steps": [{
         "key": "assignment_create",
         "inputs": {
@@ -70,8 +74,10 @@
     "model": "%MODEL%",
     "params": {"req": "UpdateReq"},
     "returns": ["%MODEL%"],
-    "route": "/%PROJ_NAME%/models/%MODEL%.updateByRowId",
-    "method": "post",
+    "http": {
+        "route": "/%PROJ_NAME%/models/%MODEL%.updateByRowId",
+        "method": "post"
+    },
     "steps": [{
         "key": "json_unmarshalToMap",
         "desc": "将更新的实体转成map",
@@ -119,8 +125,10 @@
     "model": "%MODEL%",
     "params": {"iden": "StrIden"},
     "returns": ["%MODEL%"],
-    "route": "/%PROJ_NAME%/models/%MODEL%.selectByRowId",
-    "method": "post",
+    "http": {
+        "route": "/%PROJ_NAME%/models/%MODEL%.selectByRowId",
+        "method": "post"
+    },
     "steps": [{
         "key": "mongo_queryOne",
         "desc": "查询_id为（%iden.Id%）的%MODEL%",

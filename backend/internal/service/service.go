@@ -11,6 +11,7 @@ import (
 	"github.com/bilibili/kratos/pkg/conf/paladin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	_ "google.golang.org/grpc"
 	"os"
 	"path"
 	"reflect"
@@ -54,6 +55,10 @@ func (s *Service) SwaggerFile() string {
 	pjPath, _ := s.ac.Get("projPath").String()
 	swagger, _ := s.ac.Get("swaggerFile").String()
 	return path.Join(pjPath, swagger)
+}
+
+func (s *Service) TestGet(ctx context.Context, req *pb.Empty) (*pb.StrResp, error) {
+	return nil, nil
 }
 
 func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, error) {
@@ -194,57 +199,76 @@ func (s *Service) LinksDeleteBySymbol(ctx context.Context, req *pb.SymbolID) (*p
 
 func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{}) (*pb.ApiInfo, error) {
 	// 获取模板步骤作为API步骤
-	tempSteps := make(map[string]*pb.Step)
-	jsonSteps := minfo["steps"].([]interface{})
-	for _, obj := range jsonSteps {
-		mstep := obj.(map[string]interface{})
-		tempSteps[mstep["key"].(string)] = nil
-	}
-	for stepName := range tempSteps {
-		step, err := s.TempStepsSelectByKey(ctx, &pb.StrKey{Key: stepName})
-		if err != nil {
-			return nil, fmt.Errorf("查询模板步骤（%s）失败：%v", stepName, err)
-		}
-		tempSteps[stepName] = step
-	}
-
-	for idx, obj := range jsonSteps {
-		mstep := obj.(map[string]interface{})
-		tempStep := tempSteps[mstep["key"].(string)]
-		if mstep["desc"] == nil || mstep["desc"] == "" {
-			mstep["desc"] = tempStep.Desc
-		}
-		requires := make([]string, len(tempStep.Requires))
-		if err := utils.Clone(&tempStep.Requires, &requires); err != nil {
-			return nil, fmt.Errorf("复制步骤（%s）依赖失败：%v", tempStep.Key, err)
-		}
-		mstep["requires"] = requires
-		if mstep["inputs"] == nil {
-			var inputs interface{}
-			if err := utils.Clone(tempStep.Inputs, &inputs); err != nil {
-				return nil, fmt.Errorf("复制步骤（%s）输入失败：%v", tempStep.Key, err)
+	if minfo["steps"] != nil {
+		tempSteps := make(map[string]*pb.Step)
+		jsonSteps := minfo["steps"].([]interface{})
+		for _, obj := range jsonSteps {
+			mstep := obj.(map[string]interface{})
+			if mstep["key"] == nil {
+				continue
 			}
-			mstep["inputs"] = inputs
+			key := mstep["key"].(string)
+			if len(key) == 0 {
+				continue
+			}
+			tempSteps[key] = nil
 		}
-		outputs := make([]string, len(tempStep.Outputs))
-		if err := utils.Clone(&tempStep.Outputs, &outputs); err != nil {
-			return nil, fmt.Errorf("复制步骤（%s）输出失败：%v", tempStep.Key, err)
+		for stepName := range tempSteps {
+			step, err := s.TempStepsSelectByKey(ctx, &pb.StrKey{Key: stepName})
+			if err != nil {
+				return nil, fmt.Errorf("查询模板步骤（%s）失败：%v", stepName, err)
+			}
+			tempSteps[stepName] = step
 		}
-		mstep["outputs"] = outputs
-		if mstep["code"] == nil || mstep["code"] == "" {
-			mstep["code"] = tempStep.Code
-		}
-		mstep["symbol"] = tempStep.Symbol
-		jsonSteps[idx] = mstep
-	}
-	minfo["steps"] = jsonSteps
 
+		for idx, obj := range jsonSteps {
+			mstep := obj.(map[string]interface{})
+			if mstep["key"] == nil {
+				continue
+			}
+			key := mstep["key"].(string)
+			if len(key) == 0 {
+				continue
+			}
+			tempStep := tempSteps[key]
+			if mstep["desc"] == nil || mstep["desc"] == "" {
+				mstep["desc"] = tempStep.Desc
+			}
+			requires := make([]string, len(tempStep.Requires))
+			if err := utils.Clone(&tempStep.Requires, &requires); err != nil {
+				return nil, fmt.Errorf("复制步骤（%s）依赖失败：%v", tempStep.Key, err)
+			}
+			mstep["requires"] = requires
+			if mstep["inputs"] == nil {
+				var inputs interface{}
+				if err := utils.Clone(tempStep.Inputs, &inputs); err != nil {
+					return nil, fmt.Errorf("复制步骤（%s）输入失败：%v", tempStep.Key, err)
+				}
+				mstep["inputs"] = inputs
+			}
+			outputs := make([]string, len(tempStep.Outputs))
+			if err := utils.Clone(&tempStep.Outputs, &outputs); err != nil {
+				return nil, fmt.Errorf("复制步骤（%s）输出失败：%v", tempStep.Key, err)
+			}
+			mstep["outputs"] = outputs
+			if mstep["code"] == nil || mstep["code"] == "" {
+				procCode := tempStep.Code
+				// 用输入替换code中的宏
+				for macro, input := range mstep["inputs"].(map[string]interface{}) {
+					procCode = strings.Replace(procCode, fmt.Sprintf("%%%s%%", macro), input.(string), -1)
+				}
+				mstep["code"] = procCode
+			}
+			mstep["symbol"] = tempStep.Symbol
+			jsonSteps[idx] = mstep
+		}
+		minfo["steps"] = jsonSteps
+	}
 	// 转成ApiInfo对象
 	obj, err := utils.ToObj(minfo, reflect.TypeOf((*pb.ApiInfo)(nil)).Elem())
 	if err != nil {
 		return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
 	}
-
 	// 调整步骤的序列号
 	apiInfo := obj.(*pb.ApiInfo)
 	for idx := range apiInfo.Steps {
@@ -288,13 +312,14 @@ func (s *Service) ApisInsert(ctx context.Context, req *pb.ApiInfo) (*pb.ApiInfo,
 
 func (s *Service) ApisInsertByTemp(ctx context.Context, req *pb.AddTmpApiToMdlReq) (*pb.ApiInfo, error) {
 	mname := req.ModelName.Name
-	fmt.Printf("%v", req.TempApi)
 	req.TempApi.Name = strings.Replace(req.TempApi.Name, "%MODEL%", mname, -1)
 	req.TempApi.Model = strings.Replace(req.TempApi.Model, "%MODEL%", mname, -1)
 	for pname, ptype := range req.TempApi.Params {
 		req.TempApi.Params[pname] = strings.Replace(ptype, "%MODEL%", mname, -1)
 	}
-	req.TempApi.GetHttp().Route = strings.Replace(req.TempApi.GetHttp().Route, "%MODEL%", mname, -1)
+	if req.TempApi.Http != nil {
+		req.TempApi.Http.Route = strings.Replace(req.TempApi.Http.Route, "%MODEL%", mname, -1)
+	}
 	for index, ret := range req.TempApi.Returns {
 		req.TempApi.Returns[index] = strings.Replace(ret, "%MODEL%", mname, -1)
 	}
@@ -334,14 +359,13 @@ func (s *Service) TempApiSelectAll(ctx context.Context, _ *pb.Empty) (*pb.ApiInf
 		return nil, fmt.Errorf("查询所有模板接口失败：%v", err)
 	}
 
-	apiInfoType := reflect.TypeOf((*pb.ApiInfo)(nil)).Elem()
 	resp := new(pb.ApiInfoArray)
 	for _, res := range ress {
-		obj, err := utils.ToObj(res, apiInfoType)
+		apiInfo, err := s.complApiSteps(ctx, res)
 		if err != nil {
 			return nil, fmt.Errorf("转ApiInfo对象失败：%v", err)
 		}
-		resp.Infos = append(resp.Infos, obj.(*pb.ApiInfo))
+		resp.Infos = append(resp.Infos, apiInfo)
 	}
 	return resp, nil
 }
@@ -530,6 +554,14 @@ func (s *Service) DaoGroupDeleteByName(ctx context.Context, req *pb.NameID) (*pb
 	if err != nil {
 		return nil, fmt.Errorf("删除DAO组失败：%v", err)
 	}
+
+	// 如果DAO组已实例化，卸载
+	if len(resp.Implement) != 0 {
+		resp, err = s.DaoGroupUpdateImplement(ctx, &pb.DaoGrpSetImpl{Gpname: req.Name, ImplId: ""})
+		if err != nil {
+			return nil, err
+		}
+	}
 	return resp, nil
 }
 
@@ -577,6 +609,9 @@ func (s *Service) DaoGroupUpdateImplement(ctx context.Context, req *pb.DaoGrpSet
 		}
 		if _, err := s.mongo.Delete(ctx, model.TEMP_API_TABLE, bson.D{{"group", req.Gpname}}); err != nil {
 			return nil, fmt.Errorf("删除DAO组实例依赖的模板API失败：%v", err)
+		}
+		if _, err := s.mongo.Delete(ctx, model.API_INFO_TABLE, bson.D{{"group", req.Gpname}}); err != nil {
+			return nil, fmt.Errorf("删除DAO组实例依赖的API失败：%v", err)
 		}
 		return group, nil
 	}

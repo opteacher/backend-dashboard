@@ -1,6 +1,6 @@
 [{
   "id" : "",
-  "name" : "Nil",
+  "name" : "Null",
   "props" : [],
   "methods" : null,
   "type" : "struct",
@@ -11,9 +11,9 @@
   "height" : 0
 }, {
   "id" : "",
-  "name" : "NumIden",
+  "name" : "Number",
   "props" : [{
-    "name" : "id",
+    "name" : "value",
     "type" : "int64"
   }],
   "methods" : null,
@@ -25,9 +25,9 @@
   "height" : 0
 }, {
   "id" : "",
-  "name" : "StrIden",
+  "name" : "String",
   "props" : [{
-    "name" : "id",
+    "name" : "value",
     "type" : "string"
   }],
   "methods" : null,

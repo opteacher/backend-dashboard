@@ -73,14 +73,10 @@
                 </el-select>
             </el-form-item>
             <div v-show="activeType == 'http'">
-                <el-form-item label="路由" :rules="[
-                    { required: true, message: '请输入路由', trigger: 'blur' }
-                ]" prop="route">
+                <el-form-item label="路由">
                     <el-input v-model="api.http.route"/>
                 </el-form-item>
-                <el-form-item label="方法" :rules="[
-                    { required: true, message: '请选择方法', trigger: 'blur' }
-                ]" prop="method">
+                <el-form-item label="方法">
                     <el-select class="w-100" v-model="api.http.method">
                         <el-option label="GET" value="GET"/>
                         <el-option label="POST" value="POST"/>
@@ -92,7 +88,7 @@
             </div>
             <div v-show="activeType == 'timing'">
                 <el-form-item label="定时方式">
-                    <el-select class="w-100" v-model="api.timing.type" placeholder="请选择">
+                    <el-select class="w-100" v-model="api.timing.type" placeholder="请选择" @change="hdlChgTimeType">
                         <el-option label="间隔" value="interval"/>
                         <el-option label="延时" value="timeout"/>
                         <el-option label="定期" value="crontab"/>
@@ -100,37 +96,33 @@
                 </el-form-item>
                 <div v-show="api.timing.type == 'interval'">
                     <el-form-item label="间隔执行">
-                        <el-input v-model="numTempTime[0]" class="input-with-select" text="number">
-                            <el-select slot="append" v-model="numTempTime[1]">
-                                <el-option label="天" value="d"/>
-                                <el-option label="时" value="H"/>
-                                <el-option label="分" value="m"/>
-                                <el-option label="秒" value="s"/>
-                                <el-option label="毫秒" value="ms"/>
+                        <el-input v-model="tempTime[0]" class="input-with-select" text="number">
+                            <el-select slot="append" v-model="tempTime[1]">
+                                <el-option label="天" value="28800000"/>
+                                <el-option label="时" value="1200000"/>
+                                <el-option label="分" value="60000"/>
+                                <el-option label="秒" value="1000" />
+                                <el-option label="毫秒" value="1"/>
                             </el-select>
                         </el-input>
                     </el-form-item>
                 </div>
                 <div v-show="api.timing.type == 'timeout'">
                     <el-form-item label="延时执行">
-                        <el-input v-model="numTempTime[0]" class="input-with-select" text="number">
-                            <el-select slot="append" v-model="numTempTime[1]">
-                                <el-option label="天" value="d"/>
-                                <el-option label="时" value="H"/>
-                                <el-option label="分" value="m"/>
-                                <el-option label="秒" value="s"/>
-                                <el-option label="毫秒" value="ms"/>
+                        <el-input v-model="tempTime[0]" class="input-with-select" text="number">
+                            <el-select slot="append" v-model="tempTime[1]">
+                                <el-option label="天" value="28800000"/>
+                                <el-option label="时" value="1200000"/>
+                                <el-option label="分" value="60000"/>
+                                <el-option label="秒" value="1000"/>
+                                <el-option label="毫秒" value="1"/>
                             </el-select>
                         </el-input>
                     </el-form-item>
                 </div>
                 <div v-show="api.timing.type == 'crontab'">
                     <el-form-item label="定期执行">
-                        <el-time-select
-                            class="w-100"
-                            v-model="strTempTime"
-                            :picker-options="{step: '00:15'}"
-                            placeholder="选择时间"/>
+                        <el-time-select class="w-100" v-model="api.timing.hms" :picker-options="{step: '00:15'}" placeholder="选择时间"/>
                     </el-form-item>
                 </div>
             </div>
@@ -175,7 +167,8 @@ export default {
                 },
                 timing: {
                     type: "interval",
-                    crontab: ""
+                    mseconds: 0,
+                    hms: ""
                 },
                 subscribe: {
                     channel: "",
@@ -193,8 +186,7 @@ export default {
             models: [],
             types: [],
             activeType: "interface",
-            numTempTime: [0, "s"],
-            strTempTime: "",
+            tempTime: [0, "1000"],
             subscbDaos: []
         }
     },
@@ -250,6 +242,13 @@ export default {
         },
         hdlRemoveRet(ret) {
             this.api.returns.splice(this.api.returns.indexOf(ret), 1)
+        },
+        hdlChgTimeType() {
+            if (this.timing.type === "interval" || this.timing.type === "timeout") {
+                this.timing.hms = ""
+            } else {
+                this.timing.msecond = 0
+            }
         }
     }
 }

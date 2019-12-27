@@ -29,10 +29,10 @@
     <el-form-item label="输入" v-show="mode === 'editing-step' && selStep.inputs && selStep.inputs.length !== 0">
         <div class="card input-card" v-for="(input, symbol) in selStep.inputs" :key="symbol">
             <div class="card-body input-card-body">
-                <el-row>
+                <el-row class="plr-15">
                     <el-col :span="11">{{symbol}}</el-col>
                     <el-col :span="2">
-                        <i class="el-icon-arrow-right"></i>
+                        <i class="el-icon-arrow-left"></i>
                     </el-col>
                     <el-col :span="11">
                         <el-dropdown class="float-right" trigger="click" @command="hdlSelInput">
@@ -40,8 +40,8 @@
                                 {{input === "" ? "选择局部变量" : input}}<i class="el-icon-arrow-down el-icon--right"></i>
                             </span>
                             <el-dropdown-menu slot="dropdown">
-                                <el-dropdown-item :command="`${symbol}:ctx`">context</el-dropdown-item>
                                 <el-dropdown-item v-for="lv in locVars" :key="lv" :command="`${symbol}:${lv}`">{{lv}}</el-dropdown-item>
+                                <el-dropdown-item :command="`${symbol}:[text]`">文本输入</el-dropdown-item>
                             </el-dropdown-menu>
                         </el-dropdown>
                     </el-col>
@@ -102,7 +102,11 @@ export default {
     methods: {
         hdlSelInput(cmd) {
             let kvs = cmd.split(":")
-            this.selStep.inputs[kvs[0]] = kvs[1]
+            if (kvs[1] === "[text]") {
+                
+            } else {
+                this.selStep.inputs[kvs[0]] = kvs[1]
+            }
         },
         hdlSwhBlkInOut() {
             if (this.enableBlk) {
