@@ -57,10 +57,6 @@ func (s *Service) SwaggerFile() string {
 	return path.Join(pjPath, swagger)
 }
 
-func (s *Service) TestGet(ctx context.Context, req *pb.Empty) (*pb.StrResp, error) {
-	return nil, nil
-}
-
 func (s *Service) ModelsInsert(ctx context.Context, req *pb.Model) (*pb.Model, error) {
 	id, err := s.mongo.Insert(ctx, model.MODELS_TABLE, req)
 	if err != nil {
@@ -550,17 +546,17 @@ func (s *Service) DaoGroupDeleteByName(ctx context.Context, req *pb.NameID) (*pb
 		return nil, fmt.Errorf("查询DAO组失败：%v", err)
 	}
 
-	_, err = s.mongo.Delete(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Name}})
-	if err != nil {
-		return nil, fmt.Errorf("删除DAO组失败：%v", err)
-	}
-
 	// 如果DAO组已实例化，卸载
 	if len(resp.Implement) != 0 {
 		resp, err = s.DaoGroupUpdateImplement(ctx, &pb.DaoGrpSetImpl{Gpname: req.Name, ImplId: ""})
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	_, err = s.mongo.Delete(ctx, model.DAO_GROUPS_TABLE, bson.D{{"name", req.Name}})
+	if err != nil {
+		return nil, fmt.Errorf("删除DAO组失败：%v", err)
 	}
 	return resp, nil
 }

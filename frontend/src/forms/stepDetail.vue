@@ -35,15 +35,18 @@
                         <i class="el-icon-arrow-left"></i>
                     </el-col>
                     <el-col :span="11">
-                        <el-dropdown class="float-right" trigger="click" @command="hdlSelInput">
+                        <el-dropdown v-if="input !== inputTextFlag" class="float-right" trigger="click" @command="hdlSelInput">
                             <span class="el-dropdown-link">
                                 {{input === "" ? "选择局部变量" : input}}<i class="el-icon-arrow-down el-icon--right"></i>
                             </span>
                             <el-dropdown-menu slot="dropdown">
                                 <el-dropdown-item v-for="lv in locVars" :key="lv" :command="`${symbol}:${lv}`">{{lv}}</el-dropdown-item>
-                                <el-dropdown-item :command="`${symbol}:[text]`">文本输入</el-dropdown-item>
+                                <el-dropdown-item :command="`${symbol}:${inputTextFlag}`">文本输入</el-dropdown-item>
                             </el-dropdown-menu>
                         </el-dropdown>
+                        <el-input v-else v-model="selStep.inputs[symbol]">
+                            <el-button slot="append" icon="el-icon-search"></el-button>
+                        </el-input>
                     </el-col>
                 </el-row>
             </div>
@@ -85,7 +88,8 @@ export default {
             blkInOut: true,
             newRequire: {
                 input: ""
-            }
+            },
+            inputTextFlag: "%INPUT_TEXT%"
         }
     },
     async created() {
@@ -102,11 +106,7 @@ export default {
     methods: {
         hdlSelInput(cmd) {
             let kvs = cmd.split(":")
-            if (kvs[1] === "[text]") {
-                
-            } else {
-                this.selStep.inputs[kvs[0]] = kvs[1]
-            }
+            this.selStep.inputs[kvs[0]] = kvs[1]
         },
         hdlSwhBlkInOut() {
             if (this.enableBlk) {
