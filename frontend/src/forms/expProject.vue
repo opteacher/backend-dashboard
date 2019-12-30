@@ -13,11 +13,6 @@
             <el-option v-for="typ in exportTypes" :key="typ.title" :label="typ.title" :value="typ.value"/>
         </el-select>
     </el-form-item>
-    <el-form-item label="路由前缀" :rules="[
-        { required: true, message: '请输入路由前缀', trigger: 'blur' }
-    ]" prop="routePrefix">
-        <el-input v-model="exportOption.routePrefix"/>
-    </el-form-item>
     <el-divider>
         <a href="#" @click.prevent="clkSeniorLnk"><i :class="openSenior ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i></a>
     </el-divider>

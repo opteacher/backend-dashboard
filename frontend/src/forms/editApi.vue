@@ -12,14 +12,19 @@
                 <el-form-item label="新增参数" :rules="[
                     { required: true, message: '请输入参数名称', trigger: 'blur' },
                     { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
-                ]" prop="paramName">
-                    <el-input v-model="newParam.paramName"/>
+                ]" prop="name">
+                    <el-input v-model="newParam.name"/>
+                </el-form-item>
+                <el-form-item label="参数说明" :rules="[
+                    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+                ]" prop="desc">
+                    <el-input v-model="newParam.desc"/>
                 </el-form-item>
                 <el-form-item label="参数类型" :rules="[
                     { required: true, message: '请输入参数类型', trigger: 'blur' }
-                ]" prop="paramType">
+                ]" prop="type">
                     <el-col :span="18">
-                        <el-select class="w-100" v-model="newParam.paramType" placeholder="请选择">
+                        <el-select class="w-100" v-model="newParam.type" placeholder="请选择">
                             <el-option v-for="typ in types" :key="typ.name" :label="typ.name" :value="typ.name"/>
                         </el-select>
                     </el-col>
@@ -177,8 +182,9 @@ export default {
                 model: ""
             },
             newParam: {
-                paramName: "",
-                paramType: ""
+                name: "",
+                type: "",
+                desc: ""
             },
             newReturn: {
                 type: ""
@@ -209,11 +215,13 @@ export default {
             this.$refs["add-param-form"].validate(valid => {
                 if (valid) {
                     this.api.params.push({
-                        name: this.newParam.paramName,
-                        type: this.newParam.paramType
+                        name: this.newParam.name,
+                        type: this.newParam.type,
+                        desc: this.newParam.desc
                     })
-                    this.newParam.paramName = ""
-                    this.newParam.paramType = ""
+                    this.newParam.name = ""
+                    this.newParam.type = ""
+                    this.newParam.desc = ""
                 } else {
                     return false
                 }

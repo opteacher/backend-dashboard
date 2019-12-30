@@ -163,12 +163,6 @@ export default {
                         delete api.timing
                         delete api.subscribe
                 }
-                // 将params转化成一个对象
-                let params = {}
-                api.params.map(param => {
-                    params[param.name] = param.type
-                })
-                api.params = params
                 // 将API信息发送给后台
                 let res = await backend.addApi(api)
                 if (typeof res === "string") {

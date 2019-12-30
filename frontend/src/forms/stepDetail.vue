@@ -1,8 +1,6 @@
 <template>
 <el-form ref="form" label-width="80px">
-    <el-form-item label="操作标识">
-        {{selStep.key}}
-    </el-form-item>
+    <el-form-item label="操作标识">{{selStep.key}}</el-form-item>
     <el-form ref="new-require-form" v-model="newRequire" v-show="mode === 'add-temp-step'" label-width="80px">
         <el-form-item label="添加依赖" :rules="[
             { required: true, message: '请输入依赖路径', trigger: 'blur' }
@@ -29,23 +27,24 @@
     <el-form-item label="输入" v-show="mode === 'editing-step' && selStep.inputs && selStep.inputs.length !== 0">
         <div class="card input-card" v-for="(input, symbol) in selStep.inputs" :key="symbol">
             <div class="card-body input-card-body">
-                <el-row class="plr-15">
-                    <el-col :span="11">{{symbol}}</el-col>
+                <el-row class="plr-10">
+                    <el-col :span="11">{{symbol}}：{{input.desc}}</el-col>
                     <el-col :span="2">
                         <i class="el-icon-arrow-left"></i>
                     </el-col>
                     <el-col :span="11">
-                        <el-dropdown v-if="input !== inputTextFlag" class="float-right" trigger="click" @command="hdlSelInput">
+                        <el-dropdown v-if="symbol !== inputTextVar" class="float-right" trigger="click" @command="hdlSelInput">
                             <span class="el-dropdown-link">
-                                {{input === "" ? "选择局部变量" : input}}<i class="el-icon-arrow-down el-icon--right"></i>
+                                {{!input.name ? "选择局部变量" : input.name}}<i class="el-icon-arrow-down el-icon--right"></i>
                             </span>
                             <el-dropdown-menu slot="dropdown">
                                 <el-dropdown-item v-for="lv in locVars" :key="lv" :command="`${symbol}:${lv}`">{{lv}}</el-dropdown-item>
-                                <el-dropdown-item :command="`${symbol}:${inputTextFlag}`">文本输入</el-dropdown-item>
+                                <el-dropdown-item :command="symbol">文本输入</el-dropdown-item>
                             </el-dropdown-menu>
                         </el-dropdown>
-                        <el-input v-else v-model="selStep.inputs[symbol]">
-                            <el-button slot="append" icon="el-icon-search"></el-button>
+                        <el-input v-else v-model="selStep.inputs[symbol].name">
+                            <el-button slot="prepend" icon="el-icon-check" @click="hdlInputVar(true)"/>
+                            <el-button slot="append" icon="el-icon-close" @click="hdlInputVar(false)"/>
                         </el-input>
                     </el-col>
                 </el-row>
@@ -89,7 +88,8 @@ export default {
             newRequire: {
                 input: ""
             },
-            inputTextFlag: "%INPUT_TEXT%"
+            inputTextVar: "",
+            procCode: ""
         }
     },
     async created() {
@@ -106,7 +106,11 @@ export default {
     methods: {
         hdlSelInput(cmd) {
             let kvs = cmd.split(":")
-            this.selStep.inputs[kvs[0]] = kvs[1]
+            if (kvs.length !== 2) {
+                this.inputTextVar = cmd
+            } else {
+                this.selStep.inputs[kvs[0]].name = kvs[1]
+            }
         },
         hdlSwhBlkInOut() {
             if (this.enableBlk) {
@@ -128,6 +132,35 @@ export default {
                     return false
                 }
             })
+        },
+        hdlInputVar(useInput) {
+            if (!useInput) {
+                this.selStep.inputs[this.inputTextVar].name = ""
+            } else {
+                // 更新备注
+                // this.selStep.desc = this.selStep.desc.replace(
+                //     `%${this.inputTextVar}%`,
+                //     this.selStep.inputs[this.inputTextVar].name
+                // )
+                // 更新输出
+                for (let idx in this.selStep.outputs) {
+                    this.selStep.outputs[idx] = _.replace(
+                        this.selStep.outputs[idx],
+                        `%${this.inputTextVar}%`,
+                        this.selStep.inputs[this.inputTextVar].name
+                    )
+                }
+            }
+            this.inputTextVar = ""
+        },
+        toProcCode() {
+            this.procCode = this.selStep.code
+            for (let symbol in this.selStep.inputs) {
+                const input = this.selStep.inputs[symbol]
+                if (input.length !== 0) {
+                    this.procCode = _.replace(this.procCode, `%${symbol}%`, input)
+                }
+            }
         }
     }
 }

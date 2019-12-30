@@ -310,8 +310,8 @@ func (s *Service) ApisInsertByTemp(ctx context.Context, req *pb.AddTmpApiToMdlRe
 	mname := req.ModelName.Name
 	req.TempApi.Name = strings.Replace(req.TempApi.Name, "%MODEL%", mname, -1)
 	req.TempApi.Model = strings.Replace(req.TempApi.Model, "%MODEL%", mname, -1)
-	for pname, ptype := range req.TempApi.Params {
-		req.TempApi.Params[pname] = strings.Replace(ptype, "%MODEL%", mname, -1)
+	for idx, param := range req.TempApi.Params {
+		req.TempApi.Params[idx].Type = strings.Replace(param.Type, "%MODEL%", mname, -1)
 	}
 	if req.TempApi.Http != nil {
 		req.TempApi.Http.Route = strings.Replace(req.TempApi.Http.Route, "%MODEL%", mname, -1)
@@ -324,8 +324,8 @@ func (s *Service) ApisInsertByTemp(ctx context.Context, req *pb.AddTmpApiToMdlRe
 			step.Requires[idx] = strings.Replace(require, "%MODEL%", mname, -1)
 		}
 		step.Desc = strings.Replace(step.Desc, "%MODEL%", mname, -1)
-		for slot, in := range step.Inputs {
-			step.Inputs[slot] = strings.Replace(in, "%MODEL%", mname, -1)
+		for slot, input := range step.Inputs {
+			step.Inputs[slot].Type = strings.Replace(input.Type, "%MODEL%", mname, -1)
 		}
 		req.TempApi.Steps[index] = step
 	}
@@ -455,8 +455,9 @@ func (s *Service) TempStepsSelectAll(ctx context.Context, _ *pb.Empty) (*pb.Step
 	}
 
 	resp := new(pb.StepArray)
+	stepType := reflect.TypeOf((*pb.Step)(nil)).Elem()
 	for _, res := range ress {
-		obj, err := utils.ToObj(res, reflect.TypeOf((*pb.Step)(nil)).Elem())
+		obj, err := utils.ToObj(res, stepType)
 		if err != nil {
 			return nil, fmt.Errorf("转成步骤对象失败：%v", err)
 		}

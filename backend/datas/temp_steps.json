@@ -3,7 +3,12 @@
   "lang": "golang",
   "requires" : ["encoding/json"],
   "desc" : "将收到的请求参数编码成JSON字节数组",
-  "inputs" : {"OBJECT" : ""},
+  "inputs" : {
+    "OBJECT" : {
+      "name": "",
+      "desc":  "待编码的对象"
+    }
+  },
   "outputs" : ["bytes"],
   "code" : "bytes, err := json.Marshal(%OBJECT%)\nif err != nil {\n\treturn nil, fmt.Errorf(\"转JSON失败：%v\", err)\n}\n",
   "apiname" : "",
@@ -15,8 +20,14 @@
   "requires" : null,
   "desc" : "创建%TARGET%并用%SOURCE%初始化",
   "inputs" : {
-    "SOURCE" : "",
-    "TARGET" : ""
+    "SOURCE" : {
+      "name": "",
+      "desc": "初始化值"
+    },
+    "TARGET" : {
+      "name": "",
+      "desc": "变量名"
+    }
   },
   "outputs" : ["%TARGET%"],
   "code" : "%TARGET% := %SOURCE%\n",
@@ -28,8 +39,14 @@
   "requires" : null,
   "desc" : "将%SOURCE%赋值给%TARGET%",
   "inputs" : {
-    "SOURCE" : "",
-    "TARGET" : ""
+    "SOURCE" : {
+      "name": "",
+      "desc": "赋值右值（赋值给%TARGET%）"
+    },
+    "TARGET" : {
+      "name": "",
+      "desc": "变量名"
+    }
   },
   "outputs" : null,
   "code" : "%TARGET% = %SOURCE%\n",
@@ -40,7 +57,12 @@
   "lang": "golang",
   "requires" : null,
   "desc" : "成功返回%RETURN%",
-  "inputs" : {"RETURN" : ""},
+  "inputs" : {
+    "RETURN" : {
+      "name": "",
+      "desc": "返回值"
+    }
+  },
   "outputs" : null,
   "code" : "return %RETURN%, nil\n",
   "apiname" : "",
@@ -50,7 +72,12 @@
   "lang": "golang",
   "requires" : ["encoding/json"],
   "desc" : "将JSON字节数组转成Map键值对",
-  "inputs" : {"BYTES": ""},
+  "inputs" : {
+    "BYTES": {
+      "name": "",
+      "desc": "待解码的比特字段"
+    }
+  },
   "outputs" : ["omap"],
   "code" : "omap := make(map[string]interface{})\nif err := json.Unmarshal(%BYTES%, &omap); err != nil {\n\treturn nil, fmt.Errorf(\"从JSON转回失败：%v\", err)\n}\n",
   "apiname" : "",
@@ -62,8 +89,14 @@
   "requires" : null,
   "desc" : "将%NEW_ADD%添加进%ARRAY%",
   "inputs" : {
-    "ARRAY" : "",
-    "NEW_ADD" : ""
+    "ARRAY" : {
+      "name": "",
+      "desc": "被插入的数组变量"
+    },
+    "NEW_ADD" : {
+      "name": "",
+      "desc": "待插入的新元素"
+    }
   },
   "outputs" : null,
   "code" : "%ARRAY% = append(%ARRAY%, %NEW_ADD%)\n",
@@ -74,7 +107,13 @@
   "lang": "nodejs",
   "requires" : null,
   "desc" : "输出",
-  "inputs" : {"TEXT" : ""},
+  "inputs" : {
+    "TEXT" : {
+      "name": "",
+      "desc": "输出的字符串",
+      "type": "String"
+    }
+  },
   "outputs" : null,
   "code" : "console.log(\"%TEXT%\")\n",
   "apiname" : "",
@@ -85,8 +124,14 @@
   "requires" : null,
   "desc" : "创建%TARGET%并用%SOURCE%初始化",
   "inputs" : {
-    "SOURCE" : "",
-    "TARGET" : ""
+    "SOURCE" : {
+      "name": "",
+      "desc": "初始化值"
+    },
+    "TARGET" : {
+      "name": "",
+      "desc": "变量名"
+    }
   },
   "outputs" : ["%TARGET%"],
   "code" : "let %TARGET% = %SOURCE%\n",

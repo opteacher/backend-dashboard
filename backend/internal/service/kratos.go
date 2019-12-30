@@ -362,8 +362,8 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, []
 	}
 	for _, api := range apis.Infos {
 		sparams := ""
-		for _, ptyp := range api.Params {
-			sparams += ptyp + ","
+		for _, param := range api.Params {
+			sparams += param.Type + ","
 		}
 		sparams = strings.TrimRight(sparams, ",")
 		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.Name, sparams, strings.Join(api.Returns, ","))
@@ -421,9 +421,9 @@ func (kratos *Kratos) chgKratosServiceFile(apis []*pb.ApiInfo) error {
 			code := ""
 			for _, ai := range apis {
 				aparams := make([]string, 0)
-				for pname, ptype := range ai.Params {
+				for _, param := range ai.Params {
 					// 参数都是api包下的类型，所以要附上pb前缀
-					aparams = append(aparams, fmt.Sprintf("%s *%s", pname, ptype))
+					aparams = append(aparams, fmt.Sprintf("%s *%s", param.Name, param.Type))
 				}
 				sparams := strings.Join(aparams, ", ")
 				areturns := make([]string, 0)
@@ -441,8 +441,8 @@ func (kratos *Kratos) chgKratosServiceFile(apis []*pb.ApiInfo) error {
 					// 提取步骤操作的代码
 					cd := step.Code
 					// 替换步骤中的占位符
-					for o, n := range step.Inputs {
-						cd = strings.Replace(cd, fmt.Sprintf("%%%s%%", o), n, -1)
+					for o, input := range step.Inputs {
+						cd = strings.Replace(cd, fmt.Sprintf("%%%s%%", o), input.Name, -1)
 					}
 					// 跳进或者跳出块段落
 					if step.Symbol & pb.SpcSymbol_BLOCK_IN != 0 {

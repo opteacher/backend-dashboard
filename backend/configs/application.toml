@@ -1,6 +1,6 @@
 
 # This is a TOML document. Boom~
 appID = "backend.manager.service"
-projPath = "/home/opteacher/projects/backend-dashboard"
+projPath = "/Users/zhaojiachen/Projects/backend-dashboard"
 workspace = "backend/workspace"
 swaggerFile = "backend/api/api.swagger.json"

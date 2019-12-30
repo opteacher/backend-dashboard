@@ -389,7 +389,7 @@ message Step {
     string lang = 2;
     repeated string requires = 3;
     string desc = 4;
-    map<string,string> inputs = 5;
+    map<string, Prop> inputs = 5;
     repeated string outputs = 6;
     string code = 7;
     string apiname = 8[(gogoproto.moretags)='orm:",FOREIGN_KEY(api_infos.name)"'];
@@ -421,7 +421,7 @@ message ApiInfo {
     string symbol = 4;// 特殊标识
     string model = 5;
     string table = 6;
-    map<string,string> params = 7;
+    repeated Prop params = 7;
     // 目前有三种激活方式：
     // 1. HTTP方式（http），包含：method和route字段指定访问方式和路径
     ActivatedByHttp http = 8;

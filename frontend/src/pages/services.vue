@@ -16,7 +16,7 @@
         {{selApi.name}}
     </el-button>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog :title="`步骤 #${selStep.index}`" :visible.sync="showStepDtlDlg" :modal-append-to-body="false" width="50vw">
+    <el-dialog :title="`步骤 #${selStep.index + 1}`" :visible.sync="showStepDtlDlg" :modal-append-to-body="false" width="50vw">
         <step-detail ref="step-detail-form" :selStep="selStep"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="chgOperStep">编 辑</el-button>
@@ -24,8 +24,8 @@
         </div>
     </el-dialog>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog :title="`添加步骤 #${stepInfo.index}`" :visible.sync="showAddStepDlg" :modal-append-to-body="false" width="50vw">
-        <edit-step ref="add-step-form" :stepInfo="stepInfo"/>
+    <el-dialog :title="`添加步骤 #${selStep.index + 2}`" :visible.sync="showAddStepDlg" :modal-append-to-body="false" width="50vw">
+        <edit-step ref="add-step-form" :stepInfo="selStep"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddStepDlg = false">取 消</el-button>
             <el-button type="primary" @click="addStep">确 定</el-button>
@@ -64,8 +64,7 @@ export default {
             showStepDtlDlg: false,
             showAddStepDlg: false,
             fors: [],
-            istStepBtns: [],
-            stepInfo: {index: -1}
+            istStepBtns: []
         }
     },
     updated() {
@@ -170,7 +169,7 @@ export default {
             let form = this.$refs["add-step-form"]
             let res = await backend.addStep({
                 index: form.stepInfo.index,
-                operStep: Object.assign(form.step, {
+                step: Object.assign(form.step, {
                     apiName: this.selApi.name
                 })
             })
@@ -190,7 +189,7 @@ export default {
             this.showStepDtlDlg = true
         },
         insertStep(prevIdx) {
-            this.stepInfo.index = prevIdx + 1
+            this.selStep.index = prevIdx
             this.showAddStepDlg = true
         }
     }

@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "api.proto",
+        "title": "api/api.proto",
         "version": "1"
     },
     "schemes": [
@@ -1530,9 +1530,9 @@
                     "type": "string"
                 },
                 "params": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/.backend.manager.service.v1.Prop"
                     }
                 },
                 "http": {
@@ -1970,7 +1970,7 @@
                 "inputs": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "string"
+                        "$ref": "#/definitions/.backend.manager.service.v1.Prop"
                     }
                 },
                 "outputs": {
