@@ -23,7 +23,7 @@ type Kratos struct {
 	svc  *Service
 }
 
-func NewKratos(svc *Service, pi *ProjInfo) (*Kratos, error) {
+func (_ *newCollector) NewKratos(svc *Service, pi *ProjInfo) (*Kratos, error) {
 	return &Kratos{info: pi, svc: svc}, nil
 }
 
@@ -55,6 +55,10 @@ type DaoImplInfo struct {
 		Href string `json:"href"`
 		Location string `json:"location"`
 	} `json:"files"`
+}
+
+func  (kratos *Kratos) chkIsMicoServ() bool {
+	return kratos.info.option.Components["micoService"] != nil && kratos.info.option.Components["micoService"].Enable
 }
 
 func (kratos *Kratos) chgKratosTypeName(apiTyps []string) error {
@@ -180,14 +184,14 @@ func (kratos *Kratos) chgKratosConfig() error {
 	appCfgPath := path.Join(kratos.info.pathName, "configs", "application.toml")
 	if err := utils.InsertTxt(appCfgPath, func(line string, doProc *bool) (string, bool, error) {
 		if strings.Contains(line, "appID") {
-			if kratos.info.option.IsMicoServ {
+			if kratos.chkIsMicoServ() {
 				return fmt.Sprintf("appID = \"%s.service\"", kratos.info.pkgName), false, nil
 			} else {
 				return "", false, nil
 			}
 		}
 		if strings.Contains(line, "swaggerFile") {
-			if kratos.info.option.IsMicoServ {
+			if kratos.chkIsMicoServ() {
 				return strings.Replace(line, "template", kratos.info.option.Name, -1), false, nil
 			} else {
 				return "", false, nil
@@ -206,15 +210,15 @@ func (kratos *Kratos) adjServerFile(pathName string, regSvc string) error {
 		if !*doProc {
 			return line, false, nil
 		}
-		if strings.Trim(strings.TrimSpace(line), "\t") == "\"strings\"" && !kratos.info.option.IsMicoServ {
+		if strings.Trim(strings.TrimSpace(line), "\t") == "\"strings\"" && !kratos.chkIsMicoServ() {
 			return "", false, nil
-		} else if strings.Contains(line, "svr \"") && !kratos.info.option.IsMicoServ {
+		} else if strings.Contains(line, "svr \"") && !kratos.chkIsMicoServ() {
 			return "", false, nil
 		} else if strings.Contains(line, "Demo") {
 			return strings.Replace(line, "Demo", utils.Capital(kratos.info.option.Name), -1), false, nil
 		} else if strings.Contains(line, fmt.Sprintf("func %s", regSvc)) {
-			*doProc = kratos.info.option.IsMicoServ
-		} else if strings.Contains(line, regSvc) && !kratos.info.option.IsMicoServ {
+			*doProc = kratos.chkIsMicoServ()
+		} else if strings.Contains(line, regSvc) && !kratos.chkIsMicoServ() {
 			return "", false, nil
 		}
 		return line, false, nil
@@ -226,7 +230,7 @@ func (kratos *Kratos) adjServerFile(pathName string, regSvc string) error {
 
 func (kratos *Kratos) switchKratosMicoServ() error {
 	// 调整cmd/main.go
-	if !kratos.info.option.IsMicoServ {
+	if !kratos.chkIsMicoServ() {
 		if err := utils.InsertTxt(path.Join(kratos.info.pathName, "cmd", "main.go"), func(line string, doProc *bool) (string, bool, error) {
 			if strings.Contains(line, "resolver") || strings.Contains(line, "discovery") {
 				return "", false, nil
@@ -237,7 +241,7 @@ func (kratos *Kratos) switchKratosMicoServ() error {
 		}
 	}
 	// 删除api/register.*
-	if !kratos.info.option.IsMicoServ {
+	if !kratos.chkIsMicoServ() {
 		for _, p := range []string{
 			path.Join(kratos.info.pathName, "api", "register.proto"),
 			path.Join(kratos.info.pathName, "api", "register.bm.go"),
@@ -250,7 +254,7 @@ func (kratos *Kratos) switchKratosMicoServ() error {
 		}
 	}
 	// 删除internal/server/common.go
-	if !kratos.info.option.IsMicoServ {
+	if !kratos.chkIsMicoServ() {
 		if err := os.Remove(path.Join(kratos.info.pathName, "internal", "server", "common.go")); err != nil {
 			return err
 		}
@@ -264,7 +268,7 @@ func (kratos *Kratos) switchKratosMicoServ() error {
 		return err
 	}
 	// 调整internal/service/service.go的逻辑
-	if kratos.info.option.IsMicoServ {
+	if kratos.chkIsMicoServ() {
 		return nil
 	}
 	adjLst := []string{
@@ -303,7 +307,7 @@ func (kratos *Kratos) chgKratosProjName(addedFiles []string) error {
 	if addedFiles != nil && len(addedFiles) != 0 {
 		fixLst = append(fixLst, addedFiles...)
 	}
-	if kratos.info.option.IsMicoServ {
+	if kratos.chkIsMicoServ() {
 		fixLst = append(fixLst, path.Join(kratos.info.pathName, "internal", "server", "common.go"))
 	}
 	for _, p := range fixLst {
@@ -367,13 +371,13 @@ func (kratos *Kratos) genKratosProtoFile(ctx context.Context) ([]*pb.ApiInfo, []
 		}
 		sparams = strings.TrimRight(sparams, ",")
 		code += fmt.Sprintf("\trpc %s(%s) returns (%s)", api.Name, sparams, strings.Join(api.Returns, ","))
-		//if len(api.GetHttp().Route) != 0 && len(api.GetHttp().Method) != 0 {
-		//	fixedRoute := strings.Replace(api.GetHttp().Route, "%PROJ_NAME%", kratos.info.pkgName, -1)
-		//	code += " {\n\t\toption (google.api.http) = {\n"
-		//	code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.GetHttp().Method, fixedRoute)
-		//} else {
-		//	code += ";\n"
-		//}
+		if api.Http != nil && len(api.Http.Method) != 0 && len(api.Http.Method) != 0 {
+			fixedRoute := strings.Replace(api.Http.Route, "%PROJ_NAME%", kratos.info.pkgName, -1)
+			code += " {\n\t\toption (google.api.http) = {\n"
+			code += fmt.Sprintf("\t\t\t%s: \"%s\"\n\t\t};\n\t};\n", api.Http.Method, fixedRoute)
+		} else {
+			code += ";\n"
+		}
 	}
 	code += "}\n\n"
 

@@ -1,0 +1,13 @@
+[{
+  "id": "kratos",
+  "name": "bilibili Kratos框架",
+  "lang": "golang",
+  "generator": "NewKratos",
+  "supports": ["micoService"]
+}, {
+  "id": "koa",
+  "name": "nodejs Koa框架",
+  "lang": "nodejs",
+  "generator": "NewKoa",
+  "supports": ["frontendEnv"]
+}]

@@ -58,6 +58,7 @@ var PathBackendManagerDaoInterfaceDelete = "/backend-dashboard/backend/dao.inter
 var PathBackendManagerDaoConfigInsert = "/backend-dashboard/backend/dao.config.insert"
 var PathBackendManagerDaoConfigSelectByImpl = "/backend-dashboard/backend/dao.config.selectByImpl"
 var PathBackendManagerExport = "/backend-dashboard/backend/export"
+var PathBackendManagerTempFrameworkSelect = "/backend-dashboard/backend/temp.framework.selectAll"
 var PathBackendManagerSpecialSymbols = "/backend-dashboard/backend/specialSymbols"
 var PathBackendManagerModuleSignSelectAll = "/backend-dashboard/backend/mod.sign.selectAll"
 var PathBackendManagerModuleInfoSelectBySignId = "/backend-dashboard/backend/mod.info.selectBySignId"
@@ -135,6 +136,8 @@ type BackendManagerBMServer interface {
 	DaoConfigSelectByImpl(ctx context.Context, req *DaoConfImplIden) (resp *DaoConfig, err error)
 
 	Export(ctx context.Context, req *ExpOptions) (resp *UrlResp, err error)
+
+	TempFrameworkSelect(ctx context.Context, req *Empty) (resp *Framework_Array, err error)
 
 	SpecialSymbols(ctx context.Context, req *Empty) (resp *SymbolsResp, err error)
 
@@ -469,6 +472,15 @@ func backendManagerExport(c *bm.Context) {
 	c.JSON(resp, err)
 }
 
+func backendManagerTempFrameworkSelect(c *bm.Context) {
+	p := new(Empty)
+	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
+		return
+	}
+	resp, err := BackendManagerSvc.TempFrameworkSelect(c, p)
+	c.JSON(resp, err)
+}
+
 func backendManagerSpecialSymbols(c *bm.Context) {
 	p := new(Empty)
 	if err := c.BindWith(p, binding.Default(c.Request.Method, c.Request.Header.Get("Content-Type"))); err != nil {
@@ -535,6 +547,7 @@ func RegisterBackendManagerBMServer(e *bm.Engine, server BackendManagerBMServer)
 	e.POST("/backend-dashboard/backend/dao.config.insert", backendManagerDaoConfigInsert)
 	e.POST("/backend-dashboard/backend/dao.config.selectByImpl", backendManagerDaoConfigSelectByImpl)
 	e.POST("/backend-dashboard/backend/export", backendManagerExport)
+	e.POST("/backend-dashboard/backend/temp.framework.selectAll", backendManagerTempFrameworkSelect)
 	e.POST("/backend-dashboard/backend/specialSymbols", backendManagerSpecialSymbols)
 	e.POST("/backend-dashboard/backend/mod.sign.selectAll", backendManagerModuleSignSelectAll)
 	e.POST("/backend-dashboard/backend/mod.info.selectBySignId", backendManagerModuleInfoSelectBySignId)

@@ -783,6 +783,24 @@ func (s *Service) Export(ctx context.Context, req *pb.ExpOptions) (*pb.UrlResp, 
 	}
 }
 
+func (s *Service) TempFrameworkSelect(ctx context.Context, _ *pb.Empty) (*pb.Framework_Array, error) {
+	ress, err := s.mongo.Query(ctx, model.TEMP_FRAMEWORKS, bson.D{})
+	if err != nil {
+		return nil, fmt.Errorf("查询模板导出框架失败：%v", err)
+	}
+
+	resp := new(pb.Framework_Array)
+	frameworkType := reflect.TypeOf((*pb.Framework)(nil)).Elem()
+	for _, res := range ress {
+		obj, err := utils.ToObj(res, frameworkType)
+		if err != nil {
+			return nil, fmt.Errorf("转成Framework类型失败：%v", err)
+		}
+		resp.Frameworks = append(resp.Frameworks, obj.(*pb.Framework))
+	}
+	return resp, nil
+}
+
 func (s *Service) SpecialSymbols(context.Context, *pb.Empty) (*pb.SymbolsResp, error) {
 	return &pb.SymbolsResp{
 		Values: pb.SpcSymbol_value,

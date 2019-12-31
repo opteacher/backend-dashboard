@@ -6,6 +6,9 @@ export default {
     async export(option) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/export`, option))
     },
+    async qryAllExpTypes() {
+        return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/temp.framework.selectAll`))
+    },
     async addModel(model) {
         return await utils.reqBackend(axios.post(`${config.url}/backend-dashboard/backend/models.insert`, _.omit(model, "id")))
     },

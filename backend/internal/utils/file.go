@@ -424,3 +424,54 @@ func ReplaceContentInFile(flPath string, rpFuns map[string]ReplaceProcFunc) erro
 	}
 	return nil
 }
+
+// 删除tag包围的文字块（连同tag一起删除）
+// @Param{1}：文件位置
+// @Param{2}：tag字段，会在其后追加（_BEG）和（_END）形成开始块和结束块
+func DelByTagInFile(flPath string, tag string) error {
+	file, err := os.Open(flPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	code := ""
+	beg := fmt.Sprintf("[%s_BEG]", tag)
+	end := fmt.Sprintf("[%s_END]", tag)
+	skip := false
+	for {
+		byteLine, _, err := reader.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return err
+			}
+		}
+		strLine := string(byteLine)
+		if strings.Index(strLine, end) != -1 {
+			skip = false
+			continue
+		}
+		if skip {
+			continue
+		}
+		if strings.Index(strLine, beg) != -1 {
+			skip = true
+			continue
+		}
+		code += strLine + "\n"
+	}
+	if err := os.Truncate(flPath, 0); err != nil {
+		return err
+	}
+	file, err = os.OpenFile(flPath, os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err := file.WriteString(code); err != nil {
+		return fmt.Errorf("重新写入文件失败：%v", err)
+	}
+	return nil
+}

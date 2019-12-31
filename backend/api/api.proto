@@ -218,6 +218,11 @@ service BackendManager {
             body: "*"
         };
     };
+    rpc TempFrameworkSelect(Empty) returns (Framework.Array) {
+        option (google.api.http) = {
+            post: "/backend-dashboard/backend/temp.framework.selectAll"
+        };
+    };
     rpc SpecialSymbols(Empty) returns (SymbolsResp) {
         option (google.api.http) = {
             post: "/backend-dashboard/backend/specialSymbols"
@@ -268,6 +273,20 @@ message TypeIden {
 
 message NameArray {
     repeated string names = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+message Framework {
+    string id = 1;
+    string name = 2;
+    string lang = 3;
+    string generator = 4;// 参数1是Service指针，参数2是ProjInfo指针；返回值1是导出器实例，返回值2是错误
+    repeated string supports = 5;// 组件支持：与ExpOptions对应：微服务、前端环境
+
+    message Array {
+        repeated Framework frameworks = 1;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -355,12 +374,18 @@ message DaoGrpSetImpl {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+message ExpOpnComp {
+    string name = 1;// 同Framework的supports和ExpOptions的compSupports键值
+    bool enable = 2;
+    map<string, string> options = 3;
+}
+
 message ExpOptions {
     string name = 1;
     string type = 2;
-    string routePrefix = 3;
-    bool isMicoServ = 4;
-    Database database = 5;
+    // micoService：微服务支持
+    // frontendEnv：前端环境预配置
+    map<string, ExpOpnComp> components = 3;
 }
 
 message Database {
