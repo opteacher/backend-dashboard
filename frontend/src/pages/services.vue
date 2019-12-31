@@ -2,11 +2,20 @@
 <dashboard>
     <info-bar @select-api="selectApi" @add-api="addApi" @del-api="delApi"/>
     <div v-if="forceUpdateFlg">
-        <div id="pnlFlows" class="w-100 h-100" style="position: absolute">
-            <step-block v-for="(step, index) in selApi.steps" :key="index" :step="step" @show-detail="showOperDetail" @be-deleted="refresh"/>
-            <button v-for="btn in istStepBtns" :key="btn.nsuffix" :name="`istStepBtn${btn.nsuffix}`" class="btn btn-success rounded-circle" type="button" style="position:absolute" @click="insertStep(btn.prev ? btn.prev.index : 0)">
-                <i class="el-icon-plus"/>
-            </button>
+        <div id="pnlFlows" class="w-100 h-100" style="position: absolute; padding-bottom: 50px">
+            <step-block
+                v-for="(step, index) in selApi.steps" :key="index"
+                :step="step"
+                @show-detail="showOperDetail"
+                @be-deleted="refresh"
+            />
+            <el-button
+                type="success" icon="el-icon-plus" circle
+                v-for="btn in istStepBtns" :key="btn.nsuffix"
+                :name="`istStepBtn${btn.nsuffix}`"
+                class="ml-0" style="position:absolute"
+                @click="insertStep(btn)"
+            />
         </div>
         <svg id="pnlGraphs" class="w-100" style="position: absolute; z-index: -100; height: 100%">
             <step-link v-for="btn in istStepBtns" :key="btn.nsuffix" :istStepBtn="btn"/>
@@ -24,8 +33,8 @@
         </div>
     </el-dialog>
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-    <el-dialog :title="`添加步骤 #${selStep.index + 2}`" :visible.sync="showAddStepDlg" :modal-append-to-body="false" width="50vw">
-        <edit-step ref="add-step-form" :stepInfo="selStep"/>
+    <el-dialog :title="`添加步骤 #${clkIstStepBtn.prev ? clkIstStepBtn.prev.index + 2 : 1}`" :visible.sync="showAddStepDlg" :modal-append-to-body="false" width="50vw">
+        <edit-step ref="add-step-form" :locVars="clkIstStepBtn.locVars"/>
         <div slot="footer" class="dialog-footer">
             <el-button @click="showAddStepDlg = false">取 消</el-button>
             <el-button type="primary" @click="addStep">确 定</el-button>
@@ -63,8 +72,8 @@ export default {
             index: 1,
             showStepDtlDlg: false,
             showAddStepDlg: false,
-            fors: [],
-            istStepBtns: []
+            istStepBtns: [],
+            clkIstStepBtn: {prev: null}
         }
     },
     updated() {
@@ -105,7 +114,7 @@ export default {
                             nsuffix: `_${idx}`,
                             prev: step,
                             next: null,
-                            locVars: locVars
+                            locVars
                         })
                     } else {
                         step.isLast = true
@@ -116,7 +125,7 @@ export default {
                         nsuffix: `_${idx}_${idx + 1}`,
                         prev: step,
                         next: this.selApi.steps[idx + 1],
-                        locVars: locVars
+                        locVars
                     })
                 }
 
@@ -130,7 +139,7 @@ export default {
                 this.istStepBtns.push({
                     apiName: selApi.name,
                     nsuffix: "__0",
-                    locVars: locVars
+                    locVars
                 })
             }
             // 强制pnlFlows刷新
@@ -168,7 +177,7 @@ export default {
         async addStep() {
             let form = this.$refs["add-step-form"]
             let res = await backend.addStep({
-                index: form.stepInfo.index,
+                index: this.clkIstStepBtn.prev ? this.clkIstStepBtn.prev.index + 1 : 0,
                 step: Object.assign(form.step, {
                     apiName: this.selApi.name
                 })
@@ -188,8 +197,8 @@ export default {
             this.selStep = step
             this.showStepDtlDlg = true
         },
-        insertStep(prevIdx) {
-            this.selStep.index = prevIdx
+        insertStep(istBtn) {
+            this.clkIstStepBtn = istBtn
             this.showAddStepDlg = true
         }
     }

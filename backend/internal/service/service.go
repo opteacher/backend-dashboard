@@ -193,13 +193,33 @@ func (s *Service) LinksDeleteBySymbol(ctx context.Context, req *pb.SymbolID) (*p
 	return resp.(*pb.Link), nil
 }
 
+func cvtToArray(itfc interface{}) []interface{} {
+	ret := make([]interface{}, 0)
+	if reflect.TypeOf(itfc) == reflect.TypeOf([]interface{}{}) {
+		ret = itfc.([]interface{})
+	} else if reflect.TypeOf(itfc) == reflect.TypeOf(bson.A{}) {
+		ret = itfc.(bson.A)
+	}
+	return ret
+}
+
+func cvtToMap(itfc interface{}) map[string]interface{} {
+	ret := make(map[string]interface{})
+	if reflect.TypeOf(itfc) == reflect.TypeOf(map[string]interface{}{}) {
+		ret = itfc.(map[string]interface{})
+	} else if reflect.TypeOf(itfc) == reflect.TypeOf(bson.M{}) {
+		ret = itfc.(bson.M)
+	}
+	return ret
+}
+
 func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{}) (*pb.ApiInfo, error) {
 	// 获取模板步骤作为API步骤
 	if minfo["steps"] != nil {
 		tempSteps := make(map[string]*pb.Step)
-		jsonSteps := minfo["steps"].([]interface{})
+		jsonSteps := cvtToArray(minfo["steps"])
 		for _, obj := range jsonSteps {
-			mstep := obj.(map[string]interface{})
+			mstep := cvtToMap(obj)
 			if mstep["key"] == nil {
 				continue
 			}
@@ -218,7 +238,7 @@ func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{
 		}
 
 		for idx, obj := range jsonSteps {
-			mstep := obj.(map[string]interface{})
+			mstep := cvtToMap(obj)
 			if mstep["key"] == nil {
 				continue
 			}
@@ -250,7 +270,7 @@ func (s *Service) complApiSteps(ctx context.Context, minfo map[string]interface{
 			if mstep["code"] == nil || mstep["code"] == "" {
 				procCode := tempStep.Code
 				// 用输入替换code中的宏
-				for macro, input := range mstep["inputs"].(map[string]interface{}) {
+				for macro, input := range cvtToMap(mstep["inputs"]) {
 					procCode = strings.Replace(procCode, fmt.Sprintf("%%%s%%", macro), input.(string), -1)
 				}
 				mstep["code"] = procCode

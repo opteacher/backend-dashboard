@@ -1,22 +1,22 @@
 <template>
-<el-form ref="form" :model="step" label-width="80px">
-    <el-form-item label="操作KEY">
-        <el-col :span="9">
+<div>
+    <el-form :inline="true" ref="form" :model="step" label-width="80px">
+        <el-form-item label="操作KEY">
             <el-select class="w-100" v-model="step.key" placeholder="选择既存操作" @change="hdlSelStep">
                 <el-option v-for="step in groupByLang[selLang]" :key="step.key" :label="step.key" :value="step.key"/>
             </el-select>
-        </el-col>
-        <el-col :span="9">
-            <el-select class="float-right w-90" v-model="selLang" placeholder="选择语言">
+        </el-form-item>
+        <el-form-item label="语言">
+            <el-select class="float-right w-90" v-model="selLang" placeholder="选择语言" @change="step = {key: ''}">
                 <el-option v-for="lang in Object.keys(groupByLang)" :key="lang" :label="lang" :value="lang"/>
             </el-select>
-        </el-col>
-        <el-col :span="6">
-            <el-button class="float-right" @click="hdlAddStep">添加模板步骤</el-button>
-        </el-col>
-    </el-form-item>
-    <step-detail v-if="Object.keys(stepMapper).includes(step.key)" :selStep="step" preMode="editing-step" :locVars="stepInfo.locVars"/>
-</el-form>
+        </el-form-item>
+        <el-form-item class="float-right">
+            <el-button @click="hdlAddStep">添加模板步骤</el-button>
+        </el-form-item>
+    </el-form>
+    <step-detail v-if="Object.keys(stepMapper).includes(step.key)" :selStep="step" preMode="editing-step" :locVars="locVars"/>
+</div>
 </template>
 
 <script>
@@ -30,16 +30,15 @@ export default {
         "step-detail": stepDetail
     },
     props: {
-        "stepInfo": Object
+        "prevIdx": Number,
+        "locVars": Array
     },
     data() {
         return {
             steps: [],
             groupByLang: {},
             stepMapper: {},
-            step: {
-                key: ""
-            },
+            step: {key: ""},
             selLang: ""
         }
     },

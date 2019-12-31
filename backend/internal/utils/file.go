@@ -428,7 +428,8 @@ func ReplaceContentInFile(flPath string, rpFuns map[string]ReplaceProcFunc) erro
 // 删除tag包围的文字块（连同tag一起删除）
 // @Param{1}：文件位置
 // @Param{2}：tag字段，会在其后追加（_BEG）和（_END）形成开始块和结束块
-func DelByTagInFile(flPath string, tag string) error {
+// @Param{3}：是否删除文字块，如果选择不删除，该函数会删除tag字段，但保留块内文字
+func DelByTagInFile(flPath string, tag string, delete bool) error {
 	file, err := os.Open(flPath)
 	if err != nil {
 		return err
@@ -457,7 +458,7 @@ func DelByTagInFile(flPath string, tag string) error {
 			continue
 		}
 		if strings.Index(strLine, beg) != -1 {
-			skip = true
+			skip = delete
 			continue
 		}
 		code += strLine + "\n"

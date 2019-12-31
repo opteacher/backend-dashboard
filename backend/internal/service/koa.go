@@ -37,12 +37,14 @@ func  (koa *Koa) chkSuptFrontend() bool {
 }
 
 func (koa *Koa) adjFrontendSupt(ctx context.Context) error {
-	if koa.chkSuptFrontend() {
-		return nil
+	suptFrontend := koa.chkSuptFrontend()
+
+	if err := utils.DelByTagInFile(path.Join(koa.info.pathName, "app.js"), "FRONTEND_ENV", !suptFrontend); err != nil {
+		return fmt.Errorf("调整app.js的前端环境支持逻辑时发生错误：%v", err)
 	}
 
-	if err := utils.DelByTagInFile(path.Join(koa.info.pathName, "app.js"), "FRONTEND_ENV"); err != nil {
-		return fmt.Errorf("调整app.js的前端环境支持逻辑时发生错误：%v", err)
+	if suptFrontend {
+		return nil
 	}
 
 	for _, delFile := range []string{

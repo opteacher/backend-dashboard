@@ -85,9 +85,7 @@ export default {
             spcSymbols: {},
             enableBlk: false,
             blkInOut: true,
-            newRequire: {
-                input: ""
-            },
+            newRequire: {input: ""},
             inputTextVar: "",
             procCode: ""
         }

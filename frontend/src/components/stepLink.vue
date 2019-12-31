@@ -83,8 +83,6 @@ export default {
         d3.select(`button[name="istStepBtn${this.istStepBtn.nsuffix}"]`)
             .style("left", `${x - 20}px`)
             .style("top", `${y - 20}px`)
-            // 最后的按钮添加50像素的底部距离，以配合第一个step块的顶部距离
-            .style("margin-bottom", `${!next ? 50 : 0}px`)
     }
 }
 </script>
